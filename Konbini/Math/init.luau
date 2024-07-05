@@ -105,7 +105,7 @@ end
 --- `BestOf(5, 2, 2) -> 0` \
 --- `BestOf(7, 4, 3) -> 1`
 function K_Math.bestof(series: number, h: number, k: number): number
-	local wins = 1 + math.floor(series / 2)
+	local wins = 1 + (series // 2)
 
 	if h == wins then
 		return 1
@@ -128,7 +128,7 @@ end
 --- `cartesian(7, 3)`: `"point #7 on a 3x3 grid" -> (2, 0)`
 function K_Math.cartesian(n: number, p: number): (number, number)
 	n -= 1
-	return math.floor(n / p), (n % p)
+	return n // p, (n % p)
 end
 
 --- scales numbersequence by x

@@ -57,7 +57,6 @@ function K_CFrame.ispointinvolumeXZ(point: Vector3, volumecframe: CFrame, volume
 
 	return
 		(math.abs(ObjectSpace.X) <= volumesize.X) and
-		(math.abs(ObjectSpace.Y) <= volumesize.Y) and
 		(math.abs(ObjectSpace.Z) <= volumesize.Z)
 end
 

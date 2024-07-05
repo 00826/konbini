@@ -50,11 +50,11 @@ function Time.__index.notation(x: number, Notation: types.Notation?): string
 	]]
 	if Notation == "DD:HH:MM:SS" then
 		if x >= 86400 then
-			local D = math.floor(x / 86400)
+			local D = x // 86400
 			x -= D * 86400
-			local H = math.floor(x / 3600)
+			local H = x // 3600
 			x -= H * 3600
-			local M = math.floor(x / 60)
+			local M = x // 60
 			x -= M * 60
 			return string.gsub(string.format(("%d:%d:%d:%d"), D, H, M, x), "%d+", subf)
 		else
@@ -62,9 +62,9 @@ function Time.__index.notation(x: number, Notation: types.Notation?): string
 		end
 	elseif Notation == "HH:MM:SS" then
 		if x >= 86400 then
-			local H = math.floor(x / 3600)
+			local H = x // 3600
 			x -= H * 3600
-			local M = math.floor(x / 60)
+			local M = x // 60
 			x -= M * 60
 			return string.gsub(string.format(("%d:%d:%d"), H, M, x), "%d+", subf)
 		else
@@ -72,7 +72,7 @@ function Time.__index.notation(x: number, Notation: types.Notation?): string
 		end
 	elseif Notation == "MM:SS" then
 		if x >= 3600 then
-			local M = math.floor(x / 60)
+			local M = x // 60
 			x -= M * 60
 			return string.gsub(string.format(("%d:%d"), M, x), "%d+", subf)
 		else

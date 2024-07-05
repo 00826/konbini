@@ -10,7 +10,7 @@ end
 
 local function Cartesian(n: number, p: number): (number, number)
 	n -= 1
-	return math.floor(n / p), (n % p)
+	return n // p, (n % p)
 end
 
 --- ### Interface.luau
