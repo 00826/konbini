@@ -1,0 +1,42 @@
+{
+	"ClassName": "Folder",
+	"ignoreUnknownInstances": true,
+	"children": [
+		{
+			"ClassName": "BodyGyro",
+			"Name": "BodyGyro",
+			"Properties": {
+				"D": 600,
+				"P": 50000,
+				"MaxTorque": [400000, 400000, 400000]
+			}
+		},
+		{
+			"ClassName": "BodyVelocity",
+			"Name": "BodyVelocity",
+			"Properties": {
+				"Velocity": [0, 0, 0],
+				"P": 7500,
+				"MaxForce": [1e8, 1e8, 1e8]
+			}
+		},
+		{
+			"ClassName": "BodyPosition",
+			"Name": "BodyPosition",
+			"Properties": {
+				"D": 2000,
+				"P": 150000,
+				"MaxForce": [200000, 200000, 200000],
+				"Position": [0, 0, 0]
+			}
+		},
+		{
+			"ClassName": "VectorForce",
+			"Name": "VectorForce",
+			"Properties": {
+				"Force": [0, 0, 0],
+				"RelativeTo": "World"
+			}
+		}
+	]
+}

@@ -1,0 +1,12 @@
+{
+	"className": "BallSocketConstraint",
+	"properties": {
+		"LimitsEnabled": true,
+		"TwistLimitsEnabled": true,
+		"UpperAngle": 45,
+		"Restitution": 0,
+		"MaxFrictionTorque": 0,
+		"TwistLowerAngle": -45,
+		"TwistUpperAngle": 45
+	}
+}

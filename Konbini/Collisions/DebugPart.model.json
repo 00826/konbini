@@ -1,0 +1,18 @@
+{
+	"className": "Part",
+	"properties": {
+		"CastShadow": false,
+		"Material": "ForceField",
+		"Transparency": 0,
+
+		"Color": { "Color3uint8": [255, 0, 0] },
+		"Size": [1, 1, 1],
+		"CFrame": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+
+		"Anchored": true,
+		"CanCollide": false,
+		"CanQuery": false,
+		"CanTouch": false,
+		"Massless": true
+	}
+}

@@ -1,0 +1,35 @@
+{
+	"className": "Part",
+	"properties": {
+		"CastShadow": true,
+		"Material": "Plastic",
+		"Transparency": 0,
+
+		"Color": { "Color3uint8": [163, 162, 165] },
+		"Size": [1, 1, 1],
+		"CFrame": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+
+		"Anchored": false,
+		"CanCollide": false,
+		"CanQuery": false,
+		"CanTouch": false,
+		"Massless": true
+	},
+	"children": [
+		{
+			"ClassName": "Attachment",
+			"Name": "Attachment",
+			"Properties": {
+				"CFrame": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]
+			}
+		},
+		{
+			"Name": "Mesh",
+			"className": "SpecialMesh",
+			"properties": {
+				"MeshType": {"Enum": 5},
+				"Scale": [1, 1, 1]
+			}
+		}
+	]
+}
