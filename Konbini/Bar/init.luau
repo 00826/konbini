@@ -1,6 +1,6 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types						= require("./Konbini/types")
 
 local Vector3_yzAxis			= Vector3.new(0, 1, 1)
 
@@ -34,7 +34,7 @@ function Bar.delta(thing: Instance, name: string, delta: number): ()
 end
 
 --- directly writes to barvalue axes
-function Bar.writeaxes(thing: Instance, name: string, axes: types.BarAxes): ()
+function Bar.writeaxes(thing: Instance, name: string, axes: types.Axes): ()
 	local barvalue = thing:GetAttribute(name)
 	assert(typeof(barvalue) == "Vector3")
 

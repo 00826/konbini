@@ -2,7 +2,7 @@
 --!native
 --!optimize 2
 
-local types						= require(script.Parent.types)
+local types						= require("./Konbini/types")
 
 local DefaultR					= Random.new()
 

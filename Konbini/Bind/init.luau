@@ -1,6 +1,6 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types						= require("./Konbini/types")
 
 local Cache						= {}
 

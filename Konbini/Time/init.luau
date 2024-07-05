@@ -1,8 +1,6 @@
 --!strict
 
-local types						= require(script.Parent.types)
-
----@diagnostic disable: undefined-type
+local types						= require("./Konbini/types")
 
 local RunService				= game:GetService("RunService")
 local IsServer					= RunService:IsServer()
