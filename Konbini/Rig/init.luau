@@ -1,6 +1,6 @@
 --!strict
 
-local types						= require("./Konbini/types")
+local types						= require(script.Parent.types)
 
 local RunService				= game:GetService("RunService")
 local Players					= game:GetService("Players")

@@ -1,6 +1,6 @@
 --!strict
 
-local types						= require("./Konbini/types")
+local types						= require(script.Parent.types)
 
 local Vector3_yzAxis			= Vector3.new(0, 1, 1)
 
