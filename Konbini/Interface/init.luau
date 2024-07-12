@@ -8,9 +8,9 @@ local function Tween(Object: Instance, Properties: {[string]: any}, Time: number
 	TweenService:Create(Object, TweenInfo.new(Time, ...), Properties):Play()
 end
 
-local function Cartesian(n: number, p: number): (number, number)
-	n -= 1
-	return n // p, (n % p)
+local function cartesian(p: number, w: number): (number, number)
+	p -= 1
+	return p % w, p // w
 end
 
 --- ### Interface.luau
@@ -145,7 +145,7 @@ function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite): ()
 
 	if Layout then
 		imagelabel.Image = Layout.Id
-		local X, Y = Cartesian(sprite.Position, Layout.Grid)
+		local X, Y = cartesian(sprite.Position, Layout.Width)
 		local Padding = Layout.Padding or 0
 		local Size = Layout.Size
 		imagelabel.ImageRectSize = Size

@@ -61,7 +61,7 @@ export type SpriteLayout		= {
 	Id: string; -- rbxassetid://
 	Size: Vector2; -- sprite size
 	Padding: number; -- sheet padding
-	Grid: number; -- sheet dimensions
+	Width: number; -- sheet dimensions
 }
 
 export type Sprite				= {
@@ -80,6 +80,7 @@ export type UnitCircleVertex	= { X: number, Z: number }
 export type Remote				= RemoteEvent|UnreliableRemoteEvent|any
 export type ClientArg			= 
 	nil |
+	number |
 	Player |
 	{ Player } |
 	((Player) -> boolean)

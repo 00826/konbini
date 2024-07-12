@@ -122,13 +122,13 @@ function K_Math.limit(x: number, a: number, k: number): number
 	return (a * x) / (k + x)
 end
 
---- returns x,y coordinate of point `n` with respect to plane size `a` \
+--- returns cartesian coordinates of point `p` with respect to grid width `w` \
 --- assumes a zero-indexed cartesian plane, read from `left -> right`, `top -> bottom` \
---- `cartesian(3, 2)`: `"point #3 on a 2x2 grid" -> (0, 1)` \
---- `cartesian(7, 3)`: `"point #7 on a 3x3 grid" -> (2, 0)`
-function K_Math.cartesian(n: number, p: number): (number, number)
-	n -= 1
-	return n // p, (n % p)
+--- `cartesian(3, 2)`: `"point #3 on a 2-width grid" -> (0, 1)` \
+--- `cartesian(7, 3)`: `"point #7 on a 3-width grid" -> (2, 0)`
+function K_Math.cartesian(p: number, w: number): (number, number)
+	p -= 1
+	return p % w, p // w
 end
 
 --- scales numbersequence by x

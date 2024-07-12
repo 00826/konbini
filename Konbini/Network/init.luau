@@ -4,7 +4,8 @@ local types						= require(script.Parent.types)
 
 local Players					= game:GetService("Players")
 
-local IsServer					= game:GetService("RunService"):IsServer()
+local RunService				= game:GetService("RunService")
+local IsServer					= RunService:IsServer()
 
 local async						= require(script.Parent.async)
 
@@ -23,31 +24,37 @@ for _, Remote: types.Remote in script:GetChildren() do
 	Network.Cache[Remote.Name] = Remote
 end
 
---- `server`: sends `...` via remote to client(s) of clientarg \
---- `client`: sends `...` via remote to server -- `[!] clientarg is ignored`
-function Network.send(remote: string, clientarg: types.ClientArg?, ...: any?): ()
+--- sends `...` via remote to client(s) of clientarg
+function Network.toclient(remote: string, clientarg: types.ClientArg?, ...: any?): ()
 	local Remote = Network.Cache[remote]
-
-	if IsServer then
-		if typeof(clientarg) == "nil" then
-			Remote:FireAllClients(...)
-		elseif typeof(clientarg) == "Instance" then
-			assert(clientarg:IsA("Player"))
+	if typeof(clientarg) == "nil" then
+		Remote:FireAllClients(...)
+	elseif typeof(clientarg) == "number" then
+		local P = Players:GetPlayerByUserId(clientarg)
+		if P then
+			Remote:FireClient(P, ...)
+		end
+	elseif typeof(clientarg) == "Instance" then
+		assert(clientarg:IsA("Player"))
+		Remote:FireClient(clientarg, ...)
+	elseif typeof(clientarg) == "table" then
+		for _, Client in clientarg do
 			Remote:FireClient(clientarg, ...)
-		elseif typeof(clientarg) == "table" then
-			for _, Client in clientarg do
+		end
+	elseif typeof(clientarg) == "function" then
+		for _, Client in Players:GetPlayers() do
+			if clientarg(Client) == true then
 				Remote:FireClient(clientarg, ...)
 			end
-		elseif typeof(clientarg) == "function" then
-			for _, Client in Players:GetPlayers() do
-				if clientarg(Client) == true then
-					Remote:FireClient(clientarg, ...)
-				end
-			end
 		end
-	else
-		Remote:FireServer(...)
 	end
+end
+
+--- sends `...` via remote to server
+function Network.toserver(remote: string, ...: any?): ()
+	local Remote = Network.Cache[remote]
+
+	Remote:FireServer(...)
 end
 
 --- `server`: creates and/or connects remote to `f` with option to make the remote unreliable \
