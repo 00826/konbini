@@ -63,6 +63,26 @@ function Encoder.writeboolean(b: buffer, offset: number, value: boolean?): ()
 	buffer.writeu8(b, offset, value and 1 or 0)
 end
 
+--- rotates range of values to the right
+--- ```
+--- rrotatef64([1, 2, 3, 4, 5]) -> [5, 1, 2, 3, 4]
+--- ```
+function Encoder.rrotatef64(b: buffer, offset: number, range: number)
+	local x = buffer.readf64(b, offset + range - 8)
+	buffer.copy(b, offset + 8, b, offset, range - 8)
+	buffer.writef64(b, offset, x)
+end
+
+--- rotates range of values to the left
+--- ```
+--- lrotatef64([1, 2, 3, 4, 5]) -> [2, 3, 4, 5, 1]
+--- ```
+function Encoder.lrotatef64(b: buffer, offset: number, range: number)
+	local x = buffer.readf64(b, offset)
+	buffer.copy(b, offset, b, offset + 8, range - 8)
+	buffer.writef64(b, offset + range - 8, x)
+end
+
 --- generates a random guid
 function Encoder.guid(len: number?): string
 	return string.sub(string.gsub(HttpService:GenerateGUID(false), "-", ""), 1, (len or 8))
