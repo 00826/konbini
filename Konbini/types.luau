@@ -82,7 +82,7 @@ export type ClientArg			=
 	nil |
 	number |
 	Player |
-	{ Player } |
+	{ number|Player } |
 	((Player) -> boolean)
 
 --- Rig.luau

@@ -152,7 +152,7 @@ function K_Table.pickfromdroptable(D: {[string]: number}, n: number, R: Random?)
 	return Items
 end
 
---- returns list of elements picked from array
+--- returns non-repeating list of elements picked from array
 function K_Table.pickfromlist<T>(A: {T}, n: number?, R: Random?): {T}
 	if not R then R = DefaultR end
 	if not n then n = 1 end
@@ -160,22 +160,10 @@ function K_Table.pickfromlist<T>(A: {T}, n: number?, R: Random?): {T}
 	assert(R)
 	assert(n)
 
-	local Items = table.create(n)
+	local B = table.clone(A)
+	R:Shuffle(B)
 
-	local Length = #A
-	local Integers = table.create(Length)
-
-	for _ = 1, math.clamp(n, 1, Length) do
-		local ThisIdx
-		repeat
-			ThisIdx = R:NextInteger(1, Length)
-		until not Integers[ThisIdx]
-		Integers[ThisIdx] = true
-
-		table.insert(Items, A[ThisIdx])
-	end
-
-	return Items
+	return table.move(B, 1, math.clamp(n, 1, #B), 1, table.create(n))
 end
 
 --- returns true if table contains value and its associated key

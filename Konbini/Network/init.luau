@@ -39,7 +39,11 @@ function Network.toclient(remote: string, clientarg: types.ClientArg?, ...: any?
 		Remote:FireClient(clientarg, ...)
 	elseif typeof(clientarg) == "table" then
 		for _, Client in clientarg do
-			Remote:FireClient(clientarg, ...)
+			if typeof(Client) == "number" then
+				Remote:FireClient(Players:GetPlayerByUserId(clientarg), ...)
+			else
+				Remote:FireClient(clientarg, ...)
+			end
 		end
 	elseif typeof(clientarg) == "function" then
 		for _, Client in Players:GetPlayers() do
