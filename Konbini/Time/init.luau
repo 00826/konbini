@@ -29,7 +29,7 @@ function Time.__index.furthest(x: number?): number
 end
 
 --- runs function in second intervals `x`
-function Time.__index.framerule(x: number, f: () -> ()): RBXScriptConnection
+function Time.__index.framerule(x: number, f: (...any) -> ()): RBXScriptConnection
 	local T = 0
 	local function Frame(dt)
 		T += dt

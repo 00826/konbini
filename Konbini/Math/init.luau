@@ -73,17 +73,9 @@ end
 --- `Shift(5, 2, 6) -> 1` \
 --- `Shift(1, -3, 6) -> 4`
 function K_Math.shift(x: number, a: number, b: number): number
-	local s = x + (math.sign(a) * (a % b))
-
-	if a == 0 then
-		return x
-	elseif s > b then
-		return s - b
-	elseif s < 1 then
-		return s + b
-	end
-
-	return s
+	x += a
+	local c = x % b
+	return c == 0 and b or c
 end
 
 --- returns winner of rally point game with minimum `score` given team 1 points `k` and team 2 points `k` \

@@ -36,7 +36,7 @@ function Data.get(player: Player?): types.SaveTemplate
 end
 
 --- reads player's data value stored at key
-function Data.read(player: Player, key: string): any
+function Data.read(player: Player, key: string): unknown
 	if IsServer then
 		return ServerCache[player].Data[key]
 	else

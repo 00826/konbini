@@ -36,6 +36,33 @@ GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(function()
 	Inset = GuiService:GetGuiInset()
 end)
 
+local Keycodes					= Enum.KeyCode:GetEnumItems()
+
+local function searchkeycodes(A: {Enum.KeyCode}, enumvalue: number): Enum.KeyCode?
+	local L = 1
+	local R = #A
+
+	if L > R then
+		return nil
+	else
+		local idx = (L + R) // 2
+		local value = A[idx]
+
+		local result = value.Value == enumvalue and 0 or value.Value < enumvalue and 1 or 2
+
+		if result == 0 then
+			return value
+		else
+			if result == 1 then
+				L = idx + 1
+			elseif result == 2 then
+				R = idx - 1
+			end
+			return searchkeycodes(table.move(A, L, R, 1, table.create(L + R)), enumvalue)
+		end
+	end
+end
+
 local ConversionTable			= {
 	[Enum.UserInputType.None]			= 0;
 
@@ -58,7 +85,40 @@ local ConversionTable			= {
 	[Enum.UserInputType.Gamepad8]		= 3;
 }
 
-
+local Aliases					= {
+	[Enum.KeyCode.Unknown]				= " ";
+	[Enum.KeyCode.One]					= "1";
+	[Enum.KeyCode.Two]					= "2";
+	[Enum.KeyCode.Three]				= "3";
+	[Enum.KeyCode.Four]					= "4";
+	[Enum.KeyCode.Five]					= "5";
+	[Enum.KeyCode.Six]					= "6";
+	[Enum.KeyCode.Seven]				= "7";
+	[Enum.KeyCode.Eight]				= "8";
+	[Enum.KeyCode.Nine]					= "9";
+	[Enum.KeyCode.Zero]					= "0";
+	[Enum.KeyCode.Backquote]			= "~";
+	[Enum.KeyCode.LeftShift]			= "LShift";
+	[Enum.KeyCode.RightShift]			= "RShift";
+	[Enum.KeyCode.LeftControl]			= "LCtrl";
+	[Enum.KeyCode.RightControl]			= "RCtrl";
+	[Enum.KeyCode.LeftAlt]				= "LAlt";
+	[Enum.KeyCode.RightAlt]				= "RAlt";
+	[Enum.KeyCode.Underscore]			= "_";
+	[Enum.KeyCode.Equals]				= "=";
+	[Enum.KeyCode.LeftBracket]			= "[";
+	[Enum.KeyCode.RightBracket]			= "]";
+	[Enum.KeyCode.ButtonL1]				= "L1";
+	[Enum.KeyCode.ButtonR1]				= "R1";
+	[Enum.KeyCode.ButtonL2]				= "L2";
+	[Enum.KeyCode.ButtonR2]				= "R2";
+	[Enum.KeyCode.ButtonL3]				= "L3";
+	[Enum.KeyCode.ButtonR3]				= "R3";
+	[Enum.KeyCode.ButtonY]				= "Y";
+	[Enum.KeyCode.ButtonX]				= "X";
+	[Enum.KeyCode.ButtonB]				= "B";
+	[Enum.KeyCode.ButtonA]				= "A";
+}
 
 --- ### Inputs.luau
 ---
@@ -75,7 +135,9 @@ local Inputs = {
 	AssistMousePosition			= nil :: (() -> (Vector2))?;
 	MouseBlacklist				= table.create(8);
 
-	SyncRate					= 1 / 60
+	SyncRate					= 1 / 60;
+
+	Aliases						= Aliases;
 }
 
 local BlacklistParams = RaycastParams.new()
@@ -205,6 +267,11 @@ function Inputs.setmouseiconenabled(state: boolean): ()
 	UIS.MouseIconEnabled = state
 end
 
+--- returns keycode enum from its integral value
+function Inputs.findkeycodefromvalue(keycodevalue: number): Enum.KeyCode?
+	return searchkeycodes(Keycodes, keycodevalue)
+end
+
 --- returns true if the inputobject was *not* obscured by the on-screen thumbstick
 function Inputs.sinkthumbstickcheck(inputobject: InputObject): boolean
 	if not PlayerGui then return false end
@@ -261,7 +328,7 @@ end
 function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyId: types.DynamicGamepadKey, UserInputState: Enum.UserInputState) -> ()): ()
 	local White = Color3.fromRGB(255, 255, 255)
 	local Black = Color3.fromRGB(0, 0, 0)
-	for _, KeyId: types.DynamicGamepadKey in {"Y", "X", "B", "A", "L1", "R1", "L2", "R2"} :: {types.DynamicGamepadKey} do
+	for _, KeyId: types.DynamicGamepadKey in {"Y", "X", "B", "A", "L1", "R1", "L2", "R2", "Center"} :: {types.DynamicGamepadKey} do
 		local ButtonFrame = gamepadobject:FindFirstChild(KeyId)
 		if not ButtonFrame then warn(gamepadobject, KeyId); continue end
 

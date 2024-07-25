@@ -21,6 +21,10 @@ local K_CFrame = {
 	RX180						= CFrame.Angles(math.pi, 0, 0);
 	RY180						= CFrame.Angles(0, math.pi, 0);
 	RZ180						= CFrame.Angles(0, 0, math.pi);
+
+	RXn180						= CFrame.Angles(-math.pi, 0, 0);
+	RYn180						= CFrame.Angles(0, -math.pi, 0);
+	RZn180						= CFrame.Angles(0, 0, -math.pi);
 }
 
 --- applies selected axis from copyfrom to target \

@@ -35,7 +35,7 @@ export type SaveTemplate		= typeof(require(script.Parent.Data.Config).SaveTempla
 
 --- Inputs.luau
 
-export type DynamicGamepadKey	= "Y" | "X" | "B" | "A" | "L1" | "R1" | "L2" | "R2"
+export type DynamicGamepadKey	= "Y" | "X" | "B" | "A" | "L1" | "R1" | "L2" | "R2" | "Center"
 
 --- Instance.luau
 

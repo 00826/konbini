@@ -187,6 +187,49 @@ function K_Table.shuffle(A: {any}, R: Random?): {any}
 	return B
 end
 
+--- performs a binary search on sorted array \
+--- `comp` returns: \
+--- `0`: value == desired value; return value \
+--- `1`: value < desired value; search to the left \
+--- `2`: value > desired value; search to the right \
+---
+--- ```lua
+--- --- find x in [1, 100]:
+--- local comp = function(value: number): number
+--- 	if value == x then
+--- 		return 0
+--- 	else
+--- 		return value < x and 1 or 2
+--- 	end
+--- end
+--- ```
+function K_Table.search<T>(A: {T}, comp: (value: T) -> number): T?
+	local L = 1
+	local R = #A
+
+	if L > R then
+		return nil
+	else
+		local idx = (L + R) // 2
+		local value = A[idx]
+
+		local result = comp(value)
+
+		if result == 0 then
+			return value
+		else
+			if result == 1 then
+				L = idx + 1
+			elseif result == 2 then
+				R = idx - 1
+			else
+				error(`comp {comp} did not return exactly 0, 1, or 2`)
+			end
+			return K_Table.search(table.move(A, L, R, 1, table.create(L + R)), comp)
+		end
+	end
+end
+
 --- merges values from source into target, if they dont already exist
 function K_Table.merge<T>(target: {T}, source: {T})
 	for _, value in source do

@@ -37,6 +37,7 @@ function Sounds.play(sound: Sound, parent: Instance?, properties: {[string]: any
 	end
 
 	NewSound:Play()
+	NewSound.PlayOnRemove = false
 	NewSound.Ended:Once(function()
 		NewSound:Destroy()
 	end)

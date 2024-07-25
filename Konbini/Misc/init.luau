@@ -11,7 +11,7 @@ local Misc = {}
 Misc.Preload = {}
 
 --- deep searches through T and inserts all `rbxassetid://` strings into A
-function Misc.Preload.index(T: {[string]: any}, A: {string})
+function Misc.Preload.index(T: {any}, A: {string})
 	local Duplicates = {}
 	local function Idx(ThisTable)
 		for _, Value in ThisTable do

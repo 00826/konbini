@@ -197,7 +197,7 @@ function K_Vector3.slerp(a: Vector3, b: Vector3, t: number): Vector3
 end
 
 --- stretches `a` towards `b`, constrained around radius `r`
-function K_Vector3.Stretch(a: Vector3, b: Vector3, r: number): Vector3
+function K_Vector3.stretch(a: Vector3, b: Vector3, r: number): Vector3
 	if K_Vector3.distance(a, b) <= r then
 		return b
 	end
