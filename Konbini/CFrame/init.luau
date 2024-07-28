@@ -2,8 +2,6 @@
 --!native
 --!optimize 2
 
-local types						= require(script.Parent.types)
-
 local DefaultR					= Random.new()
 
 --- ### CFrame.luau
@@ -29,7 +27,7 @@ local K_CFrame = {
 
 --- applies selected axis from copyfrom to target \
 --- if no axis is passed, then all rotational components will be applied
-function K_CFrame.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: types.xyzAxis?): CFrame
+function K_CFrame.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enum.Axis?): CFrame
 	if not axis then
 		return CFrame.new(target.X, target.Y, target.Z, select(4, copyfrom:GetComponents()))
 	end
@@ -37,9 +35,9 @@ function K_CFrame.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: ty
 	local X, Y, Z = copyfrom:ToOrientation()
 	local C0 = CFrame.new(target.X, target.Y, target.Z)
 
-	return axis == "X" and C0 * CFrame.Angles(X, 0, 0)
-		or axis == "Y" and C0 * CFrame.Angles(0, Y, 0)
-		or axis == "Z" and C0 * CFrame.Angles(0, 0, Z)
+	return axis == Enum.Axis.X and C0 * CFrame.Angles(X, 0, 0)
+		or axis == Enum.Axis.Y and C0 * CFrame.Angles(0, Y, 0)
+		or axis == Enum.Axis.Z and C0 * CFrame.Angles(0, 0, Z)
 		or CFrame.identity
 end
 

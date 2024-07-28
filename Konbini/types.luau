@@ -20,10 +20,6 @@ export type Axes				= {
 
 export type Disconnect			= () -> ()
 
---- CFrame.luau
-
-export type xyzAxis				= "X" | "Y" | "Z"
-
 --- Collisions.luau
 
 export type CastShape			= "Box" | "Ball"

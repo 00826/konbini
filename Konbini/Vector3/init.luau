@@ -25,11 +25,11 @@ function K_Vector3.height(a: Vector3, b: Vector3): number
 end
 
 --- returns vector3 normalized along axis
-function K_Vector3.normalize(a: Vector3, Axis: types.xyzAxis): Vector3
+function K_Vector3.normalize(a: Vector3, Axis: Enum.Axis): Vector3
 	return (a * (
-		Axis == "X" and K_Vector3.yzAxis or
-		Axis == "Y" and K_Vector3.xzAxis or
-		Axis == "Z" and K_Vector3.xyAxis or
+		Axis == Enum.Axis.X and K_Vector3.yzAxis or
+		Axis == Enum.Axis.Y and K_Vector3.xzAxis or
+		Axis == Enum.Axis.Z and K_Vector3.xyAxis or
 		Vector3.one
 	)).Unit
 end
@@ -142,6 +142,28 @@ end
 --- returns unit vector `a` reflected against unit vector `b`
 function K_Vector3.reflect(a: Vector3, b: Vector3): Vector3
 	return 2 * a:Dot(b) * b - a
+end
+
+--- returns rotation of unit vector `a` along `axis`
+function K_Vector3.angle(a: Vector3, Axis: Enum.Axis): number
+	local y, x = 0, 0
+
+	if Axis == Enum.Axis.X then
+		y = a.Y
+		x = a.Z
+	elseif Axis == Enum.Axis.Y then
+		y = a.X
+		x = a.Z
+	elseif Axis == Enum.Axis.Z then
+		y = a.Y
+		x = a.X
+	end
+
+	if y == 0 and x == 0 then
+		return 0
+	else
+		return math.atan2(y, x)
+	end
 end
 
 --- interpolates between unit vector `a` and unit vector `b` with respect to interpolant `t` \

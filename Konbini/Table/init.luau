@@ -292,15 +292,21 @@ end
 --- rotates array `A` `x` times such that:
 --- ```
 --- rotate([1, 2, 3, 4, 5], 1) -> [5, 1, 2, 3, 4]
+--- rotate([1, 2, 3, 4, 5], -1) -> [2, 3, 4, 5, 1]
 --- ```
 function K_Table.rotate(A: {any}, x: number?)
-	x = (x or 1) - 1
-	if x >= 0 then
-		local y = table.remove(A)
-		if not y then return end
+	x = x or 1
+	assert(x)
 
-		table.insert(A, 1, y)
-		K_Table.rotate(A, x)
+	if x ~= 0 then
+		if x > 0 then
+			local value = table.remove(A)
+			table.insert(A, 1, value)
+		elseif x < 0 then
+			local value = table.remove(A, 1)
+			table.insert(A, value)
+		end
+		K_Table.rotate(A, x - math.sign(x))
 	else
 		return
 	end
