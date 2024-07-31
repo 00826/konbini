@@ -83,6 +83,13 @@ function Encoder.lrotatef64(b: buffer, offset: number, range: number)
 	buffer.writef64(b, offset + range - 8, x)
 end
 
+--- swaps values stored at two offsets
+function Encoder.swapf64(b: buffer, x: number, y: number)
+	local z = buffer.readf64(b, x)
+	buffer.writef64(b, x, buffer.readf64(b, y))
+	buffer.writef64(b, y, z)
+end
+
 --- generates a random guid
 function Encoder.guid(len: number?): string
 	return string.sub(string.gsub(HttpService:GenerateGUID(false), "-", ""), 1, (len or 8))

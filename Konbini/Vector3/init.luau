@@ -271,4 +271,9 @@ function K_Vector3.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: num
 	return P0:Lerp(P1, A), A
 end
 
+--- returns vector `a` as a string
+function K_Vector3.tostring(a: Vector3, precision: number?): string
+	return string.sub(string.format(string.rep("%." .. (precision or 2) .. "f ", 3), a.X, a.Y, a.Z), 1, -2)
+end
+
 return table.freeze(K_Vector3)
