@@ -87,4 +87,18 @@ function K_CFrame.randompivotinvolume(volumecframe: CFrame, volumesize: Vector3,
 	) or volumecframe
 end
 
+--- returns cframe rotated towards lookvector at uniform rate within `[0, 1]`
+function K_CFrame.matchlookvector(cframe: CFrame, lookvector: Vector3, rate: number): CFrame
+	local angle = cframe.LookVector:Angle(lookvector)
+	
+	if angle < 5e-7 then
+		return cframe
+	elseif angle > math.pi - 5e-7 then
+		return cframe * CFrame.Angles(0, math.pi * rate, 0)
+	else
+		local axis = cframe.LookVector:Cross(lookvector)
+		return CFrame.fromAxisAngle(axis, angle * rate) * cframe.Rotation + cframe.Position
+	end
+end
+
 return table.freeze(K_CFrame)

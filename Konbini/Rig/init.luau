@@ -225,8 +225,13 @@ end
 
 --- applies bodymover to primarypart of target \
 --- *in contexts where `time` is omitted, the bodymover will remain indefinitely*
-function Rig.applybodymover(target: Model, class: types.MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
-	local RootPart = target.PrimaryPart
+function Rig.applybodymover(target: Model|BasePart, class: types.MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
+	local RootPart
+	if target:IsA("Model") then
+		RootPart = target.PrimaryPart
+	else
+		RootPart = target
+	end
 	assert(RootPart, `{target} has no PrimaryPart`)
 
 	if IsServer then
