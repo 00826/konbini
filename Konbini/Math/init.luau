@@ -172,4 +172,10 @@ function K_Math.unitcircle(vertices: number, radius: number): { types.UnitCircle
 	return V
 end
 
+--- returns framerate-independent interpolant `a` with respect to frame time `dt` \
+--- optionally scaled by a factor of `c?=1`
+function K_Math.interpolant(a: number, dt: number, c: number?): number
+	return (1 - math.exp(-a * dt)) * (c or 1)
+end
+
 return table.freeze(K_Math)
