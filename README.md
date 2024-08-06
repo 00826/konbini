@@ -9,7 +9,7 @@
 ## items
 
 > [!NOTE]
-> because exported types can't be accessed more than a file deep, types used by Konbini are housed in their own dedicated `types.luau` file
+> because exported types can't be accessed more than a file deep, types are housed in `types.luau`, and are exported directly from `require(path.to.Konbini)`
 
 |module|why it exists|dependencies|unit tested?|
 |-|-|-|:-:|
