@@ -2,6 +2,8 @@
 
 local HttpService				= game:GetService("HttpService")
 
+local int8						= 1 / 127
+
 --- ### Encoder.luau
 ---
 --- buffer helper functions
@@ -26,6 +28,23 @@ function Encoder.writevector3(b: buffer, offset: number, value: Vector3): ()
 	buffer.writef32(b, offset, value.X)
 	buffer.writef32(b, offset + 4, value.Y)
 	buffer.writef32(b, offset + 8, value.Z)
+end
+
+--- writes unit vector from buffer
+function Encoder.readunitvector(b: buffer, offset: number): Vector3
+	return Vector3.new(
+		buffer.readi8(b, offset + 0),
+		buffer.readi8(b, offset + 1),
+		buffer.readi8(b, offset + 2)
+	) * int8
+end
+
+--- writes unit vector to buffer \
+--- `x,y,z`: mapped to `[-127, 127]`
+function Encoder.writeunitvector(b: buffer, offset: number, value: Vector3): ()
+	buffer.writei8(b, offset + 0, math.clamp(value.X * 127, -127, 127))
+	buffer.writei8(b, offset + 1, math.clamp(value.Y * 127, -127, 127))
+	buffer.writei8(b, offset + 2, math.clamp(value.Z * 127, -127, 127))
 end
 
 --- reads CFrame from buffer

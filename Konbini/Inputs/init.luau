@@ -22,8 +22,6 @@ local InputTable				= {
 	Vector3.zero;				-- mouse position
 	Vector3.zAxis;				-- camera direction
 	Vector3.yAxis;				-- mouse surface normal
-	Vector3.yAxis;				-- character floor normal
-	Vector3.zero;				-- client move vector
 }
 local InputBufferLen			= #InputTable * 12
 local InputBuffer				= buffer.create(InputBufferLen)
@@ -153,9 +151,7 @@ end
 --- when called on client, values will be read from locally-stored input buffer \
 --- `1`: mouse position \
 --- `2`: camera direction \
---- `3`: mouse surface normal \
---- `4`: character floor normal \
---- `5`: client move vector
+--- `3`: mouse surface normal
 function Inputs.read(offset: number, Client: (Player|Model)?): Vector3
 	local i = (offset - 1) * 12
 
@@ -184,9 +180,7 @@ end
 --- when called on client, values will be written to locally-stored input buffer \
 --- `1`: mouse position \
 --- `2`: camera direction \
---- `3`: mouse surface normal \
---- `4`: character floor normal \
---- `5`: client move vector
+--- `3`: mouse surface normal
 function Inputs.write(offset: number, value: Vector3, Client: (Player|Model)?): ()
 	local i = (offset - 1) * 12
 
@@ -370,11 +364,6 @@ if IsServer then
 else
 	LocalPlayer.CharacterAdded:Connect(function(C: Model)
 		Inputs.mouseblacklistadd(C)
-
-		local Humanoid = C:FindFirstChildOfClass("Humanoid") or C:WaitForChild("Humanoid") :: Humanoid
-		Humanoid:GetPropertyChangedSignal("FloorMaterial"):Connect(function()
-			Inputs.write(4, Humanoid.FloorMaterial ~= Enum.Material.Air and Vector3.yAxis or Vector3.zero, LocalPlayer)
-		end)
 	end)
 	LocalPlayer.CharacterRemoving:Connect(Inputs.mouseblacklistremove)
 
