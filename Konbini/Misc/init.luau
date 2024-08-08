@@ -7,32 +7,75 @@ local Misc = {}
 
 --- ### Misc.Preload
 --- 
---- ContentProvider wrapper + recursive rbxassetid:// finder
-Misc.Preload = {}
+--- ContentProvider wrapper
+Misc.Preload = {
+	matches = {
+		"assetdelivery.roblox.com";
+		"rbxassetid://";
+		--"rbxasset://";
+	};
+}
 
---- deep searches through T and inserts all `rbxassetid://` strings into A
-function Misc.Preload.index(T: {any}, A: {string})
-	local Duplicates = {}
-	local function Idx(ThisTable)
-		for _, Value in ThisTable do
-			if type(Value) == "table" then
-				Idx(Value)
-				continue
-			end
-			if type(Value) ~= "string" then continue end
-			if not string.find(Value, "rbxassetid://") then continue end
-			if Duplicates[Value] then continue end
-			Duplicates[Value] = true
-			table.insert(A, Value)
+--- returns true if value is a preload-able asset string
+function Misc.Preload.canpreload(value: string): boolean
+	for _, partial in Misc.Preload.matches do
+		if string.match(value, partial) then
+			return true
 		end
 	end
-	Idx(T)
+	return false
 end
 
---- ContentProvider:PreloadAsync()
-function Misc.Preload.async(A: {any}, F: ((ContentString: string, AssetFetchStatus: Enum.AssetFetchStatus) -> ())?): number
+--- deep searches through target and inserts all `rbxassetid://` strings into assetlist
+function Misc.Preload.index(target: {any}|Instance, assetlist: {string})
+	local function insert(value: string)
+		if not Misc.Preload.canpreload(value) then return end
+		if table.find(assetlist, value) then return end
+
+		table.insert(assetlist, value)
+	end
+
+	local function iter(this: {any})
+		for _, value in this do
+			if type(value) == "table" then
+				iter(value)
+				continue
+			elseif typeof(value) == "Instance" then
+				if value:IsA("MeshPart") then
+					insert(value.MeshId)
+					insert(value.TextureID)
+				elseif value:IsA("SpecialMesh") then
+					insert(value.MeshId)
+					insert(value.TextureId)
+				elseif value:IsA("Texture") then
+					insert(value.Texture)
+				elseif value:IsA("Decal") then
+					insert(value.Texture)
+				elseif value:IsA("ParticleEmitter") then
+					insert(value.Texture)
+				elseif value:IsA("Shirt") then
+					insert(value.ShirtTemplate)
+				elseif value:IsA("Pants") then
+					insert(value.PantsTemplate)
+				end
+				iter(value:GetChildren())
+			elseif type(value) == "string" then
+				insert(value)
+			end
+		end
+	end
+
+	if type(target) == "table" then
+		iter(target)
+	elseif typeof(target) == "Instance" then
+		iter(target:GetChildren())
+	end
+end
+
+--- `ContentProvider:PreloadAsync(a, f)`
+function Misc.Preload.async(assetlist: {any}, f: ((contentstring: string, assetfetchstatus: Enum.AssetFetchStatus) -> ())?): number
 	local s = os.clock()
-	game:GetService("ContentProvider"):PreloadAsync(A, F) -- contentprovider service should only ideally be called once so its never stored as a variable on the uppermost scope
+	game:GetService("ContentProvider"):PreloadAsync(assetlist, f) -- contentprovider service should only ideally be called once so its never stored as a variable on the uppermost scope
 	return (os.clock() - s) * 1000
 end
 
