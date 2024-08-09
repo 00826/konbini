@@ -14,6 +14,7 @@ return table.freeze{
 	Cache						= require(script:WaitForChild("Cache"));
 	CFrame						= require(script:WaitForChild("CFrame"));
 	Collisions					= require(script:WaitForChild("Collisions"));
+	Couture						= require(script:WaitForChild("Couture"));
 	Data						= require(script:WaitForChild("Data"));
 	Debounce					= require(script:WaitForChild("Debounce"));
 	Encoder						= require(script:WaitForChild("Encoder"));

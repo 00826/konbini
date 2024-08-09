@@ -10,10 +10,8 @@ local IsServer					= RunService:IsServer()
 local MoverCache				= {} :: {[string]: BodyMover}
 local MoverRemote				= script:WaitForChild("MoverRemote") :: UnreliableRemoteEvent
 
-local AccessoryPart				= script:WaitForChild("AccessoryPart")
 local Ball						= script:WaitForChild("BallSocketConstraint")
 local Motor						= script:WaitForChild("Motor6D")
-local Weld						= script:WaitForChild("Weld")
 
 local RagdollLimbs				= {
 	[Enum.HumanoidRigType.R6]		= {
@@ -50,8 +48,6 @@ local RagdollMotors			= {
 	};
 }
 
-
-
 --- ### Rig.luau
 ---
 --- handler for motor6d-based rigs
@@ -76,61 +72,6 @@ function Rig.loadcharacter(player: Player, description: HumanoidDescription?)
 	end
 end
 
---- updates player humanoiddescription
-function Rig.updatedescription(player: Player): HumanoidDescription?
-	local UserId = player.UserId
-	if UserId < 1 then return nil end -- Players in test mode throw errors as their UserId's are negative
-
-	local Description = player:FindFirstChildOfClass("HumanoidDescription") :: HumanoidDescription
-	if Description then
-		Description:Destroy()
-	end
-	Description = Players:GetHumanoidDescriptionFromUserId(UserId)
-	Description.Parent = player
-
-	return Description
-end
-
---- creates accessorypart
-function Rig.createaccessorypart(name: string, offset: CFrame, properties: {}): BasePart
-	local NewPart = AccessoryPart:Clone()
-	NewPart.Name = name
-
-	local Attachment = AccessoryPart:FindFirstChildOfClass("Attachment")
-	if Attachment then
-		Attachment.CFrame = offset
-	end
-
-	local SpecialMesh = AccessoryPart:FindFirstChildOfClass("SpecialMesh")
-	if SpecialMesh then
-		for Property, Value in properties do
-			SpecialMesh[Property] = Value
-		end
-	end
-
-	return NewPart
-end
-
---- attaches accessorypart to target
-function Rig.attachaccessorypart(target: Model, accessorypart: BasePart, attachmentref: string, parent: Instance?): boolean
-	local A0 = target:FindFirstChild(attachmentref, true) :: Attachment
-	if not A0 then return false end
-	if not A0:IsA("Attachment") then return false end
-
-	local A1 = accessorypart:FindFirstChildOfClass("Attachment") :: Attachment?
-	if not A1 then return false end
-
-	accessorypart.Parent = parent or target
-	accessorypart.CFrame = A0.WorldCFrame * A1.CFrame:Inverse()
-
-	local W = Weld:Clone()
-	W.Part0 = accessorypart
-	W.Part1 = A0.Parent
-	W.Parent = accessorypart
-
-	return true
-end
-
 --- disables humanoidstates
 function Rig.disablestates(humanoid: Humanoid, states: {Enum.HumanoidStateType})
 	for _, State: Enum.HumanoidStateType in states do
@@ -139,28 +80,28 @@ function Rig.disablestates(humanoid: Humanoid, states: {Enum.HumanoidStateType})
 end
 
 --- connects ragdoll event to target, defined as `boolean Attribute: "Ragdoll"`
-function Rig.ConnectRagdollEvent(target: Model)
+function Rig.connectragdollevent(target: Model)
 	local Humanoid = target:WaitForChild("Humanoid") :: Humanoid
 	if not Humanoid then warn(`Humanoid not found in {target}`); return end
 	target:GetAttributeChangedSignal("Ragdoll"):Connect(function()
 		if target:GetAttribute("Ragdoll") == true then
 			Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, false)
 			Humanoid:ChangeState(Enum.HumanoidStateType.Ragdoll)
-			Rig.ToggleRagdollCollisions(target, Humanoid.RigType, true)
+			Rig.toggleragdollcollisions(target, Humanoid.RigType, true)
 			if not IsServer then return end
-			Rig.Ragdoll(target, true)
+			Rig.ragdoll(target, true)
 		else
 			Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, true)
 			Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-			Rig.ToggleRagdollCollisions(target, Humanoid.RigType, false)
+			Rig.toggleragdollcollisions(target, Humanoid.RigType, false)
 			if not IsServer then return end
-			Rig.Ragdoll(target, false)
+			Rig.ragdoll(target, false)
 		end
 	end)
 end
 
 --- ragdolls target
-function Rig.Ragdoll(target: Model, state: boolean?)
+function Rig.ragdoll(target: Model, state: boolean?)
 	if not IsServer then
 		warn("call .Ragdoll on server")
 		return
@@ -209,11 +150,11 @@ function Rig.Ragdoll(target: Model, state: boolean?)
 		Humanoid.Sit = false
 		Humanoid.RequiresNeck = true
 	end
-	Rig.ToggleRagdollCollisions(target, Humanoid.RigType, state or false)
+	Rig.toggleragdollcollisions(target, Humanoid.RigType, state or false)
 end
 
 --- toggles collisions on certain limbs depending on ragdoll state
-function Rig.ToggleRagdollCollisions(target: Model, rigtype: Enum.HumanoidRigType, state: boolean)
+function Rig.toggleragdollcollisions(target: Model, rigtype: Enum.HumanoidRigType, state: boolean)
 	for _, Limb in RagdollLimbs[rigtype] do
 		local P = target:FindFirstChild(Limb :: string)
 		if not P then continue end

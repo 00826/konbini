@@ -23,6 +23,7 @@
 |*[Cache.luau](./Konbini/Cache/init.luau)*|shallow instance caching as `:GetChildren()` is expensive|-|❌|
 |[CFrame.luau](./Konbini/CFrame/init.luau)|`CFrame` library extension|-|❌|
 |[Collisions.luau](./Konbini/Collisions/init.luau)|condensed spatial queries|-|❌|
+|[Couture.luau](./Konbini/Couture/init.luau)|near-client-authoritative accessory/cosmetic handling<br>game server has better things to do than weld accessories|-|❌|
 |[Data.luau](./Konbini/Data/init.luau)|glorified `ProfileService` interface|`Konbini.Bind`<br>*implied dependence on profileservice*|❌|
 |*[Debounce.luau](./Konbini/Debounce/init.luau)*|debounce function|`Konbini.Time`|❌|
 |[Encoder.luau](./Konbini/Encoder/init.luau)|encode primitives into buffers|-|❌|
