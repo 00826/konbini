@@ -109,6 +109,23 @@ function Encoder.swapf64(b: buffer, x: number, y: number)
 	buffer.writef64(b, y, z)
 end
 
+--- returns true if `a == b`
+function Encoder.compare(a: buffer, b: buffer): boolean
+	local sizeA = buffer.len(a)
+	local sizeB = buffer.len(b)
+	if sizeA ~= sizeB then
+		return false
+	else
+		for offset = 1, sizeA do
+			offset -= 1
+			if buffer.readu8(a, offset) ~= buffer.readu8(b, offset) then
+				return false
+			end
+		end
+	end
+	return true
+end
+
 --- generates a random guid
 function Encoder.guid(len: number?): string
 	return string.sub(string.gsub(HttpService:GenerateGUID(false), "-", ""), 1, (len or 8))
