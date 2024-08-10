@@ -46,14 +46,14 @@ local Couture = {
 }
 
 --- returns table of clothing ids
-function Couture.readclothing(player: Player): {[string]: number}
+function Couture.readclothing(player: Player): {[string]: string}
 	local couturefolder = player:FindFirstChild("CoutureFolder")
 	if not couturefolder then
 		return {}
 	else
 		local clothingids = {}
 		for _, DescProperty in Couture.ClothingProperties do
-			clothingids[DescProperty] = couturefolder:GetAttribute(DescProperty) :: number
+			clothingids[DescProperty] = couturefolder:GetAttribute(DescProperty) :: string
 		end
 		return clothingids
 	end
@@ -90,7 +90,7 @@ end
 --- returns: \
 --- list of accessories or an empty table \
 --- boolean if the couture folder doesn't exist
-function Couture.getaccessories(player: Player): ({BasePart}, boolean)
+function Couture.readaccessories(player: Player): ({BasePart}, boolean)
 	local couturefolder = player:FindFirstChild("CoutureFolder")
 	if not couturefolder then
 		return table.create(0), false
@@ -224,6 +224,7 @@ function Couture.refresh(player: Player): HumanoidDescription
 	else
 		couturefolder:ClearAllChildren()
 	end
+	assert(couturefolder)
 
 	local preexisting = player:FindFirstChildOfClass("HumanoidDescription")
 	if preexisting then preexisting:Destroy() end
@@ -231,51 +232,91 @@ function Couture.refresh(player: Player): HumanoidDescription
 	local newdescription = Players:GetHumanoidDescriptionFromUserId(player.UserId)
 	newdescription.Parent = player
 
-	for _, DescProperty in Couture.AccessoryProperties do
-		task.defer(pcall, function(humanoiddescription: HumanoidDescription, container: Instance)
-			local Value = (humanoiddescription :: any)[DescProperty]
-			if Value == "" then return false end
+	local remaining = table.create(
+		#Couture.AccessoryProperties +
+		#Couture.BodyColorProperties +
+		#Couture.BodyPartProperties +
+		#Couture.ClothingProperties
+	)
 
-			for _, Id in Value:split(",") do
-				Id = tonumber(Id)
-				if not Id then continue end
+	table.move(Couture.AccessoryProperties, 1, #Couture.AccessoryProperties, #remaining + 1, remaining)
+	table.move(Couture.BodyColorProperties, 1, #Couture.BodyColorProperties, #remaining + 1, remaining)
+	table.move(Couture.BodyPartProperties, 1, #Couture.BodyPartProperties, #remaining + 1, remaining)
+	table.move(Couture.ClothingProperties, 1, #Couture.ClothingProperties, #remaining + 1, remaining)
+	
+	task.defer(function()
+		for _, DescProperty in Couture.AccessoryProperties do
+			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
+				local Value = (humanoiddescription :: any)[DescProperty]
+				if Value == "" then return false end
+	
+				for _, Id in Value:split(",") do
+					Id = tonumber(Id)
+					if not Id then continue end
+	
+					local s, e = pcall(function(assetid: number)
+						local InsertModel = InsertService:LoadAsset(assetid)
+						local RealAccessory = Couture.frominstance(InsertModel:FindFirstChildOfClass("Accessory"))
+						InsertModel:Destroy()
+						RealAccessory:SetAttribute("Type", DescProperty)
+						RealAccessory.Parent = container
+					end, Id)
+					if not s then warn(Id, e) end
+				end
+				return true
+			end, newdescription, couturefolder)
 
-				local s, e = pcall(function(assetid: number)
-					local InsertModel = InsertService:LoadAsset(assetid)
-					local RealAccessory = Couture.frominstance(InsertModel:FindFirstChildOfClass("Accessory"))
+			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+		end
+	end)
+	task.defer(function()
+		for _, DescProperty in Couture.BodyColorProperties do
+			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
+	
+				container:SetAttribute(DescProperty, (humanoiddescription :: any)[DescProperty])
+	
+				return true
+			end, newdescription, couturefolder)
+
+			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+		end
+	end)
+	task.defer(function()
+		for _, DescProperty in Couture.BodyPartProperties do
+			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
+	
+				container:SetAttribute(DescProperty, Couture.AssetPrefix .. (humanoiddescription :: any)[DescProperty])
+				
+				return true
+			end, newdescription, couturefolder)
+
+			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+		end
+	end)
+	task.defer(function()
+		for _, DescProperty in Couture.ClothingProperties do
+			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
+				local InsertModel = InsertService:LoadAsset((humanoiddescription :: any)[DescProperty])
+				local ShirtOrPants = InsertModel:FindFirstChildOfClass("Shirt") or InsertModel:FindFirstChildOfClass("Pants")
+				if ShirtOrPants then
+					if ShirtOrPants:IsA("Shirt") then
+						container:SetAttribute(DescProperty, Couture.AssetPrefix .. (string.match(ShirtOrPants.ShirtTemplate, "%d+") or "0"))
+					elseif ShirtOrPants:IsA("Pants") then
+						container:SetAttribute(DescProperty, Couture.AssetPrefix .. (string.match(ShirtOrPants.PantsTemplate, "%d+") or "0"))
+					end
 					InsertModel:Destroy()
-					RealAccessory:SetAttribute("Type", DescProperty)
-					RealAccessory.Parent = container
-				end, Id)
-				if not s then warn(Id, e) end
-			end
-			return true
-		end, newdescription, couturefolder :: Folder)
-	end
-	for _, DescProperty in Couture.BodyColorProperties do
-		task.defer(pcall, function(humanoiddescription: HumanoidDescription, container: Instance)
+				else
+					warn("shirt or pants not found")
+				end
+				
+				return true
+			end, newdescription, couturefolder)
 
-			container:SetAttribute(DescProperty, (humanoiddescription :: any)[DescProperty])
+			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+		end
+	end)
 
-			return true
-		end, newdescription, couturefolder :: Folder)
-	end
-	for _, DescProperty in Couture.BodyPartProperties do
-		task.defer(pcall, function(humanoiddescription: HumanoidDescription, container: Instance)
-
-			container:SetAttribute(DescProperty, Couture.AssetPrefix .. (humanoiddescription :: any)[DescProperty])
-			
-			return true
-		end, newdescription, couturefolder :: Folder)
-	end
-	for _, DescProperty in Couture.ClothingProperties do
-		task.defer(pcall, function(humanoiddescription: HumanoidDescription, container: Instance)
-
-			container:SetAttribute(DescProperty, Couture.AssetPrefix .. (humanoiddescription :: any)[DescProperty])
-			
-			return true
-		end, newdescription, couturefolder :: Folder)
-	end
+	repeat task.wait() until #remaining == 0
 
 	return newdescription
 end
