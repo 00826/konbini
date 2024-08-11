@@ -15,18 +15,6 @@ local K_Math = {
 	NumberSequenceOne			= NumberSequence.new(1);
 }
 
---- returns cooldown value of x with respect to deltatime \
---- solves `"%x per second"`, where `x ∈ [0, 100]`
-function K_Math.cooldownrate(x: number, deltatime: number): number
-	return deltatime * (100 / x)
-end
-
---- returns regen value of x with respect to deltatime \
---- solves `"x per second"`, where `x ∈ ℝ`
-function K_Math.regenrate(x: number, deltatime: number): number
-	return deltatime * x
-end
-
 --- returns `x ^ y` \
 --- *in contexts where `y == 2`, returns `x * x`*
 function K_Math.pow(x: number, y: number): number
@@ -76,36 +64,6 @@ function K_Math.shift(x: number, a: number, b: number): number
 	x += a
 	local c = x % b
 	return c == 0 and b or c
-end
-
---- returns winner of rally point game with minimum `score` given team 1 points `k` and team 2 points `k` \
---- `RallyPoint(25, 24, 25) -> 0` \
---- `RallyPoint(25, 25, 27) -> 2` \
---- `RallyPoint(25, 25, 0) -> 1`
-function K_Math.rallypoint(score: number, h: number, k: number): number
-	if (h >= score) and (h - k >= 2) then
-		return 1
-	elseif (k >= score) and (k - h >= 2) then
-		return 2
-	end
-
-	return 0
-end
-
---- returns winner of best-of `series` given team 1 wins `h` and team 2 wins `k` \
---- `BestOf(3, 1, 2) -> 2` \
---- `BestOf(5, 2, 2) -> 0` \
---- `BestOf(7, 4, 3) -> 1`
-function K_Math.bestof(series: number, h: number, k: number): number
-	local wins = 1 + (series // 2)
-
-	if h == wins then
-		return 1
-	elseif k == wins then
-		return 2
-	end
-
-	return 0
 end
 
 --- returns `x` scaled against limit `a ∈ [0, inf]` with slope scalar `k ∈ [steep, flat]` \
@@ -170,6 +128,53 @@ function K_Math.unitcircle(vertices: number, radius: number): { types.UnitCircle
 	end
 
 	return V
+end
+
+--- returns winner of rally point game with minimum `score` given team 1 points `k` and team 2 points `k` \
+--- `RallyPoint(25, 24, 25) -> 0` \
+--- `RallyPoint(25, 25, 27) -> 2` \
+--- `RallyPoint(25, 25, 0) -> 1`
+function K_Math.rallypoint(score: number, h: number, k: number): number
+	if (h >= score) and (h - k >= 2) then
+		return 1
+	elseif (k >= score) and (k - h >= 2) then
+		return 2
+	end
+
+	return 0
+end
+
+--- returns winner of best-of `series` given team 1 wins `h` and team 2 wins `k` \
+--- `BestOf(3, 1, 2) -> 2` \
+--- `BestOf(5, 2, 2) -> 0` \
+--- `BestOf(7, 4, 3) -> 1`
+function K_Math.bestof(series: number, h: number, k: number): number
+	local wins = 1 + (series // 2)
+
+	if h == wins then
+		return 1
+	elseif k == wins then
+		return 2
+	end
+
+	return 0
+end
+
+--- returns input delay given rounds-per-minute x
+function K_Math.rpm(x: number): number
+	return 1 / (x / 60)
+end
+
+--- returns cooldown value of x with respect to deltatime \
+--- solves `"%x per second"`, where `x ∈ [0, 100]`
+function K_Math.cooldownrate(x: number, deltatime: number): number
+	return deltatime * (100 / x)
+end
+
+--- returns regen value of x with respect to deltatime \
+--- solves `"x per second"`, where `x ∈ ℝ`
+function K_Math.regenrate(x: number, deltatime: number): number
+	return deltatime * x
 end
 
 return table.freeze(K_Math)
