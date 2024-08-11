@@ -82,7 +82,18 @@ end
 --- ### Misc.Color
 ---
 --- Color functions
-Misc.Color = {}
+Misc.Color = {
+	ChatColors = {
+		Color3.fromRGB(253, 41, 67); -- BrickColor.new("Bright red").Color
+		Color3.fromRGB(1, 162, 255); -- BrickColor.new("Bright blue").Color
+		Color3.fromRGB(2, 184, 87); -- BrickColor.new("Earth green").Color
+		Color3.fromRGB(107, 50, 124); -- BrickColor.new("Bright violet").Color
+		Color3.fromRGB(218, 133, 65); -- BrickColor.new("Bright orange").Color
+		Color3.fromRGB(245, 205, 48); -- BrickColor.new("Bright yellow").Color
+		Color3.fromRGB(232, 186, 200); -- BrickColor.new("Light reddish violet").Color
+		Color3.fromRGB(215, 197, 154); -- BrickColor.new("Brick yellow").Color
+	}
+}
 
 --- returns a saturation-adjusted color
 function Misc.Color.adjustsaturation(color: Color3, delta: number): Color3
@@ -123,6 +134,26 @@ function Misc.Color.getcolorinsequence(colorsequence: ColorSequence, a: number):
 		LastKeypoint = Keypoint
 	end
 	return LastKeypoint and LastKeypoint.Value or Color3.fromRGB(255, 255, 255)
+end
+
+--- returns player chat color as it would appear in vanilla chat
+function Misc.Color.getchatcolor(playername: string): Color3
+	local value = 0
+	local namelength = #playername
+
+	for index = 1, namelength do
+		local cValue = string.byte(string.sub(playername, index, index))
+		local reverseIndex = namelength - index + 1
+		if namelength % 2 == 1 then
+			reverseIndex = reverseIndex - 1
+		end
+		if reverseIndex % 4 >= 2 then
+			cValue = -cValue
+		end
+		value = value + cValue
+	end
+
+	return Misc.Color.ChatColors[1 + (value % #Misc.Color.ChatColors)]
 end
 
 --- returns value normalized as a boolean
