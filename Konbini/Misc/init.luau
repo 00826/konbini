@@ -139,9 +139,28 @@ end
 --- returns player chat color as it would appear in vanilla chat
 function Misc.Color.getchatcolor(playername: string): Color3
 	local value = 0
+	local index = 0
 	local namelength = #playername
 
-	for index = 1, namelength do
+	string.gsub(playername, ".", function(char: string)
+		index += 1
+
+		local byte = string.byte(char)
+		local reverseindex = namelength - index + 1
+
+		if namelength % 2 == 1 then
+			reverseindex -= 1
+		end
+		if reverseindex % 4 >= 2 then
+			byte *= -1
+		end
+		
+		value += byte
+
+		return char
+	end)
+
+	--[[for index = 1, namelength do
 		local cValue = string.byte(string.sub(playername, index, index))
 		local reverseIndex = namelength - index + 1
 		if namelength % 2 == 1 then
@@ -150,8 +169,8 @@ function Misc.Color.getchatcolor(playername: string): Color3
 		if reverseIndex % 4 >= 2 then
 			cValue = -cValue
 		end
-		value = value + cValue
-	end
+		value += cValue
+	end]]
 
 	return Misc.Color.ChatColors[1 + (value % #Misc.Color.ChatColors)]
 end
