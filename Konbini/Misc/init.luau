@@ -175,11 +175,25 @@ function Misc.Color.getchatcolor(playername: string): Color3
 	return Misc.Color.chatcolors[1 + (value % #Misc.Color.chatcolors)]
 end
 
---- returns value normalized as a boolean
+--- returns value normalized as a boolean: \
+--- `boolean`: `value` \
+--- `number`: `value > 0` \
+--- `string`: `value ~= ""` \
+--- `vector`: `value.Magnitude > 0` \
+--- `table`: `next(value) ~= nil` \
+--- `function`: `value() == true` \
+--- `buffer`: `buffer.tostring(value) == string.rep("\u{0000}", buffer.len(value))`
 function Misc.toboolean(value: any): boolean
 	if not value then return false end
 	local t = type(value)
-	return (t == "boolean" and value) or (t == "number" and value > 0) or (t == "string" and value ~= "") or (t == "vector" and value.Magnitude > 0) or (t == "table" and next(value) ~= nil) or (t == "function" and (value :: () -> ())()) or false
+	return (t == "boolean" and value)
+		or (t == "number" and value > 0)
+		or (t == "string" and value ~= "")
+		or (t == "vector" and value.Magnitude > 0)
+		or (t == "table" and next(value) ~= nil)
+		or (t == "function" and (value :: () -> ())() == true)
+		or (t == "buffer" and buffer.tostring(value :: buffer) == string.rep("\u{0000}", buffer.len(value :: buffer)))
+		or false
 end
 
 return Misc
