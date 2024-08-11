@@ -83,7 +83,7 @@ end
 ---
 --- Color functions
 Misc.Color = {
-	ChatColors = {
+	chatcolors = {
 		Color3.fromRGB(253, 41, 67); -- BrickColor.new("Bright red").Color
 		Color3.fromRGB(1, 162, 255); -- BrickColor.new("Bright blue").Color
 		Color3.fromRGB(2, 184, 87); -- BrickColor.new("Earth green").Color
@@ -172,7 +172,7 @@ function Misc.Color.getchatcolor(playername: string): Color3
 		value += cValue
 	end]]
 
-	return Misc.Color.ChatColors[1 + (value % #Misc.Color.ChatColors)]
+	return Misc.Color.chatcolors[1 + (value % #Misc.Color.chatcolors)]
 end
 
 --- returns value normalized as a boolean
