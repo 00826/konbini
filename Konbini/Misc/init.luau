@@ -82,18 +82,7 @@ end
 --- ### Misc.Color
 ---
 --- Color functions
-Misc.Color = {
-	chatcolors = {
-		Color3.fromRGB(253, 41, 67); -- BrickColor.new("Bright red").Color
-		Color3.fromRGB(1, 162, 255); -- BrickColor.new("Bright blue").Color
-		Color3.fromRGB(2, 184, 87); -- BrickColor.new("Earth green").Color
-		Color3.fromRGB(107, 50, 124); -- BrickColor.new("Bright violet").Color
-		Color3.fromRGB(218, 133, 65); -- BrickColor.new("Bright orange").Color
-		Color3.fromRGB(245, 205, 48); -- BrickColor.new("Bright yellow").Color
-		Color3.fromRGB(232, 186, 200); -- BrickColor.new("Light reddish violet").Color
-		Color3.fromRGB(215, 197, 154); -- BrickColor.new("Brick yellow").Color
-	}
-}
+Misc.Color = {}
 
 --- returns a saturation-adjusted color
 function Misc.Color.adjustsaturation(color: Color3, delta: number): Color3
@@ -136,64 +125,11 @@ function Misc.Color.getcolorinsequence(colorsequence: ColorSequence, a: number):
 	return LastKeypoint and LastKeypoint.Value or Color3.fromRGB(255, 255, 255)
 end
 
---- returns player chat color as it would appear in vanilla chat
-function Misc.Color.getchatcolor(playername: string): Color3
-	local value = 0
-	local index = 0
-	local namelength = #playername
-
-	string.gsub(playername, ".", function(char: string)
-		index += 1
-
-		local byte = string.byte(char)
-		local reverseindex = namelength - index + 1
-
-		if namelength % 2 == 1 then
-			reverseindex -= 1
-		end
-		if reverseindex % 4 >= 2 then
-			byte *= -1
-		end
-		
-		value += byte
-
-		return char
-	end)
-
-	--[[for index = 1, namelength do
-		local cValue = string.byte(string.sub(playername, index, index))
-		local reverseIndex = namelength - index + 1
-		if namelength % 2 == 1 then
-			reverseIndex = reverseIndex - 1
-		end
-		if reverseIndex % 4 >= 2 then
-			cValue = -cValue
-		end
-		value += cValue
-	end]]
-
-	return Misc.Color.chatcolors[1 + (value % #Misc.Color.chatcolors)]
-end
-
---- returns value normalized as a boolean: \
---- `boolean`: `value` \
---- `number`: `value > 0` \
---- `string`: `value ~= ""` \
---- `vector`: `value.Magnitude > 0` \
---- `table`: `next(value) ~= nil` \
---- `function`: `value() == true` \
---- `buffer`: `buffer.tostring(value) == string.rep("\u{0000}", buffer.len(value))`
+--- returns value normalized as a boolean
 function Misc.toboolean(value: any): boolean
 	if not value then return false end
 	local t = type(value)
-	return (t == "boolean" and value)
-		or (t == "number" and value > 0)
-		or (t == "string" and value ~= "")
-		or (t == "vector" and value.Magnitude > 0)
-		or (t == "table" and next(value) ~= nil)
-		or (t == "function" and (value :: () -> ())() == true)
-		or (t == "buffer" and buffer.tostring(value :: buffer) == string.rep("\u{0000}", buffer.len(value :: buffer)))
-		or false
+	return (t == "boolean" and value) or (t == "number" and value > 0) or (t == "string" and value ~= "") or (t == "vector" and value.Magnitude > 0) or (t == "table" and next(value) ~= nil) or (t == "function" and (value :: () -> ())()) or false
 end
 
 return Misc

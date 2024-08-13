@@ -157,7 +157,7 @@ end
 --- creates accessorypart
 function Couture.createaccessory(name: string, attachment: {}, specialmesh: {}): BasePart
 	local NewPart = AccessoryPart:Clone()
-	NewPart.Name = name
+	NewPart.Name = "Couture__" .. name
 
 	local AccessoryAttachment = NewPart:FindFirstChildOfClass("Attachment")
 	if AccessoryAttachment then
@@ -225,6 +225,12 @@ function Couture.refresh(player: Player): HumanoidDescription
 		couturefolder:ClearAllChildren()
 	end
 	assert(couturefolder)
+
+	if player.UserId < 1 then
+		local desc = Instance.new("HumanoidDescription")
+		desc.Parent = player
+		return desc
+	end
 
 	local preexisting = player:FindFirstChildOfClass("HumanoidDescription")
 	if preexisting then preexisting:Destroy() end
