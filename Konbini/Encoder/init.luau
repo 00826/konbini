@@ -9,7 +9,7 @@ local int8						= 1 / 127
 --- buffer helper functions
 local Encoder = {}
 
---- trims trailing whitespaces from string stored in buffer
+--- trims trailing whitespaces from string in buffer
 function Encoder.trimstring(str: string): string
 	return string.gsub(string.gsub(str, "%s+", " "), "\u{0000}", "")
 end
@@ -124,6 +124,43 @@ function Encoder.compare(a: buffer, b: buffer): boolean
 		end
 	end
 	return true
+end
+
+--- writes a signed 24-bit integer to buffer
+function Encoder.writei24(b: buffer, offset: number, value: number)
+	local abs = math.abs(value)
+	
+	buffer.writeu8(b, offset + 0, bit32.extract(abs, 0, 8))
+	buffer.writeu8(b, offset + 1, bit32.extract(abs, 8, 8))
+
+	local sign = math.sign(value) < 0 and 1 or 0
+	local z = bit32.extract(abs, 16, 8)
+	buffer.writeu8(b, offset + 2, bit32.replace(z, sign, 7, 1))
+end
+
+--- reads a signed 24-bit integer from buffer
+function Encoder.readi24(b: buffer, offset: number): number
+	local w = 0
+	w = bit32.replace(w, buffer.readu8(b, offset + 0), 0, 8)
+	w = bit32.replace(w, buffer.readu8(b, offset + 1), 8, 8)
+	w = bit32.replace(w, buffer.readu8(b, offset + 2), 16, 8)
+	return bit32.extract(w, 0, 23) * (bit32.extract(w, 23, 1) == 1 and -1 or 1)
+end
+
+--- writes an unsigned 24-bit integer to buffer
+function Encoder.writeu24(b: buffer, offset: number, value: number)
+	buffer.writeu8(b, offset + 0, bit32.extract(value, 0, 8))
+	buffer.writeu8(b, offset + 1, bit32.extract(value, 8, 8))
+	buffer.writeu8(b, offset + 2, bit32.extract(value, 16, 8))
+end
+
+--- reads an unsigned 24-bit integer from buffer
+function Encoder.readu24(b: buffer, offset: number): number
+	local w = 0
+	w = bit32.replace(w, buffer.readu8(b, offset + 0), 0, 8)
+	w = bit32.replace(w, buffer.readu8(b, offset + 1), 8, 8)
+	w = bit32.replace(w, buffer.readu8(b, offset + 2), 16, 8)
+	return w
 end
 
 --- generates a random guid
