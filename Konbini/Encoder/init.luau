@@ -126,7 +126,7 @@ function Encoder.compare(a: buffer, b: buffer): boolean
 	return true
 end
 
---- writes a signed 24-bit integer to buffer
+--- writes signed 24-bit integer to buffer
 function Encoder.writei24(b: buffer, offset: number, value: number)
 	local abs = math.abs(value)
 	
@@ -138,7 +138,7 @@ function Encoder.writei24(b: buffer, offset: number, value: number)
 	buffer.writeu8(b, offset + 2, bit32.replace(z, sign, 7, 1))
 end
 
---- reads a signed 24-bit integer from buffer
+--- reads signed 24-bit integer from buffer
 function Encoder.readi24(b: buffer, offset: number): number
 	local w = 0
 	w = bit32.replace(w, buffer.readu8(b, offset + 0), 0, 8)
@@ -147,14 +147,14 @@ function Encoder.readi24(b: buffer, offset: number): number
 	return bit32.extract(w, 0, 23) * (bit32.extract(w, 23, 1) == 1 and -1 or 1)
 end
 
---- writes an unsigned 24-bit integer to buffer
+--- writes unsigned 24-bit integer to buffer
 function Encoder.writeu24(b: buffer, offset: number, value: number)
 	buffer.writeu8(b, offset + 0, bit32.extract(value, 0, 8))
 	buffer.writeu8(b, offset + 1, bit32.extract(value, 8, 8))
 	buffer.writeu8(b, offset + 2, bit32.extract(value, 16, 8))
 end
 
---- reads an unsigned 24-bit integer from buffer
+--- reads unsigned 24-bit integer from buffer
 function Encoder.readu24(b: buffer, offset: number): number
 	local w = 0
 	w = bit32.replace(w, buffer.readu8(b, offset + 0), 0, 8)
