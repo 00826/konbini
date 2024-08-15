@@ -134,17 +134,17 @@ function Encoder.writei24(b: buffer, offset: number, value: number)
 	buffer.writeu8(b, offset + 1, bit32.extract(abs, 8, 8))
 
 	local sign = math.sign(value) < 0 and 1 or 0
-	local z = bit32.extract(abs, 16, 8)
-	buffer.writeu8(b, offset + 2, bit32.replace(z, sign, 7, 1))
+	local x = bit32.extract(abs, 16, 8)
+	buffer.writeu8(b, offset + 2, bit32.replace(x, sign, 7, 1))
 end
 
 --- reads signed 24-bit integer from buffer
 function Encoder.readi24(b: buffer, offset: number): number
-	local w = 0
-	w = bit32.replace(w, buffer.readu8(b, offset + 0), 0, 8)
-	w = bit32.replace(w, buffer.readu8(b, offset + 1), 8, 8)
-	w = bit32.replace(w, buffer.readu8(b, offset + 2), 16, 8)
-	return bit32.extract(w, 0, 23) * (bit32.extract(w, 23, 1) == 1 and -1 or 1)
+	local int = 0
+	int = bit32.replace(int, buffer.readu8(b, offset + 0), 0, 8)
+	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
+	int = bit32.replace(int, buffer.readu8(b, offset + 2), 16, 8)
+	return bit32.extract(int, 0, 23) * (bit32.extract(int, 23, 1) == 1 and -1 or 1)
 end
 
 --- writes unsigned 24-bit integer to buffer
@@ -156,11 +156,11 @@ end
 
 --- reads unsigned 24-bit integer from buffer
 function Encoder.readu24(b: buffer, offset: number): number
-	local w = 0
-	w = bit32.replace(w, buffer.readu8(b, offset + 0), 0, 8)
-	w = bit32.replace(w, buffer.readu8(b, offset + 1), 8, 8)
-	w = bit32.replace(w, buffer.readu8(b, offset + 2), 16, 8)
-	return w
+	local int = 0
+	int = bit32.replace(int, buffer.readu8(b, offset + 0), 0, 8)
+	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
+	int = bit32.replace(int, buffer.readu8(b, offset + 2), 16, 8)
+	return int
 end
 
 --- generates a random guid
