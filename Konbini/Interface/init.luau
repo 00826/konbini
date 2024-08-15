@@ -260,13 +260,15 @@ function Interface.adjustgridlayout(gridlayout: UIGridLayout, columns: number)
 
 		local function Adjust()
 			local ThisSize = Container.AbsoluteSize
-			gridlayout.CellSize = Interface.UDimOne
+			gridlayout.CellSize = UDim2.fromOffset(ThisSize.X / columns, ThisSize.X / columns)
 
 			for _, P in Placeholders do
 				P.Visible = true
 			end
 
-			repeat gridlayout.CellSize -= Interface.UDimOffsetX
+			repeat
+				gridlayout.CellSize -= Interface.UDimOffsetX
+				task.wait()
 			until (ThisSize ~= Container.AbsoluteSize) or (gridlayout.AbsoluteCellCount.X == gridlayout:GetAttribute("Columns"))
 
 			for _, P in Placeholders do
@@ -275,7 +277,7 @@ function Interface.adjustgridlayout(gridlayout: UIGridLayout, columns: number)
 		end
 
 		gridlayout:GetAttributeChangedSignal("Columns"):Connect(function()
-			for i = 1, gridlayout:GetAttribute("Columns") do
+			for i = 1, (gridlayout:GetAttribute("Columns") :: number?) or columns do
 				local placeholder = Container:FindFirstChild("_placeholder" .. i) :: any
 				if not placeholder then
 					placeholder = Instance.new("Frame")
