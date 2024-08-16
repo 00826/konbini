@@ -28,6 +28,19 @@ function Time.__index.furthest(x: number?): number
 	return math.max(x or 0, buffer.readf32(TimeBuffer, 0))
 end
 
+--- runs function for `x` seconds, or until function returns `true`
+function Time.__index.run(x: number, f: (elapsed: number, dt: number) -> boolean?): RBXScriptConnection
+	local elapsed = 0
+	local C; C = RunService.Heartbeat:Connect(function(dt: number)
+		elapsed += dt
+		local Result = f(elapsed, dt)
+		if (elapsed > x) or (Result == true) then
+			C:Disconnect()
+		end
+	end)
+	return C
+end
+
 --- runs function in second intervals `x`
 function Time.__index.framerule(x: number, f: (...any) -> ()): RBXScriptConnection
 	local T = 0
