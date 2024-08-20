@@ -8,6 +8,9 @@ local types						= require(script.Parent.types)
 ---
 --- extension of math library
 local K_Math = {
+	quarter_pi					= math.pi / 4;
+	half_pi						= math.pi / 2;
+
 	tau							= math.pi * 2;
 	radian						= math.rad(1);
 

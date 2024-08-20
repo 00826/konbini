@@ -126,14 +126,32 @@ function Encoder.compare(a: buffer, b: buffer): boolean
 	return true
 end
 
+--- merges value stored in new buffer into old buffer, returning values of changes made \
+--- returns: \
+--- `[buffer old u8] @ [offset] == [buffer new u8] @ [offset]` \
+--- `[buffer old u8] @ [offset]` \
+--- `[buffer new u8] @ [offset]`
+function Encoder.mergeu8(old: buffer, new: buffer, offset: number): (boolean, number, number)
+	local x = buffer.readu8(old, offset)
+	local y = buffer.readu8(new, offset)
+	local applychange = x ~= y
+	if applychange then
+		buffer.copy(old, offset, new, offset, 1)
+	end
+	return applychange, x, y
+end
+
 --- writes signed 24-bit integer to buffer
 function Encoder.writei24(b: buffer, offset: number, value: number)
+	local sign = math.sign(value) < 0 and 1 or 0
+	if sign == 1 then
+		value += 1
+	end
 	local abs = math.abs(value)
-	
+
 	buffer.writeu8(b, offset + 0, bit32.extract(abs, 0, 8))
 	buffer.writeu8(b, offset + 1, bit32.extract(abs, 8, 8))
 
-	local sign = math.sign(value) < 0 and 1 or 0
 	local x = bit32.extract(abs, 16, 8)
 	buffer.writeu8(b, offset + 2, bit32.replace(x, sign, 7, 1))
 end
@@ -144,7 +162,12 @@ function Encoder.readi24(b: buffer, offset: number): number
 	int = bit32.replace(int, buffer.readu8(b, offset + 0), 0, 8)
 	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
 	int = bit32.replace(int, buffer.readu8(b, offset + 2), 16, 8)
-	return bit32.extract(int, 0, 23) * (bit32.extract(int, 23, 1) == 1 and -1 or 1)
+	local sign = bit32.extract(int, 23, 1) == 1 and -1 or 1
+	local value = bit32.extract(int, 0, 23) * sign
+	if sign < 0 then
+		value -= 1
+	end
+	return value
 end
 
 --- writes unsigned 24-bit integer to buffer
