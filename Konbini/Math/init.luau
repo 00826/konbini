@@ -62,7 +62,9 @@ function K_Math.map(x: number, a: number, b: number, c: number, d: number): numb
 	return (x - a) * (d - c) / (b - a) + c;
 end
 
---- returns true if `x ∈ [a, b]`
+--- returns: \
+--- where `x ∈ [a, b]`: `true` \
+--- where `x ∉ [a, b]`: `false`
 function K_Math.inrange(x: number, a: number, b: number): boolean
 	if x >= a and x <= b then
 		return true
@@ -111,7 +113,7 @@ function K_Math.bestof(series: number, h: number, k: number): number
 	return 0
 end
 
---- returns `x` scaled against limit `a ∈ [0, inf]` with slope scalar `k ∈ [steep, flat]` \
+--- returns `x` scaled against limit where `a ∈ [0, ∞]` and slope scalar where `k ∈ [steep, flat]` \
 --- `y=\frac{ax}{k+x}`
 function K_Math.limit(x: number, a: number, k: number): number
 	return (a * x) / (k + x)
@@ -126,17 +128,34 @@ function K_Math.cartesian(p: number, w: number): (number, number)
 	return p % w, p // w
 end
 
---- scales numbersequence by x
+--- returns a falloff value in `[0, 1]` given `x`, where `x in [a, b]` is the most optimal: \
+--- where `x in [0, a)`: `[0, 1)` \
+--- where `x in [a, b]`: `{1}` \
+--- where `x in (b, c]`: `(1, 0]` \
+--- where `x in (c, ∞]`: `{0}`
+function K_Math.falloff(x: number, a: number, b: number, c: number): number
+	if x < a then
+		return x / a
+	elseif x > c then
+		return 0
+	elseif x > b then
+		return 1 - (x - b) / (c - b)
+	else
+		return 1
+	end
+end
+
+--- scales numbersequence by `x`
 function K_Math.scalenumbersequence(numbersequence: NumberSequence, x: number): NumberSequence
 	local NewSequence = {}
-	for _,Keypoint in ipairs(numbersequence.Keypoints) do
+	for _, Keypoint in ipairs(numbersequence.Keypoints) do
 		local NewValue = Keypoint.Value * x
 		table.insert(NewSequence,NumberSequenceKeypoint.new(Keypoint.Time,NewValue))
 	end
 	return NumberSequence.new(NewSequence)
 end
 
---- converts `x`, where `x ∈ [0, 1]`, to a numbersequence
+--- converts `x`, where `x in [0, 1]`, to a numbersequence
 function K_Math.alphatonumbersequence(x: number): NumberSequence
 	if x <= 0.01 then
 		return K_Math.NumberSequenceZero
