@@ -128,6 +128,32 @@ function K_Math.cartesian(p: number, w: number): (number, number)
 	return p % w, p // w
 end
 
+--- returns center-aligned number-line coordinates given size `x` \
+--- `aligncenter(2)`: `[-0.5, 0.5]` \
+--- `aligncenter(3, true)`: `[1, 0, -1]` \
+--- `aligncenter(5)`: `[-2, -1, 0, 1, 2]`
+function K_Math.aligncenter(x: number, reverse: boolean?): {number}
+	if x == 1 then
+		return table.create(1, 0)
+	else
+		local t = table.create(x)
+		local shift = 1 + x // 2
+		for i = 1, x do
+			i -= shift
+			if x % 2 == 0 then
+				i += 0.5
+			end
+			
+			if reverse then
+				i *= -1
+			end
+
+			table.insert(t, i)
+		end
+		return t
+	end
+end
+
 --- returns a falloff value in `[0, 1]` given `x`, where `x in [a, b]` is the most optimal: \
 --- where `x in [0, a)`: `[0, 1)` \
 --- where `x in [a, b]`: `{1}` \
