@@ -208,6 +208,37 @@ function Zone.silhouette(object: Model, comp: (original: Instance) -> boolean, t
 	return silhouette
 end
 
+--- solves load zone radius of object \
+--- `mode` \
+--- `0`: r = avg extent size \
+--- `1`: r = max extent size (optimistic) \
+--- `2`: r = min extent size (pessimistic)
+function Zone.radius(object: Model, mode: number, ignoreYaxis: boolean?): number
+	local size = object:GetExtentsSize()
+	local dimensions = table.create(3)
+	if ignoreYaxis == true then
+		table.insert(dimensions, size.X)
+		table.insert(dimensions, size.Z)
+	else
+		table.insert(dimensions, size.X)
+		table.insert(dimensions, size.Y)
+		table.insert(dimensions, size.Z)
+	end
+
+	if mode == 0 then
+		local sum = 0
+		for _, value in dimensions do
+			sum += value
+		end
+		return sum / #dimensions
+	elseif mode == 1 then
+		return math.max(select(1, unpack(dimensions)))
+	elseif mode == 2 then
+		return math.min(select(1, unpack(dimensions)))
+	end
+	error(`no radius case for mode {mode}`)
+end
+
 if IsServer then
 	Zone.Remote.OnServerEvent:Connect(function(player: Player)
 		local userid = player.UserId
