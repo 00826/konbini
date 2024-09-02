@@ -7,10 +7,14 @@ local IsServer					= RunService:IsServer()
 
 local Players					= game:GetService("Players")
 
+local function send(thing: Instance, to: Instance)
+	thing.Parent = to
+end
+
 --- ### Zone.luau
 ---
 --- server-defined, client-authoritative, to-each-his-own load zones \
---- parent calls are staggered for smoother loading
+--- .Parent assignments are deferred
 local Zone = {
 	Cache = {};
 
@@ -109,7 +113,7 @@ function Zone.reparent(z: types.Zone, isinfocus: boolean): number
 			if thing:IsDescendantOf(LoadContainer) then
 				continue
 			else
-				thing.Parent = LoadContainer
+				task.defer(send, thing, LoadContainer)
 				total += 1
 				break
 			end
@@ -118,7 +122,7 @@ function Zone.reparent(z: types.Zone, isinfocus: boolean): number
 			if thing:IsDescendantOf(Zone.DefaultOffloadContainer) then
 				continue
 			else
-				thing.Parent = Zone.DefaultOffloadContainer
+				task.defer(send, thing, Zone.DefaultOffloadContainer)
 				total += 1
 				break
 			end
@@ -130,7 +134,7 @@ function Zone.reparent(z: types.Zone, isinfocus: boolean): number
 			if thing:IsDescendantOf(Zone.DefaultOffloadContainer) then
 				continue
 			else
-				thing.Parent = Zone.DefaultOffloadContainer
+				task.defer(send, thing, Zone.DefaultOffloadContainer)
 				total += 1
 				break
 			end
@@ -139,7 +143,7 @@ function Zone.reparent(z: types.Zone, isinfocus: boolean): number
 			if thing:IsDescendantOf(LoadContainer) then
 				continue
 			else
-				thing.Parent = LoadContainer
+				task.defer(send, thing, LoadContainer)
 				total += 1
 				break
 			end
