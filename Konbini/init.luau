@@ -33,4 +33,5 @@ return table.freeze{
 	Time						= require(script:WaitForChild("Time"));
 	Tween						= require(script:WaitForChild("Tween"));
 	Vector3						= require(script:WaitForChild("Vector3"));
+	Zone						= require(script:WaitForChild("Zone"));
 }

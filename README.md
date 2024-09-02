@@ -42,5 +42,22 @@
 |[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|❌|
 |*[Tween.luau](./Konbini/Tween/init.luau)*|`TweenService` wrapper|-|❌|
 |[Vector3.luau](./Konbini/Vector3/init.luau)|`Vector3` library extension|-|❌|
+|[Zone.luau](./Konbini/Zone/init.luau)|server-defined, client-authoritative load zones|-|❌|
+
+## design language
+
+```lua
+--- types
+
+--- services
+--- variables
+--- private functions
+
+--- description
+local konbini_module = {}
+--- public functions
+--- runtime-specific operations
+return konbini_module
+```
 
 **コ** Konbini by 00826 / overflowed

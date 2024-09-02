@@ -29,7 +29,7 @@ function K_Table.queue_push<T>(queue: {T}, value: T): ()
 	table.insert(queue, value)
 end
 
---- pushes a value to queue, if any only if it isn't an element of the queue already
+--- pushes a value to queue, if any only if it isn't already an element of the queue
 function K_Table.queue_ifandonlyif<T>(queue: {T}, value: T): boolean
 	if not table.find(queue, value) then
 		table.insert(queue, value)
@@ -187,6 +187,12 @@ function K_Table.shuffle(A: {any}, R: Random?): {any}
 	return B
 end
 
+--- reflects value such that `destination[i] = source[i]` \
+--- equivalent to `table.move(source, i, i, i, destination)`
+function K_Table.reflect(source: {any}, destination: {any}, i: number)
+	table.move(source, i, i, i, destination)
+end
+
 --- performs a binary search on sorted array \
 --- `comp` returns: \
 --- `0`: value == desired value; return value \
@@ -228,6 +234,50 @@ function K_Table.search<T>(A: {T}, comp: (value: T) -> number): T?
 			return K_Table.search(table.move(A, L, R, 1, table.create(L + R)), comp)
 		end
 	end
+end
+
+--- shallow-clones target *exclusively* with keys and/or indices
+function K_Table.only(target: {any}, keys: {any}?, indices: {number}?): {}
+	local clone = {}
+
+	if keys then
+		for _, key in keys do
+			clone[key] = target[key]
+		end
+	end
+	if indices then
+		for _, idx in indices do
+			table.move(target, idx, idx, idx, clone)
+		end
+	end
+
+	return clone
+end
+
+--- shallow-clones target with the *exception* of keys and/or indices
+function K_Table.except(target: {any}, keys: {any}?, indices: {number}?): {}
+	local clone = {}
+
+	if keys then
+		for _, key in target do
+			if table.find(keys, key) then
+				continue
+			else
+				clone[key] = target[key]
+			end
+		end
+	end
+	if indices then
+		for i, v in ipairs(target) do
+			if table.find(indices, i) then
+				continue
+			else
+				table.move(target, i, i, i, clone)
+			end
+		end
+	end
+
+	return clone
 end
 
 --- merges values from source into target, if they dont already exist

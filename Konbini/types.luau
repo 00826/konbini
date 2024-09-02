@@ -54,15 +54,21 @@ export type ButtonFunctions		= {
 }
 
 export type SpriteLayout		= {
-	Id: string; -- rbxassetid://
-	Size: Vector2; -- sprite size
-	Padding: number; -- sheet padding
-	Width: number; -- sheet dimensions
+	--- rbxassetid://
+	Id: string;
+	--- sprite size
+	Size: Vector2;
+	--- sheet padding
+	Padding: number;
+	--- sheet dimensions
+	Width: number;
 }
 
 export type Sprite				= {
-	Position: number; -- position of sprite (L -> R, T -> B)
-	Layout: SpriteLayout -- sprite layout
+	--- position of sprite (L -> R, T -> B)
+	Position: number;
+	--- sprite layout
+	Layout: SpriteLayout;
 }
 
 export type LeftOrRight			= "Left" | "Right"
@@ -75,11 +81,11 @@ export type UnitCircleVertex	= { X: number, Z: number }
 
 export type Remote				= RemoteEvent|UnreliableRemoteEvent|any
 export type ClientArg			= 
-	nil |
-	number |
-	Player |
-	{ number|Player } |
-	((Player) -> boolean)
+	| nil
+	| number
+	| Player
+	| { number|Player }
+	| ((Player) -> boolean)
 
 --- Rig.luau
 
@@ -97,6 +103,23 @@ export type FormatResult		= {
 
 --- Vector3.luau
 
-export type xyzType				= Vector3 | Vector3int16  | PVInstance | CFrame -- anything that can be represented as pure `x, y, z`
+--- anything that can be represented as pure `x, y, z`
+export type xyzType				= Vector3 | Vector3int16 | PVInstance | CFrame
+
+--- Zone.luau
+
+export type Zone				= {
+	--- parent container for placements of this zone
+	Container: Instance?;
+	--- global position of this zone
+	Position: Vector3?;
+	--- load radius of this zone
+	Radius: number?;
+
+	--- instances that are visible when zone is `in a loaded state`, and are otherwise non-visible
+	Placements: {Instance}?;
+	--- instances that are visible when zone is `in an offloaded state`, and are otherwise non-visible
+	Emplacements: {Instance}?;
+}
 
 return table.create(0)
