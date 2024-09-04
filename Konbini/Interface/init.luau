@@ -260,7 +260,8 @@ function Interface.adjustgridlayout(gridlayout: UIGridLayout, columns: number)
 
 		local function Adjust()
 			local ThisSize = Container.AbsoluteSize
-			gridlayout.CellSize = UDim2.fromOffset(ThisSize.X / columns, ThisSize.X / columns)
+			local Width = 1 + math.ceil(ThisSize.X / columns)
+			gridlayout.CellSize = UDim2.fromOffset(Width, Width)
 
 			for _, P in Placeholders do
 				P.Visible = true
@@ -269,6 +270,9 @@ function Interface.adjustgridlayout(gridlayout: UIGridLayout, columns: number)
 			repeat
 				gridlayout.CellSize -= Interface.UDimOffsetX
 				task.wait()
+				if gridlayout.CellSize.X.Offset < 0 then
+					gridlayout.CellSize = Interface.UDimOne
+				end
 			until (ThisSize ~= Container.AbsoluteSize) or (gridlayout.AbsoluteCellCount.X == gridlayout:GetAttribute("Columns"))
 
 			for _, P in Placeholders do
