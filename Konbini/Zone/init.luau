@@ -7,6 +7,8 @@ local IsServer					= RunService:IsServer()
 
 local Players					= game:GetService("Players")
 
+local R							= Random.new()
+
 local function send(thing: Instance, to: Instance)
 	thing.Parent = to
 end
@@ -237,6 +239,58 @@ function Zone.radius(object: Model, mode: number, ignoreYaxis: boolean?): number
 		return math.min(select(1, unpack(dimensions)))
 	end
 	error(`no radius case for mode {mode}`)
+end
+
+--- returns a vector3 position of zone spawnbox, position, or zero-vector
+function Zone.spawnpoint(z: types.Zone): Vector3
+	local spawnbox = z.SpawnBox
+	if spawnbox then
+		local halfsize = spawnbox.Size * 0.5
+		local X, Z = halfsize.X, halfsize.Z
+		return (spawnbox.CFrame * CFrame.new(
+			R:NextNumber(-X, X),
+			0,
+			R:NextNumber(-Z, Z)
+		)).Position
+	else
+		return z.Position or Vector3.zero
+	end
+end
+
+--- force-loads zone
+--- all placements sent to load container
+--- all emplacements sent to offload container
+function Zone.forceload(z: types.Zone)
+	assert(z.Placements)
+	assert(z.Emplacements)
+
+	local LoadContainer = z.Container or Zone.DefaultLoadContainer
+	assert(LoadContainer, "zone no load container")
+
+	for _, thing in z.Placements do
+		task.defer(send, thing, LoadContainer)
+	end
+	for _, thing in z.Emplacements do
+		task.defer(send, thing, Zone.DefaultOffloadContainer)
+	end
+end
+
+--- force-offloads zone
+--- all placements sent to offload container
+--- all emplacements sent to load container
+function Zone.forceoffload(z: types.Zone)
+	assert(z.Placements)
+	assert(z.Emplacements)
+
+	local LoadContainer = z.Container or Zone.DefaultLoadContainer
+	assert(LoadContainer, "zone no load container")
+
+	for _, thing in z.Placements do
+		task.defer(send, thing, Zone.DefaultOffloadContainer)
+	end
+	for _, thing in z.Emplacements do
+		task.defer(send, thing, LoadContainer)
+	end
 end
 
 if IsServer then

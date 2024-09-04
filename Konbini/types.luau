@@ -115,6 +115,8 @@ export type Zone				= {
 	Position: Vector3?;
 	--- load radius of this zone
 	Radius: number?;
+	--- default spawn box of this zone
+	SpawnBox: (SpawnLocation|BasePart)?;
 
 	--- instances that are visible when zone is `in a loaded state`, and are otherwise non-visible
 	Placements: {Instance}?;
