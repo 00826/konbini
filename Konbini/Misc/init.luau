@@ -12,7 +12,7 @@ Misc.Preload = {
 	matches = {
 		"assetdelivery.roblox.com";
 		"rbxassetid://";
-		--"rbxasset://";
+		--- "rbxasset://";
 	};
 }
 
@@ -75,7 +75,7 @@ end
 --- `ContentProvider:PreloadAsync(a, f)`
 function Misc.Preload.async(assetlist: {any}, f: ((contentstring: string, assetfetchstatus: Enum.AssetFetchStatus) -> ())?): number
 	local s = os.clock()
-	game:GetService("ContentProvider"):PreloadAsync(assetlist, f) -- contentprovider service should only ideally be called once so its never stored as a variable on the uppermost scope
+	game:GetService("ContentProvider"):PreloadAsync(assetlist, f) --- contentprovider service should only ideally be called once so its never stored as a variable on the uppermost scope
 	return (os.clock() - s) * 1000
 end
 

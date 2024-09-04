@@ -162,13 +162,13 @@ end
 
 --- recursively searches for the highest ancestor `Ancestor` of Instance `inst` whose ClassName property matches string `ClassName`
 --- ```
---- --Fish: Model
---- --┣━ Scales: Part
---- --┣━ Eyes: Part
---- --┗┳ Fins: Model
---- -- ┣━ RightFin: Part
---- -- ┗━ LeftFin: Part
---- --┗━ Animator: Animator
+--- --- Fish: Model
+--- --- ┣━ Scales: Part
+--- --- ┣━ Eyes: Part
+--- --- ┗┳ Fins: Model
+--- ---  ┣━ RightFin: Part
+--- ---  ┗━ LeftFin: Part
+--- --- ┗━ Animator: Animator
 --- K_Instance.FindHighestAncestorOfClass(RightFin, "Model") --> Fish
 --- ```
 function K_Instance.FindHighestAncestorOfClass(inst: Instance, classname: string): Instance?

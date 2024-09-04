@@ -145,7 +145,7 @@ function Collisions.fancast(origin: Vector3, direction: Vector3, theta: number, 
 
 	for i = 0, FancastResolution, 1 do
 		Fan(i)
-		if i == 0 then continue end -- skip doing 0th raycast twice
+		if i == 0 then continue end --- skip doing 0th raycast twice
 		Fan(-i)
 	end
 

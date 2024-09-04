@@ -314,10 +314,10 @@ end
 --- connects mobile gamepad for nicer inputs \
 --- managing CAS buttons and their auto-positioning is painful and not worth the mental taxation
 --- ```
---- --gamepadobject: GuiObject
---- --┗┳ [KeyId]: GuiObject
---- -- ┣━ UIStroke: UIStroke?
---- -- ┗━ Button: TextButton
+--- --- gamepadobject: GuiObject
+--- --- ┗┳ [KeyId]: GuiObject
+--- ---  ┣━ UIStroke: UIStroke?
+--- ---  ┗━ Button: TextButton
 --- ```
 function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyId: types.DynamicGamepadKey, UserInputState: Enum.UserInputState) -> ()): ()
 	local White = Color3.fromRGB(255, 255, 255)
@@ -400,7 +400,7 @@ else
 		local Now, KeyCode = os.clock(), InputObject.KeyCode
 		local KeyCodeTimeTable = Inputs.InputTimes
 
-		do -- doubletap inputs
+		do --- doubletap inputs
 			local Then = KeyCodeTimeTable[KeyCode] or 0
 			KeyCodeTimeTable[KeyCode] = Now
 			if Now - Then < Inputs.DoubleTapTime then

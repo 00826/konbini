@@ -2,7 +2,7 @@
 --!native
 --!optimize 2
 
-local intSize					= 2 -- int16
+local intSize					= 2 --- int16
 
 local Matrix = { __index = {} }
 

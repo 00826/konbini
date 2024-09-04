@@ -215,7 +215,7 @@ function Animation.addanimator(rig: Model): Animator?
 			end
 		until PreExisting == nil
 
-		PreExisting = Instance.new("Animator") -- using a prefab animator that was made post-runtime has weird behavior
+		PreExisting = Instance.new("Animator") --- using a prefab animator that was made post-runtime has weird behavior
 		assert(PreExisting)
 		PreExisting.Parent = Container
 		return PreExisting

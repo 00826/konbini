@@ -10,11 +10,11 @@ local DefaultR					= Random.new()
 ---
 --- extension of Vector3 library
 local K_Vector3 = {
-	yzAxis						= Vector3.new(0, 1, 1);			-- `Vector3.new(0, 1, 1)`
-	xzAxis						= Vector3.new(1, 0, 1);			-- `Vector3.new(1, 0, 1)`
-	xyAxis						= Vector3.new(1, 1, 0);			-- `Vector3.new(1, 1, 0)`
+	yzAxis						= Vector3.new(0, 1, 1);			--- `Vector3.new(0, 1, 1)`
+	xzAxis						= Vector3.new(1, 0, 1);			--- `Vector3.new(1, 0, 1)`
+	xyAxis						= Vector3.new(1, 1, 0);			--- `Vector3.new(1, 1, 0)`
 
-	BallisticCoefficient		= Vector3.new(0, 0.5, 0);		-- Vector3 ballistic coefficient `(0.5*g*t*t)`
+	BallisticCoefficient		= Vector3.new(0, 0.5, 0);		--- Vector3 ballistic coefficient `(0.5*g*t*t)`
 
 	Gravity						= 196;
 }

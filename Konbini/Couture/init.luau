@@ -38,7 +38,7 @@ local Couture = {
 		"Face";
 	};
 	ClothingProperties = {
-		-- "GraphicTShirt";
+		--- "GraphicTShirt";
 		"Shirt";
 		"Pants";
 	};
