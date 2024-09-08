@@ -2,12 +2,25 @@
 --!native
 --!optimize 2
 
+local types						= require(script.Parent.types)
+
+local RunService				= game:GetService("RunService")
+local IsServer					= RunService:IsServer()
+
+local Players					= game:GetService("Players")
+
 local DefaultR					= Random.new()
 
 --- ### Table.luau
 ---
 --- extension of table library
-local K_Table = {}
+local K_Table = {
+	Remote = script:WaitForChild("SyncRemote");
+
+	SyncCache = {};
+	SyncLimit = 1;
+	SyncTimes = {};
+}
 
 --- removes and returns the first (oldest) element in queue
 function K_Table.queue_pop<T>(queue: {T}): T?
@@ -379,6 +392,84 @@ function K_Table.page<T>(A: {T}, size: number, offset: number): {T}
 		1,
 		table.create(Max)
 	)
+end
+
+--- `client`: requests sync-table by id from server, returning cached table *after* read-writing sync-table \
+--- `server`: sends sync-table by id to client
+function K_Table.sync(id: string, player: Player?): {}?
+	if IsServer then
+		K_Table.Remote:FireClient(player, K_Table.SyncCache[id])
+	else
+		K_Table.Remote:FireServer(id)
+
+		local packet: types.SyncPacket = K_Table.Remote.OnClientEvent:Wait()
+		local packetData = packet.Data
+		local packetId = packet.Id
+		local packetMessage = packet.Message
+
+		if packetData and packetId then
+			local cachedtable = K_Table.SyncCache[packetId]
+			if not cachedtable then
+				K_Table.SyncCache[packetId] = packetData
+			else
+				table.clear(cachedtable)
+				--- lazy array/dict check
+				if packetData[1] then
+					table.move(packetData, 1, #packetData, 1, cachedtable)
+				else
+					for k, v in packetData do
+						cachedtable[k] = v
+					end
+				end
+			end
+			return cachedtable
+		else
+			warn(packetMessage, packet, packetId, packet)
+		end
+	end
+	return
+end
+
+if IsServer then
+	Players.PlayerRemoving:Connect(function(P: Player)
+		K_Table.SyncTimes[P.UserId] = nil
+	end)
+	K_Table.Remote.OnServerEvent:Connect(function(P: Player, id: string)
+		assert(type(id) == "string")
+		local synctable = K_Table.SyncCache[id]
+		assert(synctable)
+	
+		local userid = P.UserId
+		local t = K_Table.SyncTimes[userid] or 0
+		local now = os.clock()
+		if t > now then
+			return
+		else
+			K_Table.SyncTimes[userid] = now + K_Table.SyncLimit
+			K_Table.Remote:FireClient(P, {
+				Data = synctable;
+				Id = id;
+			})
+		end
+	end)
+else
+	K_Table.Remote.OnClientEvent:Connect(function(packet: types.SyncPacket)
+		if packet and packet.Data and packet.Id then
+			local cachedtable = K_Table.SyncCache[packet.Id]
+			table.clear(cachedtable)
+			--- lazy array/dict check
+			local packetData = packet.Data
+			if packetData[1] then
+				table.move(packetData, 1, #packetData, 1, cachedtable)
+			else
+				for k, v in packetData do
+					cachedtable[k] = v
+				end
+			end
+		else
+			warn(packet and packet.Message, packet)
+		end
+	end)
 end
 
 return table.freeze(K_Table)

@@ -91,6 +91,14 @@ export type ClientArg			=
 
 export type MoverClass			= "BodyGyro" | "BodyVelocity" | "BodyPosition" | "VectorForce"
 
+--- Table.luau
+
+export type SyncPacket			= {
+	Data: {}?;
+	Id: string?;
+	Message: string?;
+}
+
 --- Time.luau
 
 export type Notation			= "DD:HH:MM:SS" | "HH:MM:SS" | "MM:SS" | "M:SS"
