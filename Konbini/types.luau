@@ -20,6 +20,15 @@ export type Axes				= {
 
 export type Disconnect			= () -> ()
 
+--- Bullet.luau types
+
+export type WriteOptions		= {
+	id: string?;
+	time: number?;
+	position: Vector3?;
+	direction: Vector3?;
+}
+
 --- Collisions.luau
 
 export type CastShape			= "Box" | "Ball"

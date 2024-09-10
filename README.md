@@ -20,6 +20,7 @@
 |*[async.luau](./Konbini/async/init.luau)*|task async-await|-|❌|
 |[Bar.luau](./Konbini/Bar/init.luau)|compress bar-esque values|-|❌|
 |*[Bind.luau](./Konbini/Bind/init.luau)*|bind functions|-|❌|
+|[Bullet.luau](./Konbini/Bullet/init.luau)|projectile solver|`Konbini.Encoder`<br>`Konbini.Time`<br>`Konbini.Vector3`|❌|
 |*[Cache.luau](./Konbini/Cache/init.luau)*|shallow instance caching as `:GetChildren()` is expensive|-|❌|
 |[CFrame.luau](./Konbini/CFrame/init.luau)|`CFrame` library extension|-|❌|
 |[Collisions.luau](./Konbini/Collisions/init.luau)|condensed spatial queries|-|❌|

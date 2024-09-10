@@ -16,20 +16,20 @@ end
 --- ### Time.luau
 ---
 --- server-authoritative global time
-local Time = {__index = {}}
+local Time = {}
 
 --- returns konbini time
-Time.__call = function(self): number
-	return buffer.readf32(TimeBuffer, 0)
+function Time.now(latency: number?): number
+	return buffer.readf32(TimeBuffer, 0) + (latency or 0)
 end
 
 --- returns furthest-ahead time between `x` and konbini time
-function Time.__index.furthest(x: number?): number
+function Time.furthest(x: number?): number
 	return math.max(x or 0, buffer.readf32(TimeBuffer, 0))
 end
 
 --- runs function for `x` seconds, or until function returns `true`
-function Time.__index.run(x: number, f: (elapsed: number, dt: number) -> boolean?): RBXScriptConnection
+function Time.run(x: number, f: (elapsed: number, dt: number) -> boolean?): RBXScriptConnection
 	local elapsed = 0
 	local C; C = RunService.Heartbeat:Connect(function(dt: number)
 		elapsed += dt
@@ -42,7 +42,7 @@ function Time.__index.run(x: number, f: (elapsed: number, dt: number) -> boolean
 end
 
 --- runs function in second intervals `x`
-function Time.__index.framerule(x: number, f: (...any) -> ()): RBXScriptConnection
+function Time.framerule(x: number, f: (...any) -> ()): RBXScriptConnection
 	local T = 0
 	local function Frame(dt)
 		T += dt
@@ -54,8 +54,8 @@ function Time.__index.framerule(x: number, f: (...any) -> ()): RBXScriptConnecti
 	return RunService.Heartbeat:Connect(Frame)
 end
 
---- formats `x` into notation
-function Time.__index.notation(x: number, Notation: types.Notation?): string
+--- formats `x` into a hour-minute-second-esque notation
+function Time.hourminutesecond(x: number, Notation: types.Notation?): string
 	--[[
 		os.date("!%X", x) is the fastest for all inputs below 86400, because any input at or above 86400 breaks the formatting
 		string.gsub(string.format(), x, subf) is the second fastest for all inputs, never has a formatting break, but is ~10% slower than os.date("!%X", x)
@@ -101,7 +101,7 @@ end
 --- `Timestamp`: unique, non-recurring timestamp \
 --- `Seed`: unique, non-recurring numeric seed \
 --- `Until`: seconds until `Timestamp`, `Seed` will change
-function Time.__index.format(format: types.Format): types.FormatResult
+function Time.format(format: types.Format): types.FormatResult
 	local T0 = os.date("!*t")
 	local T1 = table.clone(T0)
 
@@ -229,4 +229,4 @@ else
 	end)
 end
 
-return setmetatable({}, Time)
+return Time
