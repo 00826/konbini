@@ -12,7 +12,7 @@ local Weld						= script:WaitForChild("Weld")
 
 AccessoryPart:SetAttribute("IsAccessory", true)
 
----### Couture.luau
+--- ### Couture.luau
 ---
 --- the closest thing to client-authoritative accessory handling
 local Couture = {
