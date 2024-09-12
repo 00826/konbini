@@ -139,6 +139,8 @@ export type Zone				= {
 	Placements: {Instance}?;
 	--- instances that are visible when zone is `in an offloaded state`, and are otherwise non-visible
 	Emplacements: {Instance}?;
+	--- instances that are *never* visible regardless of loaded/offloaded state
+	Never: {Instance}?;
 }
 
 return table.create(0)

@@ -47,6 +47,7 @@ function Zone.create(zoneid: string, size: number?): types.Zone
 
 		Placements = table.create(size);
 		Emplacements = table.create(size);
+		Never = table.create(size);
 	}
 
 	Zone.Cache[zoneid] = NewZone
@@ -263,6 +264,7 @@ end
 function Zone.forceload(z: types.Zone)
 	assert(z.Placements)
 	assert(z.Emplacements)
+	assert(z.Never)
 
 	local LoadContainer = z.Container or Zone.DefaultLoadContainer
 	assert(LoadContainer, "zone no load container")
@@ -271,6 +273,9 @@ function Zone.forceload(z: types.Zone)
 		task.defer(send, thing, LoadContainer)
 	end
 	for _, thing in z.Emplacements do
+		task.defer(send, thing, Zone.DefaultOffloadContainer)
+	end
+	for _, thing in z.Never do
 		task.defer(send, thing, Zone.DefaultOffloadContainer)
 	end
 end
@@ -281,6 +286,7 @@ end
 function Zone.forceoffload(z: types.Zone)
 	assert(z.Placements)
 	assert(z.Emplacements)
+	assert(z.Never)
 
 	local LoadContainer = z.Container or Zone.DefaultLoadContainer
 	assert(LoadContainer, "zone no load container")
@@ -290,6 +296,9 @@ function Zone.forceoffload(z: types.Zone)
 	end
 	for _, thing in z.Emplacements do
 		task.defer(send, thing, LoadContainer)
+	end
+	for _, thing in z.Never do
+		task.defer(send, thing, Zone.DefaultOffloadContainer)
 	end
 end
 
