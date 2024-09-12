@@ -242,7 +242,7 @@ function Inputs.doubletap(f: (KeyCode: Enum.KeyCode) -> ()): types.Disconnect
 	return Bind("k_Input_doubletap"):Connect(f)
 end
 
---- fires function when the input platform is changed
+--- fires function when the input platform is changed \
 --- `0`: unknown \
 --- `1`: pc \
 --- `2`: mobile \
@@ -259,6 +259,11 @@ end
 --- sets visibility of mouse icon
 function Inputs.setmouseiconenabled(state: boolean): ()
 	UIS.MouseIconEnabled = state
+end
+
+--- returns true if mousebehavior == lockcenter
+function Inputs.ismouselockcenter(): boolean
+	return UIS.MouseBehavior == Enum.MouseBehavior.LockCenter
 end
 
 --- returns keycode enum from its integral value

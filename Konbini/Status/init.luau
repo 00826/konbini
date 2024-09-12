@@ -27,7 +27,7 @@ function Status.add(thing: Instance, name: string, duration: number?, stacks: nu
 	end
 
 	thing:SetAttribute(Prefix .. name, Vector3.new(
-		math.max(statusvalue.X, Time()) + (duration or 0),
+		math.max(statusvalue.X, Time.now()) + (duration or 0),
 		statusvalue.Y + (stacks or 0),
 		z
 	))
@@ -53,17 +53,21 @@ end
 --- returns true if status is active
 function Status.active(thing: Instance, name: string): boolean
 	local statusvalue = thing:GetAttribute(Prefix .. name)
-	assert(typeof(statusvalue) == "Vector3")
+	if typeof(statusvalue) ~= "Vector3" then
+		return false
+	end
 
-	return statusvalue.X >= Time()
+	return statusvalue.X >= Time.now()
 end
 
 --- returns status: `active, stacks, indefinite`
 function Status.read(thing: Instance, name: string): (boolean, number, boolean)
 	local statusvalue = thing:GetAttribute(Prefix .. name)
-	assert(typeof(statusvalue) == "Vector3")
+	if typeof(statusvalue) ~= "Vector3" then
+		return false, 0, false
+	end
 
-	return statusvalue.X >= Time(), statusvalue.Y, statusvalue.Z == 1
+	return statusvalue.X >= Time.now(), statusvalue.Y, statusvalue.Z == 1
 end
 
 --- returns raw status vector
@@ -77,7 +81,7 @@ end
 --- formats statusvalue
 function Status.format(statusvalue: Vector3): string
 	local Expiry, Stacks, Indefinite = statusvalue.X, statusvalue.Y, statusvalue.Z
-	local ExpiryString = Status.formatexpiry(Time() - Expiry)
+	local ExpiryString = Status.formatexpiry(Time.now() - Expiry)
 	local StacksString = Status.formatstacks(Stacks)
 
 	if Indefinite == 1 then

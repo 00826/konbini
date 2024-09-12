@@ -10,7 +10,7 @@ end
 
 local function cartesian(p: number, w: number): (number, number)
 	p -= 1
-	return p % w, p // w
+	return p // w, p % w
 end
 
 --- ### Interface.luau

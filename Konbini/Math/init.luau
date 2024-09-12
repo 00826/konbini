@@ -16,6 +16,8 @@ local K_Math = {
 
 	NumberSequenceZero			= NumberSequence.new(0);
 	NumberSequenceOne			= NumberSequence.new(1);
+
+	random						= Random.new();
 }
 
 --- returns cooldown value of x with respect to deltatime \
@@ -121,11 +123,9 @@ end
 
 --- returns cartesian coordinates of point `p` with respect to grid width `w` \
 --- assumes a zero-indexed cartesian plane, read from `left -> right`, `top -> bottom` \
---- `cartesian(3, 2)`: `"point #3 on a 2-width grid" -> (0, 1)` \
---- `cartesian(7, 3)`: `"point #7 on a 3-width grid" -> (2, 0)`
 function K_Math.cartesian(p: number, w: number): (number, number)
 	p -= 1
-	return p % w, p // w
+	return p // w, p % w
 end
 
 --- returns center-aligned number-line coordinates given size `x` \

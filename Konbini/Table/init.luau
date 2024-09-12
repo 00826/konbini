@@ -120,6 +120,12 @@ function K_Table.deepcopy(T: {[any]: any}): {[any]: any}
 	return Copy
 end
 
+--- packs vararg into a space-allocated array
+function K_Table.pack(...: any): {any}
+	local temp = {...}
+	return table.move(temp, 1, #temp, 1, table.create(#temp))
+end
+
 --- returns average or weighted average of elements in array \
 --- assumes a single-type array populated with types that support operators `+`, `*`, `/`
 function K_Table.average(A: {any}, weights: {number}?): any
