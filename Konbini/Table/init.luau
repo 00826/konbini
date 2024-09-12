@@ -404,7 +404,10 @@ end
 --- `server`: sends sync-table by id to client
 function K_Table.sync(id: string, player: Player?): {}?
 	if IsServer then
-		K_Table.Remote:FireClient(player, K_Table.SyncCache[id])
+		K_Table.Remote:FireClient(player, {
+			Id = id;
+			Data = K_Table.SyncCache[id];
+		} :: types.SyncPacket)
 	else
 		K_Table.Remote:FireServer(id)
 
@@ -462,14 +465,18 @@ else
 	K_Table.Remote.OnClientEvent:Connect(function(packet: types.SyncPacket)
 		if packet and packet.Data and packet.Id then
 			local cachedtable = K_Table.SyncCache[packet.Id]
-			table.clear(cachedtable)
-			--- lazy array/dict check
-			local packetData = packet.Data
-			if packetData[1] then
-				table.move(packetData, 1, #packetData, 1, cachedtable)
+			if not cachedtable then
+				K_Table.SyncCache[packet.Id] = packet.Data
 			else
-				for k, v in packetData do
-					cachedtable[k] = v
+				table.clear(cachedtable)
+				--- lazy array/dict check
+				local packetData = packet.Data
+				if packetData[1] then
+					table.move(packetData, 1, #packetData, 1, cachedtable)
+				else
+					for k, v in packetData do
+						cachedtable[k] = v
+					end
 				end
 			end
 		else
