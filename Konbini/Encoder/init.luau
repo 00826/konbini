@@ -6,7 +6,7 @@ local int8						= 1 / 127
 
 --- ### Encoder.luau
 ---
---- buffer helper functions
+--- buffer and string helper functions
 local Encoder = {}
 
 --- trims trailing whitespaces from string in buffer
@@ -189,6 +189,16 @@ end
 --- generates a random guid
 function Encoder.guid(len: number?): string
 	return string.sub(string.gsub(HttpService:GenerateGUID(false), "-", ""), 1, (len or 8))
+end
+
+--- replaces captures matching `flag .. "%w+"` in text with respect to replacement table
+function Encoder.alias(text: string, flag: string, replace: {[string]: string}): string
+	if string.find(text, flag) then
+		text = string.gsub(text, flag .. "%w+", function(s: string)
+			return replace[select(2, unpack(string.split(s, flag)))] or "[missing alias]"
+		end)
+	end
+	return text
 end
 
 return Encoder
