@@ -18,22 +18,6 @@ local PlayerGui					= nil :: PlayerGui?
 
 local Camera					= workspace.CurrentCamera
 
-local InputTable				= {
-	Vector3.zero;				-- mouse position
-	Vector3.zAxis;				-- camera direction
-	Vector3.yAxis;				-- mouse surface normal
-}
-local InputBufferLen			= #InputTable * 12
-local InputBuffer				= buffer.create(InputBufferLen)
-
-local InputCache				= {} :: {[Player]: buffer}
-local InputRemote				= script:WaitForChild("InputRemote") :: UnreliableRemoteEvent
-
-local Inset						= GuiService:GetGuiInset()
-GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(function()
-	Inset = GuiService:GetGuiInset()
-end)
-
 local Keycodes					= Enum.KeyCode:GetEnumItems()
 
 local function searchkeycodes(A: {Enum.KeyCode}, enumvalue: number): Enum.KeyCode?
@@ -61,156 +45,123 @@ local function searchkeycodes(A: {Enum.KeyCode}, enumvalue: number): Enum.KeyCod
 	end
 end
 
-local ConversionTable			= {
-	[Enum.UserInputType.None]			= 0;
-
-	[Enum.UserInputType.Keyboard]		= 1;
-	[Enum.UserInputType.MouseButton1]	= 1;
-	[Enum.UserInputType.MouseButton2]	= 1;
-	[Enum.UserInputType.MouseButton3]	= 1;
-	[Enum.UserInputType.MouseMovement]	= 1;
-	[Enum.UserInputType.MouseWheel]		= 1;
-
-	[Enum.UserInputType.Touch]			= 2;
-
-	[Enum.UserInputType.Gamepad1]		= 3;
-	[Enum.UserInputType.Gamepad2]		= 3;
-	[Enum.UserInputType.Gamepad3]		= 3;
-	[Enum.UserInputType.Gamepad4]		= 3;
-	[Enum.UserInputType.Gamepad5]		= 3;
-	[Enum.UserInputType.Gamepad6]		= 3;
-	[Enum.UserInputType.Gamepad7]		= 3;
-	[Enum.UserInputType.Gamepad8]		= 3;
-}
-
-local Aliases					= {
-	[Enum.KeyCode.Unknown]				= " ";
-	[Enum.KeyCode.One]					= "1";
-	[Enum.KeyCode.Two]					= "2";
-	[Enum.KeyCode.Three]				= "3";
-	[Enum.KeyCode.Four]					= "4";
-	[Enum.KeyCode.Five]					= "5";
-	[Enum.KeyCode.Six]					= "6";
-	[Enum.KeyCode.Seven]				= "7";
-	[Enum.KeyCode.Eight]				= "8";
-	[Enum.KeyCode.Nine]					= "9";
-	[Enum.KeyCode.Zero]					= "0";
-	[Enum.KeyCode.Backquote]			= "~";
-	[Enum.KeyCode.LeftShift]			= "LShift";
-	[Enum.KeyCode.RightShift]			= "RShift";
-	[Enum.KeyCode.LeftControl]			= "LCtrl";
-	[Enum.KeyCode.RightControl]			= "RCtrl";
-	[Enum.KeyCode.LeftAlt]				= "LAlt";
-	[Enum.KeyCode.RightAlt]				= "RAlt";
-	[Enum.KeyCode.Underscore]			= "_";
-	[Enum.KeyCode.Equals]				= "=";
-	[Enum.KeyCode.LeftBracket]			= "[";
-	[Enum.KeyCode.RightBracket]			= "]";
-	[Enum.KeyCode.ButtonL1]				= "L1";
-	[Enum.KeyCode.ButtonR1]				= "R1";
-	[Enum.KeyCode.ButtonL2]				= "L2";
-	[Enum.KeyCode.ButtonR2]				= "R2";
-	[Enum.KeyCode.ButtonL3]				= "L3";
-	[Enum.KeyCode.ButtonR3]				= "R3";
-	[Enum.KeyCode.ButtonY]				= "Y";
-	[Enum.KeyCode.ButtonX]				= "X";
-	[Enum.KeyCode.ButtonB]				= "B";
-	[Enum.KeyCode.ButtonA]				= "A";
-}
-
 --- ### Inputs.luau
 ---
 --- `UserInputService` wrapper \
---- compatible with pc, mobile, gamepad \
---- uses buffers to nicely replicate client inputs
+--- compatible with pc, mobile, gamepad
 local Inputs = {
 	TouchEnabled				= UIS.TouchEnabled;
-	PlatformId					= ConversionTable[UIS:GetLastInputType()] or 0;
+	PlatformId					= 0;
 	InputTimes					= {};
 	DoubleTapTime				= 0.2;
 	
-	MobileScreenCenter			= nil :: (() -> (Vector2))?;
-	AssistMousePosition			= nil :: (() -> (Vector2))?;
-	MouseBlacklist				= table.create(8);
+	MobileScreenCenter			= nil :: (() -> Vector2)?;
+	AssistMousePosition			= nil :: (() -> Vector2)?;
 
-	SyncRate					= 1 / 60;
+	CursorBlacklist				= table.create(8);
+	GuiInset					= Vector2.zero;
 
-	Aliases						= Aliases;
+	Aliases						= require(script.Aliases);
+	Dynamic						= require(script.Dynamic);
+	Platforms					= require(script.Platforms);
 }
 
 local BlacklistParams = RaycastParams.new()
 BlacklistParams.FilterType = Enum.RaycastFilterType.Exclude
 BlacklistParams.IgnoreWater = true
-BlacklistParams.FilterDescendantsInstances = Inputs.MouseBlacklist
+BlacklistParams.FilterDescendantsInstances = Inputs.CursorBlacklist
+
+local Cursor: types.Cursor = {
+	Position = Vector3.zero;
+	Normal = Vector3.yAxis;
+	Camera = -Vector3.zAxis;
+	Instance = nil;
+}
 
 local function rayblacklist(origin: Vector3, direction: Vector3): RaycastResult
 	return workspace:Raycast(origin, direction, BlacklistParams)
 end
 
---- reads vector from input buffer offset \
---- when called on client, values will be read from locally-stored input buffer \
---- `1`: mouse position \
---- `2`: camera direction \
---- `3`: mouse surface normal
-function Inputs.read(offset: number, Client: (Player|Model)?): Vector3
-	local i = (offset - 1) * 12
+--- returns input-cursor, describing client input
+function Inputs.cursor(): types.Cursor
+	return Cursor
+end
 
-	if IsServer then
-		local P = Players:GetPlayerFromCharacter(Client) or Client
-		assert(P)
+--- adds instance to cursor blacklist
+function Inputs.cursorblacklistadd(thing: Instance): ()
+	if not table.find(Inputs.CursorBlacklist, thing) then
+		table.insert(Inputs.CursorBlacklist, thing)
+	end
+end
 
-		local CachedBuffer = InputCache[P]
-		assert(CachedBuffer)
+--- removes instance from cursor blacklist
+function Inputs.cursorblacklistremove(thing: Instance): ()
+	table.remove(Inputs.CursorBlacklist, table.find(Inputs.CursorBlacklist, thing) or 0)
+end
 
-		return Vector3.new(
-			buffer.readf32(CachedBuffer, i + 0),
-			buffer.readf32(CachedBuffer, i + 4),
-			buffer.readf32(CachedBuffer, i + 8)
-		)
+--- returns key-value pair bound to keycode with respect to internal platform id
+function Inputs.keybind(keycode: Enum.KeyCode, k: {[string]: types.Keybind}): (string?, types.Keybind?)
+	local PlatformId = Inputs.PlatformId
+	if PlatformId == 0 then
+		return
 	else
-		return Vector3.new(
-			buffer.readf32(InputBuffer, i + 0),
-			buffer.readf32(InputBuffer, i + 4),
-			buffer.readf32(InputBuffer, i + 8)
-		)
+		for keyid, keybind in k do
+			local reals = k[keyid].Reals
+			assert(type(reals) == "table")
+
+			local boundkey = reals[PlatformId]
+			if boundkey == keycode.Value then
+				return keyid, keybind
+			end
+		end
+		return
 	end
 end
 
---- writes vector to input buffer offset \
---- when called on client, values will be written to locally-stored input buffer \
---- `1`: mouse position \
---- `2`: camera direction \
---- `3`: mouse surface normal
-function Inputs.write(offset: number, value: Vector3, Client: (Player|Model)?): ()
-	local i = (offset - 1) * 12
+--- folds saved keybinds `j` into read-write keybind table `k`
+function Inputs.keybindfold(j: {[string]: {number}}, k: {[string]: types.Keybind})
+	for keyid, keybinds in j do
+		local reals = k[keyid].Reals
+		assert(type(reals) == "table")
+		local defaults = k[keyid].Defaults
+		assert(type(defaults) == "table")
 
-	if IsServer then
-		local P = Players:GetPlayerFromCharacter(Client) or Client
-		assert(P)
-
-		local CachedBuffer = InputCache[P]
-		assert(CachedBuffer)
-
-		buffer.writef32(CachedBuffer, i + 0, value.X)
-		buffer.writef32(CachedBuffer, i + 4, value.Y)
-		buffer.writef32(CachedBuffer, i + 8, value.Z)
-	else
-		buffer.writef32(InputBuffer, i + 0, value.X)
-		buffer.writef32(InputBuffer, i + 4, value.Y)
-		buffer.writef32(InputBuffer, i + 8, value.Z)
+		table.move(defaults, 1, #defaults, 1, reals)
+		table.move(keybinds, 1, #keybinds, 1, reals)
 	end
 end
 
---- adds instance to mouse blacklist
-function Inputs.mouseblacklistadd(thing: Instance): ()
-	if not table.find(Inputs.MouseBlacklist, thing) then
-		table.insert(Inputs.MouseBlacklist, thing)
-	end
+--- resets keybind of `k`
+function Inputs.keybindreset(keyid: string, k: {[string]: types.Keybind})
+	local reals = k[keyid].Reals
+	assert(type(reals) == "table")
+	local defaults = k[keyid].Defaults
+	assert(type(defaults) == "table")
+
+	table.move(defaults, 1, #defaults, 1, reals)
 end
 
---- removes instance from mouse blacklist
-function Inputs.mouseblacklistremove(thing: Instance): ()
-	table.remove(Inputs.MouseBlacklist, table.find(Inputs.MouseBlacklist, thing) or 0)
+--- compiles read-write keybind table `k` into a savable format
+function Inputs.keybindcompile(k: {[string]: types.Keybind}): {[string]: {number}}
+	local j = {}
+	for keyid, keybind in k do
+		local reals = k[keyid].Reals
+		assert(type(reals) == "table")
+
+		j[keyid] = table.clone(reals)
+	end
+	return j
+end
+
+--- asserts keybinds `j` are of read-write keybind table `k`
+function Inputs.keybindassert(j: {[string]: {number}}, k: {[string]: types.Keybind})
+	assert(type(j) == "table")
+	for keyid, keybinds in j do
+		assert(k[keyid] ~= nil)
+		assert(type(keyid) == "string")
+		assert(type(keybinds) == "table")
+		assert(#keybinds <= #k[keyid].Defaults)
+	end
 end
 
 --- returns a platform id corresponding to `InputObject.UserInputType` \
@@ -219,7 +170,7 @@ end
 --- `2`: mobile \
 --- `3`: gamepad
 function Inputs.platform(inputobject: InputObject): number
-	return ConversionTable[inputobject.UserInputType] or 0
+	return Inputs.Platforms[inputobject.UserInputType] or 0
 end
 
 --- binds function to `UserInputService.InputBegan`
@@ -324,27 +275,25 @@ end
 --- ---  ┣━ UIStroke: UIStroke?
 --- ---  ┗━ Button: TextButton
 --- ```
-function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyId: types.DynamicGamepadKey, UserInputState: Enum.UserInputState) -> ()): ()
-	local White = Color3.fromRGB(255, 255, 255)
-	local Black = Color3.fromRGB(0, 0, 0)
-	for _, KeyId: types.DynamicGamepadKey in {"Y", "X", "B", "A", "L1", "R1", "L2", "R2", "Center"} :: {types.DynamicGamepadKey} do
-		local ButtonFrame = gamepadobject:FindFirstChild(KeyId)
+function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState) -> ()): ()
+	for KeyId, KeyEnum in Inputs.Dynamic do
+		local ButtonFrame = gamepadobject:FindFirstChild(KeyId :: types.DynamicGamepadKey)
 		if not ButtonFrame then warn(gamepadobject, KeyId); continue end
 
 		local UIStroke = ButtonFrame:FindFirstChildOfClass("UIStroke")
-		local TB = ButtonFrame:FindFirstChildOfClass("TextButton")
-		if not TB then continue end
+		local TextButton = ButtonFrame:FindFirstChildOfClass("TextButton")
+		if not TextButton then continue end
 
-		TB:GetPropertyChangedSignal("GuiState"):Connect(function()
-			if TB.GuiState== Enum.GuiState.Press then
-				f(KeyId, Enum.UserInputState.Begin)
+		TextButton:GetPropertyChangedSignal("GuiState"):Connect(function()
+			if TextButton.GuiState == Enum.GuiState.Press then
+				f(KeyEnum :: Enum.KeyCode, Enum.UserInputState.Begin)
 				if UIStroke then
-					UIStroke.Color = White
+					UIStroke.Color = Color3.fromRGB(255, 255, 255)
 				end
-			elseif TB.GuiState == Enum.GuiState.Idle then
-				f(KeyId, Enum.UserInputState.End)
+			elseif TextButton.GuiState == Enum.GuiState.Idle then
+				f(KeyEnum :: Enum.KeyCode, Enum.UserInputState.End)
 				if UIStroke then
-					UIStroke.Color = Black
+					UIStroke.Color = Color3.fromRGB(0, 0, 0)
 				end
 			end
 		end)
@@ -352,25 +301,19 @@ function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyId: types.
 end
 
 if IsServer then
-	Players.PlayerAdded:Connect(function(P: Player)
-		InputCache[P] = buffer.create(InputBufferLen)
-	end)
-	Players.PlayerRemoving:Connect(function(P: Player)
-		InputCache[P] = nil
-	end)
-
-	InputRemote.OnServerEvent:Connect(function(P: Player, b: buffer)
-		assert(buffer.len(b) == InputBufferLen)
-		if not InputCache[P] then
-			InputCache[P] = buffer.create(InputBufferLen)
-		end
-		buffer.copy(InputCache[P], 0, b, 0)
-	end)
+	
 else
+	Inputs.PlatformId = Inputs.Platforms[UIS:GetLastInputType()]
+
 	LocalPlayer.CharacterAdded:Connect(function(C: Model)
-		Inputs.mouseblacklistadd(C)
+		Inputs.cursorblacklistadd(C)
 	end)
-	LocalPlayer.CharacterRemoving:Connect(Inputs.mouseblacklistremove)
+	LocalPlayer.CharacterRemoving:Connect(Inputs.cursorblacklistremove)
+
+	Inputs.GuiInset = GuiService:GetGuiInset()
+	GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(function()
+		Inputs.GuiInset = GuiService:GetGuiInset()
+	end)
 
 	local function UpdateMouse(InputObject: InputObject)
 		local ScreenPosition = Vector2.zero
@@ -381,7 +324,7 @@ else
 			end
 			ScreenPosition = Vector2.new(InputPosition.X, InputPosition.Y)
 		else
-			ScreenPosition = UIS:GetMouseLocation() - Inset
+			ScreenPosition = UIS:GetMouseLocation() - Inputs.GuiInset
 		end
 
 		if Inputs.AssistMousePosition then
@@ -390,10 +333,17 @@ else
 	
 		local UnitRay = Camera:ScreenPointToRay(ScreenPosition.X, ScreenPosition.Y)
 		local Result = rayblacklist(UnitRay.Origin, UnitRay.Direction * 10000)
-	
-		Inputs.write(1, Result and Result.Position or (UnitRay.Origin + (UnitRay.Direction * 10000)), LocalPlayer)
-		Inputs.write(2, Camera.CFrame.LookVector, LocalPlayer)
-		Inputs.write(3, Result and Result.Normal or Vector3.yAxis, LocalPlayer)
+
+		if Result then
+			Cursor.Position = Result.Position
+			Cursor.Normal = Result.Normal
+			Cursor.Instance = Result.Instance
+		else
+			Cursor.Position = UnitRay.Origin + (UnitRay.Direction * 10000)
+			Cursor.Normal = Vector3.yAxis
+			Cursor.Instance = nil
+		end
+		Cursor.Camera = Camera.CFrame.LookVector
 	end
 
 	--- input changes
@@ -436,7 +386,7 @@ else
 	UIS.LastInputTypeChanged:Connect(function(InputType: Enum.UserInputType)
 		Inputs.TouchEnabled = UIS.TouchEnabled
 
-		local ThisPlatform = ConversionTable[InputType] or Inputs.PlatformId
+		local ThisPlatform = Inputs.Platforms[InputType] or Inputs.PlatformId
 		if Inputs.PlatformId ~= ThisPlatform then
 			Inputs.PlatformId = ThisPlatform
 			Bind("k_Input_platformchanged"):Fire(Inputs.PlatformId)
@@ -445,16 +395,6 @@ else
 	GamepadService:GetPropertyChangedSignal("GamepadCursorEnabled"):Connect(function()
 		Inputs.GamepadCursorEnabled = GamepadService.GamepadCursorEnabled
 		Bind("k_Input_gamepadcursorstatechanged"):Fire(GamepadService.GamepadCursorEnabled)
-	end)
-
-	--- input buffer sync
-
-	local Elapsed = 0
-	RunService.Heartbeat:Connect(function(dt: number)
-		Elapsed += dt
-		if Elapsed < Inputs.SyncRate then return end
-		Elapsed -= Inputs.SyncRate
-		InputRemote:FireServer(InputBuffer)
 	end)
 end
 

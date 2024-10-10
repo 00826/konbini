@@ -55,7 +55,7 @@ end
 --- type `1`
 function Bullet.hitscan(): buffer
 	local b = buffer.create(hitscanwidth)
-	buffer.writestring(b, 0, Encoder.guid(4))
+	buffer.writestring(b, 0, Encoder.string(4))
 	buffer.writeu8(b, 5, 1)
 	buffer.writef32(b, 6, Time.now())
 	return b
@@ -78,7 +78,7 @@ end
 --- type `2`
 function Bullet.ballistic(): buffer
 	local b = buffer.create(ballisticwidth)
-	buffer.writestring(b, 0, Encoder.guid(4))
+	buffer.writestring(b, 0, Encoder.string(4))
 	buffer.writeu8(b, 5, 2)
 	return b
 end
@@ -123,7 +123,7 @@ end
 --- type `3`
 function Bullet.beam(): buffer
 	local b = buffer.create(beamwidth)
-	buffer.writestring(b, 0, Encoder.guid(4))
+	buffer.writestring(b, 0, Encoder.string(4))
 	buffer.writeu8(b, 5, 3)
 	return b
 end
@@ -160,7 +160,7 @@ end
 --- type `4`
 function Bullet.bezier(): buffer
 	local b = buffer.create(bezierwidth)
-	buffer.writestring(b, 0, Encoder.guid(4))
+	buffer.writestring(b, 0, Encoder.string(4))
 	buffer.writeu8(b, 5, 4)
 	return b
 end

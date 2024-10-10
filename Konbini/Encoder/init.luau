@@ -1,6 +1,6 @@
 --!strict
 
-local HttpService				= game:GetService("HttpService")
+local R							= Random.new()
 
 local int8						= 1 / 127
 
@@ -186,9 +186,24 @@ function Encoder.readu24(b: buffer, offset: number): number
 	return int
 end
 
---- generates a random guid
-function Encoder.guid(len: number?): string
-	return string.sub(string.gsub(HttpService:GenerateGUID(false), "-", ""), 1, (len or 8))
+--- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
+--- `len (?=4, P(62,4)=677040)` string length
+function Encoder.string(len: number?): string
+	local str = ""
+	for i = 1, len or 4 do
+		local value = R:NextInteger(1, 36)
+		if value <= 26 then
+			local coinflip = R:NextInteger(0, 1) == 0
+			if coinflip then
+				str ..= string.char(value + 64) -- [A-Z]
+			else
+				str ..= string.char(value + 96) -- [a-z]
+			end
+		else
+			str ..= tostring(36 - value) -- [0-9]
+		end
+	end
+	return str
 end
 
 --- replaces captures matching `flag .. "%w+"` in text with respect to replacement table

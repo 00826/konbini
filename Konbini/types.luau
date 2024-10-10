@@ -40,7 +40,32 @@ export type SaveTemplate		= typeof(require(script.Parent.Data.Config).SaveTempla
 
 --- Inputs.luau
 
-export type DynamicGamepadKey	= "Y" | "X" | "B" | "A" | "L1" | "R1" | "L2" | "R2" | "Center"
+export type Cursor				= {
+	--- 3d position of cursor
+	Position: Vector3;
+	--- unit vector of cursor surface
+	Normal: Vector3;
+	--- unit vector of camera
+	Camera: Vector3;
+	--- instance that cursor is on
+	Instance: Instance?;
+}
+export type DynamicGamepadKey	= "Y" | "X" | "B" | "A" | "L1" | "R1" | "L2" | "R2" | "R3"
+
+export type Keybind				= {
+	--- real-time values that will activate this keybind \
+	--- indices are as follows, and default to 0 when unbound: \
+	--- `1`: pc \
+	--- `2`: mobile \
+	--- `3`: gamepad
+	Reals: {number};
+	--- default values that are written to reals \
+	--- indices are as follows, and default to 0 when unbound: \
+	--- `1`: pc \
+	--- `2`: mobile \
+	--- `3`: gamepad
+	Defaults: {number};
+} & {[string]: any};
 
 --- Instance.luau
 
@@ -99,14 +124,6 @@ export type ClientArg			=
 --- Rig.luau
 
 export type MoverClass			= "BodyGyro" | "BodyVelocity" | "BodyPosition" | "VectorForce"
-
---- Table.luau
-
-export type SyncPacket			= {
-	Data: {}?;
-	Id: string?;
-	Message: string?;
-}
 
 --- Time.luau
 

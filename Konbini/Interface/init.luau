@@ -251,6 +251,22 @@ function Interface.togglecontents(target: GuiObject, state: boolean, ...: string
 	end
 end
 
+function Interface.gridfill()
+	
+end
+
+function Interface.gridentries()
+	
+end
+
+function Interface.listfill()
+	
+end
+
+function Interface.listentries()
+	
+end
+
 --- automatically adjusts gridlayout to fit specified columns
 function Interface.adjustgridlayout(gridlayout: UIGridLayout, columns: number)
 	local Container = gridlayout.Parent :: GuiObject
@@ -375,7 +391,6 @@ function Interface.unitcircle(vertices: number, radius: number, theta: number?):
 
 	return Results
 end
-
 
 --- formats number with: \
 --- `abbreviate (?=10000)`: if `x >= abbreviate`, `x` will be abbreviated \
