@@ -10,8 +10,6 @@ local DefaultR					= Random.new()
 ---
 --- extension of table library
 local K_Table = {
-	Remote = script:WaitForChild("SyncRemote");
-
 	SyncCache = {};
 	SyncLimit = 1;
 	SyncTimes = {};

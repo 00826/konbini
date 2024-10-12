@@ -35,6 +35,7 @@ local Interface = {
 	UDimBottomLeft				= UDim2.fromScale(0, 1);		--- `🡷` -- `UDim2.fromScale(0, 1)`
 	UDimBottomRight				= UDim2.fromScale(1, 1);		--- `🡶` -- `UDim2.fromScale(1, 1)`
 
+	UDimOffsetOne				= UDim2.fromOffset(1, 1);		--- `UDim2.fromOffset(1, 1)`
 	UDimOffsetX					= UDim2.fromOffset(1, 0);		--- `UDim2.fromOffset(1, 0)`
 	UDimOffsetY					= UDim2.fromOffset(0, 1); 		--- `UDim2.fromOffset(0, 1)`
 
@@ -251,20 +252,143 @@ function Interface.togglecontents(target: GuiObject, state: boolean, ...: string
 	end
 end
 
-function Interface.gridfill()
-	
+--- populates container with a grid of entries drawn from template `t` \
+--- ```lua
+--- Interface.gridfill(container, 5, 3, template)
+--- 
+--- container:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+--- 	Interface.gridfill(container, 5, 3, template)
+--- end)
+--- ```
+function Interface.gridfill(container: Frame, width: number, height: number, template: GuiObject?)
+	local gridlayout = container:FindFirstChildOfClass("UIGridLayout")
+	assert(gridlayout)
+	gridlayout.FillDirectionMaxCells = width
+
+	local units = width * height
+	for i = 1, units do
+		local name = "griditem_" .. i
+		local entry = container:FindFirstChild(name) :: any
+		if not entry then
+			entry = template and template:Clone() or Instance.new("Frame")
+			entry.Name = name
+			entry.LayoutOrder = -99999 + i
+			entry.Parent = container
+		end
+		entry:SetAttribute("gridentry", i)
+	end
+
+	for i = units + 1, #container:GetChildren(), 1 do
+		local name = "griditem_" .. i
+		local entry = container:FindFirstChild(name) :: any
+		if entry then
+			entry:Destroy()
+		end
+	end
+
+	local max = math.max(container.AbsoluteSize.X, container.AbsoluteSize.Y)
+	local div = (max / width) + gridlayout.CellPadding.X.Offset
+	gridlayout.CellSize = UDim2.fromOffset(div, div)
+
+	repeat
+		if gridlayout.AbsoluteCellCount.X < width then
+			gridlayout.CellSize -= Interface.UDimOffsetOne
+		elseif gridlayout.AbsoluteCellCount.X > width then
+			gridlayout.CellSize += Interface.UDimOffsetOne
+		end
+	until gridlayout.AbsoluteCellCount.X == width
 end
 
-function Interface.gridentries()
-	
+--- returns entries created by `Interface.gridfill`
+function Interface.gridentries(container: Frame): {GuiObject}
+	local c = container:GetChildren()
+	local entries = table.create(#c)
+
+	for _, thing in c do
+		if not thing:IsA("GuiObject") then continue end
+
+		local value = thing:GetAttribute("gridentry") :: number?
+		if value then
+			entries[value] = thing
+		end
+	end
+
+	return entries
 end
 
-function Interface.listfill()
-	
+--- populates container with a list of entries drawn from template `t` \
+--- ```lua
+--- Interface.listfill(container, 10, template)
+--- 
+--- container:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+--- 	Interface.listfill(container, 10, template)
+--- end)
+--- ```
+function Interface.listfill(container: Frame, rows: number, template: GuiObject?)
+	local gridlayout = container:FindFirstChildOfClass("UIGridLayout")
+	assert(gridlayout)
+	gridlayout.FillDirectionMaxCells = 1
+
+	for i = 1, rows do
+		local name = "listitem_" .. i
+		local entry = container:FindFirstChild(name) :: any
+		if not entry then
+			entry = template and template:Clone() or Instance.new("Frame")
+			entry.Name = name
+			entry.LayoutOrder = -99999 + i
+			entry.Parent = container
+		end
+		entry:SetAttribute("listentry", i)
+	end
+
+	for i = rows + 1, #container:GetChildren(), 1 do
+		local name = "listitem_" .. i
+		local entry = container:FindFirstChild(name) :: any
+		if entry then
+			entry:Destroy()
+		end
+	end
+
+	local padheight = Interface.padheight(container:FindFirstChildOfClass("UIPadding")).Offset
+	local height = container.AbsoluteSize.Y
+	gridlayout.CellSize = UDim2.new(1, 0, 0, height / rows)
+
+	local desiredheight = math.round(height - padheight)
+
+	if desiredheight <= 0 then
+		return
+	end
+
+	repeat
+		if gridlayout.AbsoluteContentSize.Y < desiredheight then
+			gridlayout.CellSize += Interface.UDimOffsetY
+			if gridlayout.AbsoluteContentSize.Y >= desiredheight then
+				break
+			end
+		elseif gridlayout.AbsoluteContentSize.Y > desiredheight then
+			gridlayout.CellSize -= Interface.UDimOffsetY
+			if gridlayout.AbsoluteContentSize.Y <= desiredheight then
+				break
+			end
+		end
+	until gridlayout.AbsoluteContentSize.Y == desiredheight or gridlayout.AbsoluteContentSize.Y == 0
 end
 
-function Interface.listentries()
-	
+--- returns entries created by `Interface.listfill`
+function Interface.listentries(container: Frame): {GuiObject}
+	local c = container:GetChildren()
+	local entries = table.create(#c)
+
+	for _, thing in c do
+		if not thing:IsA("GuiObject") then continue end
+
+		local value = thing:GetAttribute("listentry") :: number?
+		if value then
+			entries[value] = thing
+		end
+	end
+
+	return entries
 end
 
 --- automatically adjusts gridlayout to fit specified columns
@@ -367,11 +491,21 @@ function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayou
 end
 
 --- sets padding values of uipadding instance
-function Interface.padding(uipadding: UIPadding, padding: UDim): ()
-	uipadding.PaddingTop = padding
-	uipadding.PaddingLeft = padding
-	uipadding.PaddingRight = padding
-	uipadding.PaddingBottom = padding
+function Interface.pad(uipadding: UIPadding, value: UDim): ()
+	uipadding.PaddingTop = value
+	uipadding.PaddingLeft = value
+	uipadding.PaddingRight = value
+	uipadding.PaddingBottom = value
+end
+
+--- returns padding width (`left + right`)
+function Interface.padwidth(uipadding: UIPadding?): UDim
+	return uipadding and uipadding.PaddingLeft + uipadding.PaddingRight or UDim.new(0, 0)
+end
+
+--- returns padding height (`left + right`)
+function Interface.padheight(uipadding: UIPadding?): UDim
+	return uipadding and uipadding.PaddingTop + uipadding.PaddingBottom or UDim.new(0, 0)
 end
 
 --- creates a unit circle \
