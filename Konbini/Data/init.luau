@@ -7,7 +7,7 @@ local RunService				= game:GetService("RunService")
 
 local IsServer					= RunService:IsServer()
 
-local DataRemote				= script:WaitForChild("DataRemote") :: RemoteEvent;
+local DataRemote				= script:WaitForChild("DataRemote") :: RemoteEvent
 
 local ServerCache				= {} :: {[Player]: {Data: types.SaveTemplate}}
 local ClientCache				= {} :: types.SaveTemplate

@@ -51,7 +51,7 @@ function C.__index:find<T>(thing: T): number?
 	return table.find(self.Items, thing)
 end
 
---- fires function `f` when an item is added to cached items
+--- fires function when an item is added to cached items
 function C.__index:ItemAdded<T>(f: (thing: T) -> ()): () -> ()
 	table.insert(self.AddedListeners, f)
 	return function ()
@@ -59,7 +59,7 @@ function C.__index:ItemAdded<T>(f: (thing: T) -> ()): () -> ()
 	end
 end
 
---- fires function `f` when an item is removed from cached items
+--- fires function when an item is removed from cached items
 function C.__index:ItemRemoved<T>(f: (thing: T) -> ()): () -> ()
 	table.insert(self.RemovedListeners, f)
 	return function ()

@@ -2,7 +2,7 @@
 
 local R							= Random.new()
 
-local int8						= 1 / 127
+local int8						= 1/127
 
 --- ### Encoder.luau
 ---

@@ -211,7 +211,7 @@ function Time.format(format: types.Format): types.FormatResult
 end
 
 if IsServer then
-	local Elapsed, Rate = 0, 1 / 60
+	local Elapsed, Rate = 0, 1/60
 	local function UpdateTime(t, dt)
 		buffer.writef32(TimeBuffer, 0, t)
 
