@@ -189,7 +189,7 @@ end
 --- returns an empty `i16`-width matrix-buffer \
 --- *matrices are one-indexed (buffers are zero-indexed), as column/row info is stored in the first 2 bytes*
 function Encoder.creatematrix(columns: number, rows: number): buffer
-	local m = buffer.create( 2 + (2 * (columns * rows)) ) -- 1 byte columns + 1 byte rows + (u16 * rows + columns)
+	local m = buffer.create( 2 + (2 * columns * rows) )
 
 	buffer.writeu8(m, 0, columns)
 	buffer.writeu8(m, 1, rows)
