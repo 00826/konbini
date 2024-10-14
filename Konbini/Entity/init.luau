@@ -180,7 +180,7 @@ else
 			elseif type(update) == "boolean" then
 				if Entity.Cache[id] then
 					removed[id] = Entity.Cache[id]
-					Entity.remove(id)
+					Entity.Cache[id] = nil
 				end
 			end
 		end
