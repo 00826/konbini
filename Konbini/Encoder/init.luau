@@ -186,6 +186,102 @@ function Encoder.readu24(b: buffer, offset: number): number
 	return int
 end
 
+--- returns an empty `i16`-width matrix-buffer \
+--- *matrices are one-indexed (buffers are zero-indexed), as column/row info is stored in the first 2 bytes*
+function Encoder.creatematrix(columns: number, rows: number): buffer
+	local m = buffer.create( 2 + (2 * (columns * rows)) ) -- 1 byte columns + 1 byte rows + (u16 * rows + columns)
+
+	buffer.writeu8(m, 0, columns)
+	buffer.writeu8(m, 1, rows)
+
+	return m
+end
+
+--- writes value to matrix-buffer
+function Encoder.writematrix(m: buffer, column: number, row: number, value: number)
+	local width = 2 * buffer.readu8(m, 0)
+	local offset = (2 * column) + ((row - 1) * width)
+
+	buffer.writei16(m, offset, value)
+end
+
+--- writes set of values to row of matrix-buffer \
+--- if values are omitted, the range is filled with zeroes
+function Encoder.writerowmatrix(m: buffer, row: number, values: {number}?)
+	local columns = buffer.readu8(m, 0)
+	local width = 2 * columns
+	local offset = 2 + ((row - 1) * width)
+
+	if values then
+		for i = 1, columns do
+			buffer.writei16(m, offset + (2 * (i - 1)), values[i] or 0)
+		end
+	else
+		buffer.fill(m, offset, 0, width)
+	end
+end
+
+--- reads set of values along row of matrix-buffer
+function Encoder.readrowmatrix(m: buffer, row: number): {number}
+	local columns = buffer.readu8(m, 0)
+	local width = 2 * columns
+	local offset = 2 + ((row - 1) * width)
+	local r = table.create(columns, 0)
+
+	for i = 1, columns do
+		r[i] = buffer.readi16(m, offset)
+		offset += 2
+	end
+
+	return r
+end
+
+--- reads sum of values along column of matrix-buffer
+function Encoder.readcolumnmatrix(m: buffer, column: number): number
+	local rows = buffer.readu8(m, 1)
+	local width = 2 * buffer.readu8(m, 0)
+
+	local offset = 2 * column
+	local sum = 0
+
+	for i = 1, rows do
+		sum += buffer.readi16(m, offset)
+		offset += width
+	end
+
+	return sum
+end
+
+function Encoder.unpackmatrix(m: buffer): { {number} }
+	local columns = buffer.readu8(m, 0)
+	local rows = buffer.readu8(m, 1)
+
+	local u = table.create(rows)
+	local sums = table.create(columns, 0)
+
+	print(`{columns}x{rows} (2 + {buffer.len(m)-2} bytes) matrix: `, m)
+
+	for i = 1, rows do
+		local r = Encoder.readrowmatrix(m, i)
+		table.insert(u, r)
+
+		local strings = table.create(columns)
+		for a, b in ipairs(r) do
+			strings[a] = string.format("%04d", b)
+			sums[a] += b
+		end
+		print(`[{i}]	`, table.concat(strings, " "))
+	end
+
+	for a, b in ipairs(sums) do
+		sums[a] = string.format("%04d", Encoder.readcolumnmatrix(m, a))::any
+	end
+	print("----")
+	print(`[sum]	`, table.concat(sums, " "))
+
+	return u
+end
+
 --- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
 --- `len (?=4, P(62,4)=677040)` string length
 function Encoder.string(len: number?): string
