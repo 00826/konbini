@@ -14,9 +14,7 @@ local KTable					= require(script.Parent.Table)
 --- ### Entity.luau
 ---
 --- entity handler, belongs as a standalone
-local Entity = {
-	Cache						= {};
-}
+local Entity = { Cache = {}; }
 
 --- creates entity `e` from template `t (?={})`, creates id `id` \
 --- stores `e` at `e = Cache[id]` \
@@ -121,27 +119,61 @@ function Entity.removed(f: (e: {}, id: string) -> ()): types.Disconnect
 	return Bind("k_Entity_removed"):Connect(f)
 end
 
+--- writes key-values of update `u` into `e`, such that `e` inherits all non-nil key-values of `u` \
+--- when possible, mutable data types (same-width buffers, same-type tables) are preserved
+function Entity.update(e: {}, u: {})
+	for k, updatevalue in u do
+		local thisvalue = e[k]
+		if thisvalue == nil then
+			e[k] = updatevalue
+		elseif thisvalue == updatevalue then
+			continue
+		else
+			if type(updatevalue) ~= type(thisvalue) then
+				e[k] = updatevalue
+			else
+				if type(updatevalue) == "buffer" then
+					if buffer.len(updatevalue) == buffer.len(thisvalue) then
+						buffer.copy(thisvalue, 0, updatevalue)
+					else
+						e[k] = updatevalue
+					end
+				elseif type(updatevalue) == "table" then --- ._. a billion dollars cant narrow a table
+					table.clear(thisvalue)
+
+					if #updatevalue::{any} > 0 then
+						table.move(updatevalue::{any}, 1, #updatevalue::{any}, 1, thisvalue)
+					else
+						for a, b in updatevalue::{any} do
+							thisvalue[a] = b
+						end
+					end
+				else
+					e[k] = updatevalue
+				end
+			end
+		end
+	end
+end
+
 if IsServer then
 else
 	EntityRemote.OnClientEvent:Connect(function(packet: {[string]: {}|boolean})
 		local added = {}
 		local removed = {}
 
-		for id, thisentity in packet do
-			if type(thisentity) == "table" then
+		for id, update in packet do
+			if type(update) == "table" then
 				if not Entity.Cache[id] then
-					Entity.Cache[id] = thisentity
-					added[id] = thisentity
+					Entity.Cache[id] = update
+					added[id] = update
 				else
-					local e = Entity.Cache[id]
-					for k, v in thisentity do
-						e[k] = v
-					end
+					Entity.update(Entity.Cache[id], update)
 				end
-			elseif type(thisentity) == "boolean" then
+			elseif type(update) == "boolean" then
 				if Entity.Cache[id] then
 					removed[id] = Entity.Cache[id]
-					Entity.Cache[id] = nil
+					Entity.remove(id)
 				end
 			end
 		end
@@ -150,7 +182,7 @@ else
 			Bind("k_Entity_added"):Fire(v, k)
 		end
 
-		for k, v in added do
+		for k, v in removed do
 			Bind("k_Entity_removed"):Fire(v, k)
 		end
 	end)
