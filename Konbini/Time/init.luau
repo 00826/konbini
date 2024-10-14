@@ -29,6 +29,16 @@ function Time.furthest(x: number?): number
 	return math.max(x or 0, buffer.readf32(Time.buffer, 0))
 end
 
+--- applies debounce against instance `i` \
+--- returns true if debounce passed, returns false if not passed
+function Time.debounce(i: Instance, name: string, time: number): boolean
+	local Now, Until = Time.now(), i:GetAttribute("K_Time_debounce_" .. name) or 0
+	if Until > Now then return false end
+
+	i:SetAttribute("K_Time_debounce_" .. name, Now + time)
+	return true
+end
+
 --- runs function for `x` seconds, or until function returns `true`
 function Time.run(x: number, f: (elapsed: number, dt: number) -> boolean?): RBXScriptConnection
 	local elapsed = 0

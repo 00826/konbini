@@ -24,14 +24,12 @@
 |[Collisions.luau](./Konbini/Collisions/init.luau)|condensed spatial queries|-|❌|
 |[Couture.luau](./Konbini/Couture/init.luau)|near-client-authoritative accessory/cosmetic handling<br>game server has better things to do than weld accessories|-|❌|
 |[Data.luau](./Konbini/Data/init.luau)|glorified `ProfileService` interface|`Konbini.Bind`<br>*implied dependence on profileservice*|❌|
-|*[Debounce.luau](./Konbini/Debounce/init.luau)*|debounce function|`Konbini.Time`|❌|
 |[Encoder.luau](./Konbini/Encoder/init.luau)|buffer/string manip library|-|❌|
 |[Entity.luau](./Konbini/Entity/init.luau)|entity replicator|`Konbini.Bind`<br>`Konbini.Table`|❌|
 |[Inputs.luau](./Konbini/Inputs/init.luau)|`UserInputService` wrapper, universal mouse position|`Konbini.Bind`|❌|
 |[Instance.luau](./Konbini/Instance/init.luau)|`Instance` library extension|-|❌|
 |[Interface.luau](./Konbini/Interface/init.luau)|user-interface helper functions|-|❌|
 |[Math.luau](./Konbini/Math/init.luau)|`math` library extension|-|❌|
-|*[Matrix.luau](./Konbini/Matrix/init.luau)*|buffer matrix-esque implementation|-|❌|
 |[Misc.luau](./Konbini/Misc/init.luau)|collection of miscellaneous functions|-|❌|
 |[Network.luau](./Konbini/Network/init.luau)|straightforward networking interface<br>tired of referencing remotes on every new script|`Konbini.async`|❌|
 |[Rig.luau](./Konbini/Rig/init.luau)|motor6d-based rig helper functions|-|❌|
