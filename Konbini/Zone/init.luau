@@ -7,7 +7,7 @@ local IsServer					= RunService:IsServer()
 
 local Players					= game:GetService("Players")
 
-local R							= Random.new()
+local DefaultR					= Random.new()
 
 local function send(thing: Instance, to: Instance)
 	thing.Parent = to
@@ -249,9 +249,9 @@ function Zone.spawnpoint(z: types.Zone): Vector3
 		local halfsize = spawnbox.Size * 0.5
 		local X, Z = halfsize.X, halfsize.Z
 		return (spawnbox.CFrame * CFrame.new(
-			R:NextNumber(-X, X),
+			DefaultR:NextNumber(-X, X),
 			0,
-			R:NextNumber(-Z, Z)
+			DefaultR:NextNumber(-Z, Z)
 		)).Position
 	else
 		return z.Position or Vector3.zero
