@@ -35,7 +35,6 @@
 |[Misc.luau](./Konbini/Misc/init.luau)|collection of miscellaneous functions|-|❌|
 |[Network.luau](./Konbini/Network/init.luau)|straightforward networking interface<br>tired of referencing remotes on every new script|`Konbini.async`|❌|
 |[Rig.luau](./Konbini/Rig/init.luau)|motor6d-based rig helper functions|-|❌|
-|[Sounds.luau](./Konbini/Sounds/init.luau)|sound player|-|❌|
 |[Table.luau](./Konbini/Table/init.luau)|`table` library extension|-|❌|
 |[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|❌|
 |*[Tween.luau](./Konbini/Tween/init.luau)*|`TweenService` wrapper|-|❌|
