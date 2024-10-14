@@ -106,7 +106,7 @@ function Entity.removed(f: (e: {}, id: string) -> ()): types.Disconnect
 end
 
 --- writes key-values of update `u` into `e`, such that `e` inherits all non-nil key-values of `u` \
---- when possible, mutable data types (same-width buffers, same-type tables) are preserved
+--- when possible, mutable data types (same-width buffers, same-type tables) have their references preserved
 function Entity.update(e: {}, u: {})
 	for k, updatevalue in u do
 		local thisvalue = e[k]
