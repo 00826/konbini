@@ -19,7 +19,7 @@ end
 local Interface = {
 	ButtonSounds = {} :: {[string]: Sound};
 
-	UDim = {
+	UDim = table.freeze{
 		zero = UDim.new(0, 0);
 
 		--- returns `UDim.new(w, w)`
@@ -27,7 +27,7 @@ local Interface = {
 			return UDim.new(w, w)
 		end;
 	};
-	UDim2 = {
+	UDim2 = table.freeze{
 		zero = UDim2.fromScale(0, 0);
 
 		oneOffset = UDim2.fromOffset(1, 1);
@@ -52,7 +52,7 @@ local Interface = {
 			return UDim2.new(w, w)
 		end;
 	};
-	Vector2 = {
+	Vector2 = table.freeze{
 		half = Vector2.new(0.5, 0.5);
 		top = Vector2.new(0.5, 0);
 		bottom = Vector2.new(0.5, 1);
@@ -68,7 +68,7 @@ local Interface = {
 			return Vector2.new(w, w)
 		end;
 	};
-	Color3 = {
+	Color3 = table.freeze{
 		white = Color3.fromRGB(255, 255, 255);
 		gray = Color3.fromRGB(128, 128, 128);
 		black = Color3.fromRGB(0, 0, 0);
@@ -76,6 +76,51 @@ local Interface = {
 		--- returns `Color3.fromRGB(w, w, w)`
 		fromConstant = function(w: number)
 			return Color3.fromRGB(w, w, w)
+		end;
+		--- adjusts color3 saturation
+		adjustSaturation = function(c: Color3, value: number)
+			local H, S, V = c:ToHSV()
+			return Color3.fromHSV(H, math.clamp(S + (value / 100), 0, 1), V)
+		end;
+		--- returns approximate sort value of color3
+		sortValue = function(c: Color3)
+			return (c:ToHSV()) * 100
+		end;
+		--- inverts color3
+		invert = function(c: Color3)
+			return Color3.new(1 - c.R, 1 - c.G, 1 - c.B)
+		end;
+		--- returns a vertexcolor from color3
+		toVertexColor = function(c: Color3)
+			return Vector3.new(c.R, c.G, c.B) / 255
+		end;
+		--- returns a color3 from vertexcolor
+		fromVertexColor = function(v: Vector3)
+			v *= 255
+			return Color3.new(v.X, v.Y, v.Z)
+		end;
+	};
+	ColorSequence = table.freeze{
+		white = ColorSequence.new(Color3.fromRGB(255, 255, 255));
+		gray = ColorSequence.new(Color3.fromRGB(128, 128, 128));
+		black = ColorSequence.new(Color3.fromRGB(0, 0, 0));
+
+		--- returns `ColorSequence.new(Color3.fromRGB(w, w, w))`
+		fromConstant = function(w: number)
+			return ColorSequence.new(Color3.fromRGB(w, w, w))
+		end;
+		--- returns color3 in colorsequence at interpolant `a`
+		colorAt = function(sequence: ColorSequence, a: number): Color3
+			local LastKeypoint = nil
+			for _, Keypoint in ipairs(sequence.Keypoints) do
+				if a < Keypoint.Time then
+					local T0 = LastKeypoint.Time
+		
+					return LastKeypoint.Value:Lerp(Keypoint.Value, (a - T0) / (Keypoint.Time - T0))
+				end
+				LastKeypoint = Keypoint
+			end
+			return LastKeypoint and LastKeypoint.Value or Color3.fromRGB(255, 255, 255)
 		end;
 	};
 
