@@ -17,43 +17,69 @@ end
 ---
 --- contains quality-of-life functions for UI development
 local Interface = {
-	ButtonSounds				= {} :: {[string]: Sound};
+	ButtonSounds = {} :: {[string]: Sound};
 
-	--- `UDim2.fromScale(1, 1)`
-	UDimOne						= UDim2.fromScale(1, 1);		--- `UDim2.fromScale(1, 1)`
-	UDimZero					= UDim2.fromScale(0, 0);		--- `UDim2.fromScale(0, 0)`
-	UDimX						= UDim2.fromScale(1, 0);		--- `UDim2.fromScale(1, 0)`
-	UDimY						= UDim2.fromScale(0, 1);		--- `UDim2.fromScale(0, 1)`
+	UDim = {
+		zero = UDim.new(0, 0);
 
-	UDimHalf					= UDim2.fromScale(0.5, 0.5);	--- `UDim2.fromScale(0.5, 0.5)`
-	UDimTop						= UDim2.fromScale(0.5, 0);		--- `🡱` -- `UDim2.fromScale(0.5, 0)`
-	UDimBottom					= UDim2.fromScale(0.5, 1);		--- `🡳` -- `UDim2.fromScale(0.5, 1)`
-	UDimLeft					= UDim2.fromScale(0, 0.5);		--- `🡰` -- `UDim2.fromScale(0, 0.5)`
-	UDimRight					= UDim2.fromScale(1, 0.5);		--- `🡲` -- `UDim2.fromScale(1, 0.5)`
-	UDimTopLeft					= UDim2.fromScale(0, 0);		--- `🡴` -- `UDim2.fromScale(0, 0)`
-	UDimTopRight				= UDim2.fromScale(1, 0);		--- `🡵` -- `UDim2.fromScale(1, 0)`
-	UDimBottomLeft				= UDim2.fromScale(0, 1);		--- `🡷` -- `UDim2.fromScale(0, 1)`
-	UDimBottomRight				= UDim2.fromScale(1, 1);		--- `🡶` -- `UDim2.fromScale(1, 1)`
+		--- returns `UDim.new(w, w)`
+		fromConstant = function(w: number)
+			return UDim.new(w, w)
+		end;
+	};
+	UDim2 = {
+		zero = UDim2.fromScale(0, 0);
 
-	UDimOffsetOne				= UDim2.fromOffset(1, 1);		--- `UDim2.fromOffset(1, 1)`
-	UDimOffsetX					= UDim2.fromOffset(1, 0);		--- `UDim2.fromOffset(1, 0)`
-	UDimOffsetY					= UDim2.fromOffset(0, 1); 		--- `UDim2.fromOffset(0, 1)`
+		oneOffset = UDim2.fromOffset(1, 1);
+		xOffset = UDim2.fromOffset(1, 0);
+		yOffset = UDim2.fromOffset(0, 1);
+		oneScale = UDim2.fromScale(1, 1);
+		xScale = UDim2.fromScale(1, 0);
+		yScale = UDim2.fromScale(0, 1);
 
-	Vector2Half					= Vector2.new(0.5, 0.5);		--- `Vector2.new(0.5, 0.5)`
-	Vector2Top					= Vector2.new(0.5, 0);			--- `🡱` -- `Vector2.new(0.5, 0)`
-	Vector2Bottom				= Vector2.new(0.5, 1);			--- `🡳` -- `Vector2.new(0.5, 1)`
-	Vector2Left					= Vector2.new(0, 0.5);			--- `🡰` -- `Vector2.new(0, 0.5)`
-	Vector2Right				= Vector2.new(1, 0.5);			--- `🡲` -- `Vector2.new(1, 0.5)`
-	Vector2TopLeft				= Vector2.new(0, 0);			--- `🡴` -- `Vector2.new(0, 0)`
-	Vector2TopRight				= Vector2.new(1, 0);			--- `🡵` -- `Vector2.new(1, 0)`
-	Vector2BottomLeft			= Vector2.new(0, 1);			--- `🡷` -- `Vector2.new(0, 1)`
-	Vector2BottomRight			= Vector2.new(1, 1);			--- `🡶` -- `Vector2.new(1, 1)`
+		half = UDim2.fromScale(0.5, 0.5);
+		top = UDim2.fromScale(0.5, 0);
+		bottom = UDim2.fromScale(0.5, 1);
+		left = UDim2.fromScale(0, 0.5);
+		right = UDim2.fromScale(1, 0.5);
+		topLeft = UDim2.fromScale(0, 0);
+		topRight = UDim2.fromScale(1, 0);
+		bottomLeft = UDim2.fromScale(0, 1);
+		bottomRight = UDim2.fromScale(1, 1);
 
-	Color3White					= Color3.fromRGB(255, 255, 255);
-	Color3Gray					= Color3.fromRGB(128, 128, 128);
-	Color3Black					= Color3.fromRGB();
+		--- returns `UDim2.new(w, w)`
+		fromConstant = function(w: number)
+			return UDim2.new(w, w)
+		end;
+	};
+	Vector2 = {
+		half = Vector2.new(0.5, 0.5);
+		top = Vector2.new(0.5, 0);
+		bottom = Vector2.new(0.5, 1);
+		left = Vector2.new(0, 0.5);
+		right = Vector2.new(1, 0.5);
+		topLeft = Vector2.new(0, 0);
+		topRight = Vector2.new(1, 0);
+		bottomLeft = Vector2.new(0, 1);
+		bottomRight = Vector2.new(1, 1);
 
-	Suffixes					= table.freeze{""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
+		--- returns `Vector2.new(w, w)`
+		fromConstant = function(w: number)
+			return Vector2.new(w, w)
+		end;
+	};
+	Color3 = {
+		white = Color3.fromRGB(255, 255, 255);
+		gray = Color3.fromRGB(128, 128, 128);
+		black = Color3.fromRGB(0, 0, 0);
+
+		--- returns `Color3.fromRGB(w, w, w)`
+		fromConstant = function(w: number)
+			return Color3.fromRGB(w, w, w)
+		end;
+	};
+
+	suffixes = table.freeze{""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
 
 --- returns point on bezier curve at interpolant `A`
@@ -170,7 +196,7 @@ function Interface.scaletextlabel(textlabel: TextLabel, settextbounds: boolean?,
 	textlabel.TextWrapped = true
 	if not textlabel.TextFits then
 		repeat
-			textlabel.Size += Interface.UDimOffsetY
+			textlabel.Size += Interface.UDim2.yOffset
 		until textlabel.TextFits
 	end
 
@@ -183,7 +209,7 @@ function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alig
 
 	if textlabel.TextXAlignment == Enum.TextXAlignment.Left then
 		if alignment == "Left" then
-			target.Position = Interface.UDimLeft
+			target.Position = Interface.UDim2.left
 		elseif alignment == "Right" then
 			target.Position = UDim2.new(0, TextX, 0.5, 0)
 		end
@@ -191,7 +217,7 @@ function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alig
 		if alignment == "Left" then
 			target.Position = UDim2.new(1, -TextX, 0.5, 0)
 		elseif alignment == "Right" then
-			target.Position = Interface.UDimRight
+			target.Position = Interface.UDim2.right
 		end
 	elseif textlabel.TextXAlignment == Enum.TextXAlignment.Center then
 		if alignment == "Left" then
@@ -202,10 +228,10 @@ function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alig
 	end
 	
 	if alignment == "Left" then
-		target.AnchorPoint = Interface.Vector2Right
+		target.AnchorPoint = Interface.Vector2.right
 		target.Position += UDim2.fromOffset(-(padding or 0), 0)
 	elseif alignment == "Right" then
-		target.AnchorPoint = Interface.Vector2Left
+		target.AnchorPoint = Interface.Vector2.left
 		target.Position += UDim2.fromOffset((padding or 0), 0)
 	end
 end
@@ -241,7 +267,7 @@ function Interface.toggledescendants(target: GuiObject, state: boolean, ...: str
 end
 
 --- sets visibility of all guiobject children of target
-function Interface.togglecontents(target: GuiObject, state: boolean, ...: string): ()
+function Interface.togglecontents(target: GuiObject, state: boolean, ...: string)
 	local Names = {...}
 
 	for _, Thing in target:GetChildren() do
@@ -252,7 +278,7 @@ function Interface.togglecontents(target: GuiObject, state: boolean, ...: string
 	end
 end
 
---- populates container with a grid of entries drawn from template `t` \
+--- populates container with a grid of entries drawn from `template (?=Frame)`
 --- ```lua
 --- Interface.gridfill(container, 5, 3, template)
 --- 
@@ -286,17 +312,17 @@ function Interface.gridfill(container: Frame, width: number, height: number, tem
 		end
 	end
 
-	local max = math.max(container.AbsoluteSize.X, container.AbsoluteSize.Y)
-	local div = (max / width) + gridlayout.CellPadding.X.Offset
-	gridlayout.CellSize = UDim2.fromOffset(div, div)
+	local containersize = container.AbsoluteSize
+	local target = math.round(containersize.Y - Interface.padheight(container:FindFirstChildOfClass("UIPadding")).Offset)
+	
+	local cell = target / width
+	gridlayout.CellSize = UDim2.fromOffset(cell, cell)
 
-	repeat
-		if gridlayout.AbsoluteCellCount.X < width then
-			gridlayout.CellSize -= Interface.UDimOffsetOne
-		elseif gridlayout.AbsoluteCellCount.X > width then
-			gridlayout.CellSize += Interface.UDimOffsetOne
-		end
-	until gridlayout.AbsoluteCellCount.X == width
+	if target <= 0 then
+		return
+	else
+		Interface.resizegrid(gridlayout, target, Enum.Axis.Y)
+	end
 end
 
 --- returns entries created by `Interface.gridfill`
@@ -316,7 +342,7 @@ function Interface.gridentries(container: Frame): {GuiObject}
 	return entries
 end
 
---- populates container with a list of entries drawn from template `t` \
+--- populates container with a list of entries drawn from `template (?=Frame)`
 --- ```lua
 --- Interface.listfill(container, 10, template)
 --- 
@@ -353,25 +379,13 @@ function Interface.listfill(container: Frame, rows: number, template: GuiObject?
 	local height = container.AbsoluteSize.Y
 	gridlayout.CellSize = UDim2.new(1, 0, 0, height / rows)
 
-	local desiredheight = math.round(height - padheight)
+	local target = math.round(height - padheight)
 
-	if desiredheight <= 0 then
+	if target <= 0 then
 		return
+	else
+		Interface.resizegrid(gridlayout, target, Enum.Axis.Y)
 	end
-
-	repeat
-		if gridlayout.AbsoluteContentSize.Y < desiredheight then
-			gridlayout.CellSize += Interface.UDimOffsetY
-			if gridlayout.AbsoluteContentSize.Y >= desiredheight then
-				break
-			end
-		elseif gridlayout.AbsoluteContentSize.Y > desiredheight then
-			gridlayout.CellSize -= Interface.UDimOffsetY
-			if gridlayout.AbsoluteContentSize.Y <= desiredheight then
-				break
-			end
-		end
-	until gridlayout.AbsoluteContentSize.Y == desiredheight or gridlayout.AbsoluteContentSize.Y == 0
 end
 
 --- returns entries created by `Interface.listfill`
@@ -391,73 +405,38 @@ function Interface.listentries(container: Frame): {GuiObject}
 	return entries
 end
 
---- automatically adjusts gridlayout to fit specified columns
-function Interface.adjustgridlayout(gridlayout: UIGridLayout, columns: number)
-	local Container = gridlayout.Parent :: GuiObject
-	if not gridlayout:GetAttribute("IsAutoAdjusting") then
-		gridlayout:SetAttribute("IsAutoAdjusting", true)
-
-		local Placeholders = table.create(10) :: {Frame}
-
-		local function Adjust()
-			local ThisSize = Container.AbsoluteSize
-			local Width = 1 + math.ceil(ThisSize.X / columns)
-			gridlayout.CellSize = UDim2.fromOffset(Width, Width)
-
-			for _, P in Placeholders do
-				P.Visible = true
-			end
-
-			repeat
-				gridlayout.CellSize -= Interface.UDimOffsetX
-				task.wait()
-				if gridlayout.CellSize.X.Offset < 0 then
-					gridlayout.CellSize = Interface.UDimOne
+function Interface.resizegrid(gridlayout: UIGridLayout, target: number, axis: Enum.Axis)
+	if axis == Enum.Axis.X then
+		repeat
+			if gridlayout.AbsoluteContentSize.X < target then
+				gridlayout.CellSize -= Interface.UDim2.xOffset
+				if gridlayout.AbsoluteContentSize.X >= target then
+					break
 				end
-			until (ThisSize ~= Container.AbsoluteSize) or (gridlayout.AbsoluteCellCount.X == gridlayout:GetAttribute("Columns"))
-
-			for _, P in Placeholders do
-				P.Visible = false
-			end
-		end
-
-		gridlayout:GetAttributeChangedSignal("Columns"):Connect(function()
-			for i = 1, (gridlayout:GetAttribute("Columns") :: number?) or columns do
-				local placeholder = Container:FindFirstChild("_placeholder" .. i) :: any
-				if not placeholder then
-					placeholder = Instance.new("Frame")
-					placeholder.Name = "_placeholder" .. i
-					placeholder.LayoutOrder = -99999 + i
-					placeholder.Parent = Container
-
-					Placeholders[i] = placeholder
+			elseif gridlayout.AbsoluteContentSize.X > target then
+				gridlayout.CellSize += Interface.UDim2.xOffset
+				if gridlayout.AbsoluteContentSize.X <= target then
+					break
 				end
 			end
-
-			Adjust()
-		end)
-
-		Container:GetPropertyChangedSignal("AbsoluteSize"):Connect(Adjust)
+		until gridlayout.AbsoluteContentSize.X == target or gridlayout.AbsoluteContentSize.X == 0
+	elseif axis == Enum.Axis.Y then
+		repeat
+			if gridlayout.AbsoluteContentSize.Y < target then
+				gridlayout.CellSize += Interface.UDim2.yOffset
+				if gridlayout.AbsoluteContentSize.Y >= target then
+					break
+				end
+			elseif gridlayout.AbsoluteContentSize.Y > target then
+				gridlayout.CellSize -= Interface.UDim2.yOffset
+				if gridlayout.AbsoluteContentSize.Y <= target then
+					break
+				end
+			end
+		until gridlayout.AbsoluteContentSize.Y == target or gridlayout.AbsoluteContentSize.Y == 0
+	else
+		error(axis)
 	end
-	gridlayout:SetAttribute("Columns", columns)
-end
-
---- automatically adjusts scrollingframe canvas to fit its layoutobject
-function Interface.adjustscrollcanvas(ScrollingFrame: ScrollingFrame): RBXScriptConnection?
-	local LayoutObject = ScrollingFrame:FindFirstChildOfClass("UIGridLayout") or ScrollingFrame:FindFirstChildOfClass("UIListLayout")
-	if not LayoutObject then return end
-	local PaddingObject = ScrollingFrame:FindFirstChildOfClass("UIPadding")
-
-	local Compound = 0
-	if PaddingObject then
-		Compound += PaddingObject.PaddingTop.Offset + PaddingObject.PaddingBottom.Offset
-	end
-
-	ScrollingFrame.CanvasSize = UDim2.fromOffset(0, math.ceil(LayoutObject.AbsoluteContentSize.Y + Compound))
-
-	return LayoutObject:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		ScrollingFrame.CanvasSize = UDim2.fromOffset(0, math.ceil(LayoutObject.AbsoluteContentSize.Y + Compound))
-	end)
 end
 
 --- automatically scales size of target along axis with respect to uigridlayout or uilistlayout
@@ -519,7 +498,7 @@ function Interface.unitcircle(vertices: number, radius: number, theta: number?):
 	for i = 1, vertices do
 		i -= 1
 		local a = (i * Step) + Start
-		local U = UDim2.fromScale(radius * math.cos(a), radius * math.sin(a)) + Interface.UDimHalf
+		local U = UDim2.fromScale(radius * math.cos(a), radius * math.sin(a)) + Interface.UDim2.half
 		table.insert(Results, U)
 	end
 
@@ -549,7 +528,7 @@ end
 --- abbreviates number following a `"K", "M", "B", "T", "Qd"...`-esque notation
 function Interface.abbreviatenumber(n: number, decimalplaces: number?): string
 	local exp = math.floor(math.log(math.max(1, math.abs(n)), 1000))
-	local suffix = Interface.Suffixes[1 + exp] or ("e+" .. exp)
+	local suffix = Interface.suffixes[1 + exp] or ("e+" .. exp)
 	local norm = math.floor(n * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))
 
 	return string.format("%." .. (decimalplaces or 1) .. "f%s", norm, suffix)

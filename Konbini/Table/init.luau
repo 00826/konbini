@@ -9,11 +9,7 @@ local DefaultR					= Random.new()
 --- ### Table.luau
 ---
 --- extension of table library
-local K_Table = {
-	SyncCache = {};
-	SyncLimit = 1;
-	SyncTimes = {};
-}
+local K_Table = {}
 
 --- removes and returns the first (oldest) element in queue
 function K_Table.queue_pop<T>(queue: {T}): T?

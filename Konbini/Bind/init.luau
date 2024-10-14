@@ -4,7 +4,6 @@ local types						= require(script.Parent.types)
 
 local Cache						= {}
 
-
 local Bind = { __index = {} }
 
 --- connects function to group

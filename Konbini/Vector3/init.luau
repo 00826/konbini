@@ -10,13 +10,20 @@ local DefaultR					= Random.new()
 ---
 --- extension of Vector3 library
 local K_Vector3 = {
-	yzAxis						= Vector3.new(0, 1, 1);			--- `Vector3.new(0, 1, 1)`
-	xzAxis						= Vector3.new(1, 0, 1);			--- `Vector3.new(1, 0, 1)`
-	xyAxis						= Vector3.new(1, 1, 0);			--- `Vector3.new(1, 1, 0)`
+	yzAxis = Vector3.new(0, 1, 1);
+	xzAxis = Vector3.new(1, 0, 1);
+	xyAxis = Vector3.new(1, 1, 0);
 
-	BallisticCoefficient		= Vector3.new(0, 0.5, 0);		--- Vector3 ballistic coefficient `(0.5*g*t*t)`
+	xAxisHalf = Vector3.new(0.5, 0, 0);
+	yAxisHalf = Vector3.new(0, 0.5, 0);
+	zAxisHalf = Vector3.new(0, 0, 0.5);
 
-	Gravity						= 196;
+	gravity = 196;
+
+	--- returns `Vector3.one * w`
+	fromConstant = function(w: number)
+		return Vector3.one * w
+	end;
 }
 
 --- returns `b.Y - a.Y`
@@ -255,7 +262,7 @@ end
 --- `Vector3`: offset of ballistic projectile \
 --- *in contexts where `gravity == 0`, ballistic projectile will behave like a linear projectile*
 function K_Vector3.solveballistic(direction: Vector3, velocity: number, time: number, gravity: number?): Vector3
-	return (direction * (velocity * time)) - (K_Vector3.BallisticCoefficient * (gravity or K_Vector3.Gravity) * (time * time))
+	return (direction * (velocity * time)) - (K_Vector3.yAxisHalf * (gravity or K_Vector3.gravity) * (time * time))
 end
 
 --- returns, with respect to time elapsed, \

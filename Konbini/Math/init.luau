@@ -8,16 +8,26 @@ local types						= require(script.Parent.types)
 ---
 --- extension of math library
 local K_Math = {
-	quarter_pi					= math.pi / 4;
-	half_pi						= math.pi / 2;
+	pi4 = math.pi/4;
+	pi2 = math.pi/2;
 
-	tau							= math.pi * 2;
-	radian						= math.rad(1);
+	tau = math.pi*2;
+	radian = math.rad(1);
 
-	NumberSequenceZero			= NumberSequence.new(0);
-	NumberSequenceOne			= NumberSequence.new(1);
+	NumberSequence = table.freeze{
+		zero = NumberSequence.new(0);
+		one = NumberSequence.new(0);
+	};
+	NumberRange = table.freeze{
+		zero = NumberRange.new(0);
+		one = NumberRange.new(0);
 
-	random						= Random.new();
+		zeroOne = NumberRange.new(0, 1);
+		zeroTen = NumberRange.new(0, 10);
+		zeroHundred = NumberRange.new(0, 100);
+	};
+
+	random = Random.new();
 }
 
 --- returns cooldown value of x with respect to deltatime \
@@ -184,11 +194,11 @@ end
 --- converts `x`, where `x in [0, 1]`, to a numbersequence
 function K_Math.alphatonumbersequence(x: number): NumberSequence
 	if x <= 0.01 then
-		return K_Math.NumberSequenceZero
+		return K_Math.NumberSequence.zero
 	elseif x == 1 then
-		return K_Math.NumberSequenceOne
+		return K_Math.NumberSequence.one
 	elseif x >= 0.99 then
-		return K_Math.NumberSequenceOne
+		return K_Math.NumberSequence.one
 	end
 	x = math.clamp(x, 0, 1)
 	return NumberSequence.new({

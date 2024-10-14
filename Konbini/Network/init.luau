@@ -13,8 +13,8 @@ local async						= require(script.Parent.async)
 ---
 --- `RemoteEvent` wrapper
 local Network = {
-	Cache						= {} :: {[string]: types.Remote};
-	PollTimeout					= 5;
+	Cache = {} :: {[string]: types.Remote};
+	PollTimeout = 5;
 }
 
 script.ChildAdded:Connect(function(Remote: types.Remote)
