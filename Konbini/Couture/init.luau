@@ -1,14 +1,14 @@
 --!strict
 
-local RunService				= game:GetService("RunService")
-local IsServer					= RunService:IsServer()
+local RunService = game:GetService("RunService")
+local IsServer = RunService:IsServer()
 
-local InsertService				= game:GetService("InsertService")
+local InsertService = game:GetService("InsertService")
 
-local Players					= game:GetService("Players")
+local Players = game:GetService("Players")
 
-local AccessoryPart				= script:WaitForChild("AccessoryPart")
-local Weld						= script:WaitForChild("Weld")
+local AccessoryPart = script:WaitForChild("AccessoryPart")
+local Weld = script:WaitForChild("Weld")
 
 AccessoryPart:SetAttribute("IsAccessory", true)
 

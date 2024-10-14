@@ -1,16 +1,16 @@
 --- Animation.luau types
 
-export type AnimLibraryKey		= Enum.HumanoidRigType | string
-export type AnimLibraryEntry	= {
+export type AnimLibraryKey = Enum.HumanoidRigType | string
+export type AnimLibraryEntry = {
 	Id: string;
 	Priority: Enum.AnimationPriority;
 	AnimInstance: Animation?;
 }
-export type StepSoundKey		= Enum.Material | string
+export type StepSoundKey = Enum.Material | string
 
 --- Bar.luau types
 
-export type Axes				= {
+export type Axes = {
 	X: number?;
 	Y: number?;
 	Z: number?;
@@ -18,11 +18,11 @@ export type Axes				= {
 
 --- Bind.luau types
 
-export type Disconnect			= () -> ()
+export type Disconnect = () -> ()
 
 --- Bullet.luau types
 
-export type WriteOptions		= {
+export type WriteOptions = {
 	id: string?;
 	time: number?;
 	position: Vector3?;
@@ -31,16 +31,16 @@ export type WriteOptions		= {
 
 --- Collisions.luau
 
-export type CastShape			= "Box" | "Ball"
-export type CastList			= "Whitelist" | "Blacklist"
+export type CastShape = "Box" | "Ball"
+export type CastList = "Whitelist" | "Blacklist"
 
 --- Data.luau
 
-export type SaveTemplate		= typeof(require(script.Parent.Data.Config).SaveTemplate)
+export type SaveTemplate = typeof(require(script.Parent.Data.Config).SaveTemplate)
 
 --- Inputs.luau
 
-export type Cursor				= {
+export type Cursor = {
 	--- 3d position of cursor
 	Position: Vector3;
 	--- unit vector of cursor surface
@@ -50,9 +50,9 @@ export type Cursor				= {
 	--- instance that cursor is on
 	Instance: Instance?;
 }
-export type DynamicGamepadKey	= "Y" | "X" | "B" | "A" | "L1" | "R1" | "L2" | "R2" | "R3"
+export type DynamicGamepadKey = "Y" | "X" | "B" | "A" | "L1" | "R1" | "L2" | "R2" | "R3"
 
-export type Keybind				= {
+export type Keybind = {
 	--- real-time values that will activate this keybind \
 	--- indices are as follows, and default to 0 when unbound: \
 	--- `1`: pc \
@@ -69,7 +69,7 @@ export type Keybind				= {
 
 --- Instance.luau
 
-export type Tree				= {
+export type Tree = {
 	ClassName: string;
 	Children: { Tree }?;
 	Parent: Instance?;
@@ -77,7 +77,7 @@ export type Tree				= {
 
 --- Interface.luau
 
-export type ButtonFunctions		= {
+export type ButtonFunctions = {
 	["ClickDown"]: ((x: number?, y: number?) -> ())?;
 	["ClickUp"]: ((x: number?, y: number?) -> ())?;
 	["RClickDown"]: ((x: number?, y: number?) -> ())?;
@@ -87,7 +87,7 @@ export type ButtonFunctions		= {
 	["Move"]: ((x: number?, y: number?) -> ())?;
 }
 
-export type SpriteLayout		= {
+export type SpriteLayout = {
 	--- rbxassetid://
 	Id: string;
 	--- sprite size
@@ -98,23 +98,23 @@ export type SpriteLayout		= {
 	Width: number;
 }
 
-export type Sprite				= {
+export type Sprite = {
 	--- position of sprite (L -> R, T -> B)
 	Position: number;
 	--- sprite layout
 	Layout: SpriteLayout;
 }
 
-export type LeftOrRight			= "Left" | "Right"
+export type LeftOrRight = "Left" | "Right"
 
 --- Math.luau
 
-export type UnitCircleVertex	= { X: number, Z: number }
+export type UnitCircleVertex = { X: number, Z: number }
 
 --- Network.luau
 
-export type Remote				= RemoteEvent|UnreliableRemoteEvent|any
-export type ClientArg			= 
+export type Remote = RemoteEvent|UnreliableRemoteEvent|any
+export type ClientArg = 
 	| nil
 	| number
 	| Player
@@ -123,13 +123,13 @@ export type ClientArg			=
 
 --- Rig.luau
 
-export type MoverClass			= "BodyGyro" | "BodyVelocity" | "BodyPosition" | "VectorForce"
+export type MoverClass = "BodyGyro" | "BodyVelocity" | "BodyPosition" | "VectorForce"
 
 --- Time.luau
 
-export type Notation			= "DD:HH:MM:SS" | "HH:MM:SS" | "MM:SS" | "M:SS"
-export type Format				= number | "Hour" | "Biphase" | "Day" | "Week" | "Season" | "Biseason" | "Year"
-export type FormatResult		= {
+export type Notation = "DD:HH:MM:SS" | "HH:MM:SS" | "MM:SS" | "M:SS"
+export type Format = number | "Hour" | "Biphase" | "Day" | "Week" | "Season" | "Biseason" | "Year"
+export type FormatResult = {
 	Timestamp: string;
 	Seed: number;
 	Until: number;
@@ -138,11 +138,11 @@ export type FormatResult		= {
 --- Vector3.luau
 
 --- anything that can be represented as pure `x, y, z`
-export type xyzType				= Vector3 | Vector3int16 | PVInstance | CFrame
+export type xyzType = Vector3 | Vector3int16 | PVInstance | CFrame
 
 --- Zone.luau
 
-export type Zone				= {
+export type Zone = {
 	--- parent container for placements of this zone
 	Container: Instance?;
 	--- global position of this zone

@@ -1,14 +1,14 @@
 return {
-	Name						= "PlayerData";
-	SaveKey						= "_1a";
+	Name = "PlayerData";
+	SaveKey = "_1a";
 
 	--- player savetemplate
-	SaveTemplate				= {
+	SaveTemplate = {
 		
 	};
 
 	--- keys that are replicated via Data.sync
-	SyncKeys					= table.freeze{
+	SyncKeys = table.freeze{
 		
 	} :: {string};
 }

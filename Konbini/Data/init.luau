@@ -1,28 +1,28 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local DSS						= game:GetService("DataStoreService")
-local RunService				= game:GetService("RunService")
+local DSS = game:GetService("DataStoreService")
+local RunService = game:GetService("RunService")
 
-local IsServer					= RunService:IsServer()
+local IsServer = RunService:IsServer()
 
-local DataRemote				= script:WaitForChild("DataRemote") :: RemoteEvent
+local DataRemote = script:WaitForChild("DataRemote") :: RemoteEvent
 
-local ServerCache				= {} :: {[Player]: {Data: types.SaveTemplate}}
-local ClientCache				= {} :: types.SaveTemplate
+local ServerCache = {} :: {[Player]: {Data: types.SaveTemplate}}
+local ClientCache = {} :: types.SaveTemplate
 
-local Bind						= require(script.Parent.Bind)
+local Bind = require(script.Parent.Bind)
 
 --- ### Data.luau
 ---
 --- data handler
 --- intended to be used in conjunction with profileservice
 local Data = {
-	Config						= require(script:WaitForChild("Config"));
+	Config = require(script:WaitForChild("Config"));
 
-	LoadHook					= nil :: ((Player: Player) -> {Data: types.SaveTemplate}?)?;
-	ReleaseHook					= nil :: ((Player: Player) -> boolean)?;
+	LoadHook = nil :: ((Player: Player) -> {Data: types.SaveTemplate}?)?;
+	ReleaseHook = nil :: ((Player: Player) -> boolean)?;
 }
 
 --- returns player's save data

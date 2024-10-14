@@ -1,11 +1,11 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local RunService				= game:GetService("RunService")
-local IsServer					= RunService:IsServer()
+local RunService = game:GetService("RunService")
+local IsServer = RunService:IsServer()
 
-local TimeRemote				= script:WaitForChild("TimeRemote")
+local TimeRemote = script:WaitForChild("TimeRemote")
 
 local function subf(x: string): string
 	return #x == 1 and "0" .. x or x

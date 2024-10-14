@@ -2,9 +2,9 @@
 --!native
 --!optimize 2
 
-local Encoder					= require(script.Parent.Encoder)
+local Encoder = require(script.Parent.Encoder)
 
-local DefaultR					= Random.new()
+local DefaultR = Random.new()
 
 --- ### Table.luau
 ---

@@ -1,6 +1,6 @@
 --!strict
 
-local Time						= require(script.Parent.Time)
+local Time = require(script.Parent.Time)
 
 --- ### Debounce.luau
 ---

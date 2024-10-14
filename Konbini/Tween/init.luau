@@ -1,6 +1,6 @@
 --!strict
 
-local TweenService				= game:GetService("TweenService")
+local TweenService = game:GetService("TweenService")
 
 --- ### Tween.luau
 ---

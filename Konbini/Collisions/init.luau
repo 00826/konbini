@@ -1,27 +1,27 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local WhitelistParams			= RaycastParams.new()
-WhitelistParams.FilterType		= Enum.RaycastFilterType.Include
-WhitelistParams.IgnoreWater		= true
+local WhitelistParams = RaycastParams.new()
+WhitelistParams.FilterType = Enum.RaycastFilterType.Include
+WhitelistParams.IgnoreWater = true
 
-local BlacklistParams			= RaycastParams.new()
-BlacklistParams.FilterType		= Enum.RaycastFilterType.Exclude
-BlacklistParams.IgnoreWater		= true
+local BlacklistParams = RaycastParams.new()
+BlacklistParams.FilterType = Enum.RaycastFilterType.Exclude
+BlacklistParams.IgnoreWater = true
 
-local OverlapWhite				= OverlapParams.new()
-OverlapWhite.FilterType			= Enum.RaycastFilterType.Include
-OverlapWhite.RespectCanCollide	= false
+local OverlapWhite = OverlapParams.new()
+OverlapWhite.FilterType = Enum.RaycastFilterType.Include
+OverlapWhite.RespectCanCollide = false
 
-local OverlapBlack				= OverlapParams.new()
-OverlapBlack.FilterType			= Enum.RaycastFilterType.Exclude
-OverlapBlack.RespectCanCollide	= false
+local OverlapBlack = OverlapParams.new()
+OverlapBlack.FilterType = Enum.RaycastFilterType.Exclude
+OverlapBlack.RespectCanCollide = false
 
-local f							= function() end
-local FancastResolution			= 10
+local f = function() end
+local FancastResolution = 10
 
-local DebugPart					= script:WaitForChild("DebugPart")
+local DebugPart = script:WaitForChild("DebugPart")
 
 --local Vert1 = Vector3.new(1, 1, 1)
 local Vert2 = Vector3.new(-1, 1, 1)

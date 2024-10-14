@@ -1,15 +1,15 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local RunService				= game:GetService("RunService")
+local RunService = game:GetService("RunService")
 
-local IsServer					= RunService:IsServer()
+local IsServer = RunService:IsServer()
 
-local EntityRemote				= script:WaitForChild("EntityRemote") :: RemoteEvent
+local EntityRemote = script:WaitForChild("EntityRemote") :: RemoteEvent
 
-local Bind						= require(script.Parent.Bind)
-local KTable					= require(script.Parent.Table)
+local Bind = require(script.Parent.Bind)
+local KTable = require(script.Parent.Table)
 
 --- ### Entity.luau
 ---

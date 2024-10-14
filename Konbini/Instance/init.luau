@@ -1,9 +1,9 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local SoundPart					= script:WaitForChild("SoundPart")
-local Weld						= script:WaitForChild("Weld")
+local SoundPart = script:WaitForChild("SoundPart")
+local Weld = script:WaitForChild("Weld")
 
 --- ### Instance.luau
 ---

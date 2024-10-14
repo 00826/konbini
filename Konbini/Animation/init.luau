@@ -1,13 +1,13 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local AnimationInstance			= script:WaitForChild("Animation")
+local AnimationInstance = script:WaitForChild("Animation")
 
-local AnimLibrary				= {} :: { [types.AnimLibraryKey]: {[string]: types.AnimLibraryEntry} }
-local StepSounds				= {} :: { [types.StepSoundKey]: Sound }
+local AnimLibrary = {} :: { [types.AnimLibraryKey]: {[string]: types.AnimLibraryEntry} }
+local StepSounds = {} :: { [types.StepSoundKey]: Sound }
 
-local Vector3_xzAxis			= Vector3.one - Vector3.yAxis
+local Vector3_xzAxis = Vector3.one - Vector3.yAxis
 
 --- ### Animation.luau
 ---
@@ -20,18 +20,18 @@ function Animation.Controller(rig: Model)
 	assert(Controller)
 	assert(rig.PrimaryPart)
 	return setmetatable({
-		Rig					= rig;
-		RootPart			= rig.PrimaryPart;
-		Controller			= Controller;
-		Animator			= Animator;
-		AnimTable			= Controller:IsA("Humanoid") and AnimLibrary[Controller.RigType] or AnimLibrary["Custom"];
+		Rig = rig;
+		RootPart = rig.PrimaryPart;
+		Controller = Controller;
+		Animator = Animator;
+		AnimTable = Controller:IsA("Humanoid") and AnimLibrary[Controller.RigType] or AnimLibrary["Custom"];
 
-		CurrentLoopAnim		= nil :: AnimationTrack?;
-		CurrentToolAnim		= nil :: AnimationTrack?;
+		CurrentLoopAnim = nil :: AnimationTrack?;
+		CurrentToolAnim = nil :: AnimationTrack?;
 
-		PlayStepSounds		= true;
+		PlayStepSounds = true;
 
-		ScalarBuffer		= buffer.create(12);
+		ScalarBuffer = buffer.create(12);
 		--[[
 		[0] uint8 BaseRecp # when LateralVelocity <= BaseSpeed, AnimationSpeed = LateralVelocity * (1 / BaseRecp)
 		[1] uint8 SprintRecp # when LateralVelocity > BaseSpeed, AnimationSpeed = LateralVelocity * (1 / SprintRecp)

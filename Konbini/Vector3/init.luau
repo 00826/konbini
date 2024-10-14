@@ -2,9 +2,9 @@
 --!native
 --!optimize 2
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local DefaultR					= Random.new()
+local DefaultR = Random.new()
 
 --- ### Vector3.luau
 ---

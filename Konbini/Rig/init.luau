@@ -1,17 +1,17 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local RunService				= game:GetService("RunService")
-local Players					= game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 
-local IsServer					= RunService:IsServer()
+local IsServer = RunService:IsServer()
 
-local MoverCache				= {} :: {[string]: BodyMover}
-local MoverRemote				= script:WaitForChild("MoverRemote") :: UnreliableRemoteEvent
+local MoverCache = {} :: {[string]: BodyMover}
+local MoverRemote = script:WaitForChild("MoverRemote") :: UnreliableRemoteEvent
 
-local Ball						= script:WaitForChild("BallSocketConstraint")
-local Motor						= script:WaitForChild("Motor6D")
+local Ball = script:WaitForChild("BallSocketConstraint")
+local Motor = script:WaitForChild("Motor6D")
 
 --- ### Rig.luau
 ---

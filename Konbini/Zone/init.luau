@@ -1,13 +1,13 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local RunService				= game:GetService("RunService")
-local IsServer					= RunService:IsServer()
+local RunService = game:GetService("RunService")
+local IsServer = RunService:IsServer()
 
-local Players					= game:GetService("Players")
+local Players = game:GetService("Players")
 
-local DefaultR					= Random.new()
+local DefaultR = Random.new()
 
 local function send(thing: Instance, to: Instance)
 	thing.Parent = to

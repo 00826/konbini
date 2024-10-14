@@ -1,24 +1,24 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local RunService				= game:GetService("RunService")
-local IsServer					= RunService:IsServer()
+local RunService = game:GetService("RunService")
+local IsServer = RunService:IsServer()
 
-local Players					= game:GetService("Players")
+local Players = game:GetService("Players")
 
-local UIS						= game:GetService("UserInputService")
-local GuiService				= game:GetService("GuiService")
-local GamepadService			= game:GetService("GamepadService")
+local UIS = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+local GamepadService = game:GetService("GamepadService")
 
-local Bind						= require(script.Parent.Bind)
+local Bind = require(script.Parent.Bind)
 
-local LocalPlayer				= Players.LocalPlayer
-local PlayerGui					= nil :: PlayerGui?
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = nil :: PlayerGui?
 
-local Camera					= workspace.CurrentCamera
+local Camera = workspace.CurrentCamera
 
-local Keycodes					= Enum.KeyCode:GetEnumItems()
+local Keycodes = Enum.KeyCode:GetEnumItems()
 
 local function searchkeycodes(A: {Enum.KeyCode}, enumvalue: number): Enum.KeyCode?
 	local L = 1
@@ -50,20 +50,20 @@ end
 --- `UserInputService` wrapper \
 --- compatible with pc, mobile, gamepad
 local Inputs = {
-	TouchEnabled				= UIS.TouchEnabled;
-	PlatformId					= 0;
-	InputTimes					= {};
-	DoubleTapTime				= 0.2;
+	TouchEnabled = UIS.TouchEnabled;
+	PlatformId = 0;
+	InputTimes = {};
+	DoubleTapTime = 0.2;
 	
-	MobileScreenCenter			= nil :: (() -> Vector2)?;
-	AssistMousePosition			= nil :: (() -> Vector2)?;
+	MobileScreenCenter = nil :: (() -> Vector2)?;
+	AssistMousePosition = nil :: (() -> Vector2)?;
 
-	CursorBlacklist				= table.create(8);
-	GuiInset					= Vector2.zero;
+	CursorBlacklist = table.create(8);
+	GuiInset = Vector2.zero;
 
-	Aliases						= require(script.Aliases);
-	Dynamic						= require(script.Dynamic);
-	Platforms					= require(script.Platforms);
+	Aliases = require(script.Aliases);
+	Dynamic = require(script.Dynamic);
+	Platforms = require(script.Platforms);
 }
 
 local BlacklistParams = RaycastParams.new()

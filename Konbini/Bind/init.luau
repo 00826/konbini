@@ -1,8 +1,8 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local Cache						= {}
+local Cache = {}
 
 local Bind = { __index = {} }
 

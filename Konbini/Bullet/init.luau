@@ -1,17 +1,17 @@
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local Encoder					= require(script.Parent.Encoder)
-local Time						= require(script.Parent.Time)
-local KVector3					= require(script.Parent.Vector3)
+local Encoder = require(script.Parent.Encoder)
+local Time = require(script.Parent.Time)
+local KVector3 = require(script.Parent.Vector3)
 
-local emptywidth				= 34
+local emptywidth = 34
 
-local hitscanwidth				= emptywidth + 0
-local ballisticwidth			= emptywidth + 5
-local beamwidth					= emptywidth + 2
-local bezierwidth				= emptywidth + 14
+local hitscanwidth = emptywidth + 0
+local ballisticwidth = emptywidth + 5
+local beamwidth = emptywidth + 2
+local bezierwidth = emptywidth + 14
 
-local frame						= 1/60
+local frame = 1/60
 
 --- ### Bullet.luau
 ---

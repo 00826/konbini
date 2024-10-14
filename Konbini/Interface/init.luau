@@ -1,8 +1,8 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local TweenService				= game:GetService("TweenService")
+local TweenService = game:GetService("TweenService")
 
 local function Tween(Object: Instance, Properties: {[string]: any}, Time: number, ...)
 	TweenService:Create(Object, TweenInfo.new(Time, ...), Properties):Play()

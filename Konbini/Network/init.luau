@@ -1,13 +1,13 @@
 --!strict
 
-local types						= require(script.Parent.types)
+local types = require(script.Parent.types)
 
-local Players					= game:GetService("Players")
+local Players = game:GetService("Players")
 
-local RunService				= game:GetService("RunService")
-local IsServer					= RunService:IsServer()
+local RunService = game:GetService("RunService")
+local IsServer = RunService:IsServer()
 
-local async						= require(script.Parent.async)
+local async = require(script.Parent.async)
 
 --- ### Network.luau
 ---

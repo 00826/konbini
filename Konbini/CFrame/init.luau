@@ -2,7 +2,7 @@
 --!native
 --!optimize 2
 
-local DefaultR					= Random.new()
+local DefaultR = Random.new()
 
 --- ### CFrame.luau
 ---
