@@ -2,7 +2,7 @@
 
 local types						= require(script.Parent.types)
 
-local ObjectValue				= script:WaitForChild("ObjectValue")
+local SoundPart					= script:WaitForChild("SoundPart")
 local Weld						= script:WaitForChild("Weld")
 
 --- ### Instance.luau
@@ -75,20 +75,6 @@ function K_Instance.Weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstra
 	NewWeld.Part1 = a
 	NewWeld.Parent = b
 	return NewWeld
-end
-
---- creates objectvalue proxy tree of instance with recursion levels
-function K_Instance.Proxy(inst: Instance, levels: number?): ObjectValue
-	local OV = ObjectValue:Clone()
-	OV.Name = inst.Name
-	OV.Value = inst
-
-	if levels and levels > 0 then
-		for _, Thing in inst:GetChildren() do
-			K_Instance.Proxy(Thing, levels - 1).Parent = OV
-		end
-	end
-	return OV
 end
 
 --- iterative `Property` setter
@@ -264,6 +250,49 @@ function K_Instance.ClearChildrenWithCase(inst: Instance, shoulddelete: (Thing: 
 		if string.sub(Thing.Name, 1, 1) == "_" then continue end
 		if shoulddelete(Thing) == false then continue end
 		Thing:Destroy()
+	end
+end
+
+--- emits sound at optional position or instance
+function K_Instance.EmitSound(sound: Sound, at: (Vector3|Instance)?)
+	if typeof(at) == "Instance" then
+		local real: BasePart? = nil
+		if at:IsA("BasePart") then
+			real = at
+		elseif at:IsA("Model") then
+			real = at.PrimaryPart
+		else
+			assert(`{at.ClassName} {at}`)
+		end
+		assert(real)
+
+		local newsound = sound:Clone()
+		newsound.Parent = real
+		newsound.PlayOnRemove = false
+
+		newsound.Stopped:Once(function()
+			newsound:Destroy()
+		end)
+		newsound.Ended:Once(function()
+			newsound:Destroy()
+		end)
+
+		newsound:Play()
+	elseif typeof(at) == "Vector3" then
+		local newpart = SoundPart:Clone()
+		newpart.Parent = workspace
+
+		local newsound = sound:Clone()
+		newsound.Parent = newpart
+		newsound.PlayOnRemove = true
+		
+		newpart:Destroy()
+	else
+		local newsound = sound:Clone()
+		newsound.Parent = script
+		newsound.PlayOnRemove = true
+
+		newsound:Destroy()
 	end
 end
 
