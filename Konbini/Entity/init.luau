@@ -14,7 +14,12 @@ local KTable					= require(script.Parent.Table)
 --- ### Entity.luau
 ---
 --- entity handler, belongs as a standalone
-local Entity = { Cache = {}; }
+local Entity = {
+	Cache = {};
+	
+	rate = 1/40;
+	bucket = table.create(128);
+}
 
 --- creates entity `e` from template `t (?={})`, creates id `id` \
 --- stores `e` at `e = Cache[id]` \
@@ -44,6 +49,11 @@ function Entity.remove(id: string)
 		table.clear(Entity.Cache[id])
 	end
 	Entity.Cache[id] = nil
+end
+
+--- queues entity at `Cache[id]` for the next replication cycle
+function Entity.queue(id: string)
+	KTable.queue_ifandonlyif(Entity.bucket, id)
 end
 
 --- returns first `id` that satisfies `e = Cache[id]`
@@ -83,30 +93,6 @@ function Entity.subset(scope: string, comp: (e: {}) -> boolean): {[string]: {}}
 		end
 	end
 	return subset
-end
-
---- reflects entity data across the network \
---- if `ids` are omitted, then entire cache is sent \
---- nil-ids are sent as `false`
-function Entity.sync(ids: {string}?, player: Player?)
-	assert(IsServer)
-
-	local packet = {}
-	if ids then
-		for _, id in ids do
-			packet[id] = Entity.Cache[id] or false
-		end
-	else
-		for id, e in Entity.Cache do
-			packet[id] = e or false
-		end
-	end
-
-	if player then
-		EntityRemote:FireClient(player, packet)
-	else
-		EntityRemote:FireAllClients(packet)
-	end
 end
 
 --- fires function when an entity is added
@@ -157,6 +143,27 @@ function Entity.update(e: {}, u: {})
 end
 
 if IsServer then
+	local elapsed = 0
+	RunService.Heartbeat:Connect(function(dt: number)
+		elapsed += dt
+		if elapsed < Entity.rate then return end
+		elapsed -= Entity.rate
+
+		local len = #Entity.bucket
+		if len < 1 then
+			return
+		else
+			local ids = table.move(Entity.bucket, 1, len, 1, table.create(len))
+			table.clear(Entity.bucket)
+	
+			local packet = {}
+			for _, id in ids do
+				packet[id] = Entity.Cache[id] or false
+			end
+	
+			EntityRemote:FireAllClients(packet)
+		end
+	end)
 else
 	EntityRemote.OnClientEvent:Connect(function(packet: {[string]: {}|boolean})
 		local added = {}

@@ -7,8 +7,6 @@ local IsServer					= RunService:IsServer()
 
 local TimeRemote				= script:WaitForChild("TimeRemote")
 
-local TimeBuffer				= buffer.create(4)
-
 local function subf(x: string): string
 	return #x == 1 and "0" .. x or x
 end
@@ -16,16 +14,19 @@ end
 --- ### Time.luau
 ---
 --- server-authoritative global time
-local Time = {}
+local Time = {
+	rate = 1/60;
+	buffer = buffer.create(4);
+}
 
 --- returns konbini time
 function Time.now(latency: number?): number
-	return buffer.readf32(TimeBuffer, 0) + (latency or 0)
+	return buffer.readf32(Time.buffer, 0) + (latency or 0)
 end
 
 --- returns furthest-ahead time between `x` and konbini time
 function Time.furthest(x: number?): number
-	return math.max(x or 0, buffer.readf32(TimeBuffer, 0))
+	return math.max(x or 0, buffer.readf32(Time.buffer, 0))
 end
 
 --- runs function for `x` seconds, or until function returns `true`
@@ -211,21 +212,21 @@ function Time.format(format: types.Format): types.FormatResult
 end
 
 if IsServer then
-	local Elapsed, Rate = 0, 1/60
+	local elapsed = 0
 	local function UpdateTime(t, dt)
-		buffer.writef32(TimeBuffer, 0, t)
+		buffer.writef32(Time.buffer, 0, t)
 
-		Elapsed += dt
-		if Elapsed < Rate then return end
-		Elapsed -= Rate
+		elapsed += dt
+		if elapsed < Time.rate then return end
+		elapsed -= Time.rate
 
-		TimeRemote:FireAllClients(TimeBuffer)
+		TimeRemote:FireAllClients(Time.buffer)
 	end
-	UpdateTime(0, Rate)
+	UpdateTime(0, Time.rate)
 	RunService.Stepped:Connect(UpdateTime)
 else
 	TimeRemote.OnClientEvent:Connect(function(tBuffer: buffer)
-		buffer.writef32(TimeBuffer, 0, buffer.readf32(tBuffer, 0))
+		buffer.writef32(Time.buffer, 0, buffer.readf32(tBuffer, 0))
 	end)
 end
 
