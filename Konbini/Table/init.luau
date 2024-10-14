@@ -109,6 +109,17 @@ function K_Table.deepcopy(T: {[any]: any}): {[any]: any}
 	return Copy
 end
 
+--- returns a copy of array with vargarg appended
+function K_Table.insertcopy(A: {any}, ...: any): {any}
+	local B = {...}
+	local C = table.create(#A + #B)
+
+	table.move(A, 1, #A, #C + 1, C)
+	table.move(B, 1, #B, #C + 1, C)
+
+	return C
+end
+
 --- packs vararg into a space-allocated array
 function K_Table.pack(...: any): {any}
 	local temp = {...}
