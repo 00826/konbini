@@ -5,6 +5,6 @@ local TweenService = game:GetService("TweenService")
 --- ### Tween.luau
 ---
 --- TweenService wrapper
-return function(Object: Instance, Properties: {[string]: any}, Time: number, ...)
-	TweenService:Create(Object, TweenInfo.new(Time, ...), Properties):Play()
+return function(object: Instance, properties: {[string]: any}, time: number, ...)
+	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
 end

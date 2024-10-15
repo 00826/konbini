@@ -4,8 +4,8 @@ local types = require(script.Parent.types)
 
 local TweenService = game:GetService("TweenService")
 
-local function Tween(Object: Instance, Properties: {[string]: any}, Time: number, ...)
-	TweenService:Create(Object, TweenInfo.new(Time, ...), Properties):Play()
+local function Tween(object: Instance, properties: {[string]: any}, time: number, ...)
+	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
 end
 
 local function cartesian(p: number, w: number): (number, number)
@@ -488,16 +488,11 @@ end
 function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayout, Axis: "X" | "Y"): RBXScriptConnection
 	assert(gridorlist.Parent)
 
-	local PaddingObject = gridorlist.Parent:FindFirstChildOfClass("UIPadding")
 	local Compound = 0
-	if PaddingObject then
-		if Axis == "X" then
-			Compound += PaddingObject.PaddingLeft.Offset
-			Compound += PaddingObject.PaddingRight.Offset
-		elseif Axis == "Y" then
-			Compound += PaddingObject.PaddingTop.Offset
-			Compound += PaddingObject.PaddingBottom.Offset
-		end
+	if Axis == "X" then
+		Compound += Interface.padwidth(target:FindFirstChildOfClass("UIPadding")).Offset
+	elseif Axis == "Y" then
+		Compound += Interface.padheight(target:FindFirstChildOfClass("UIPadding")).Offset
 	end
 
 	local function UpdateSize()

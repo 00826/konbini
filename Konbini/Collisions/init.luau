@@ -2,6 +2,10 @@
 
 local types = require(script.Parent.types)
 
+local TweenService = game:GetService("TweenService")
+
+local Choreographs = script:WaitForChild("C")
+
 local WhitelistParams = RaycastParams.new()
 WhitelistParams.FilterType = Enum.RaycastFilterType.Include
 WhitelistParams.IgnoreWater = true
@@ -21,16 +25,15 @@ OverlapBlack.RespectCanCollide = false
 local f = function() end
 local FancastResolution = 10
 
-local DebugPart = script:WaitForChild("DebugPart")
+local function Tween(object: Instance, properties: {[string]: any}, time: number, ...)
+	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
+end
 
---local Vert1 = Vector3.new(1, 1, 1)
-local Vert2 = Vector3.new(-1, 1, 1)
-local Vert3 = Vector3.new(-1, -1, 1)
-local Vert4 = Vector3.new(1, -1, 1)
---local Vert5 = Vector3.new(-1, -1, -1)
-local Vert6 = Vector3.new(-1, 1, -1)
-local Vert7 = Vector3.new(1, 1, -1)
-local Vert8 = Vector3.new(1, -1, -1)
+local function ChoreographOut(C: any, properties: {[string]: any})
+	Tween(C.Outer, properties, 0.1)
+	task.wait(0.1)
+	C:Destroy()
+end
 
 ---@native
 local function FastDistance(point0: Vector3, point1: Vector3): number
@@ -81,20 +84,14 @@ function Collisions.collide(part: BasePart): {BasePart}
 end
 
 --- all-in-one `workspace:GetPartBoundsInBox()`, `workspace:GetPartBoundsInRadius()`
-function Collisions.cast(castshape: types.CastShape, listtype: types.CastList, search: {Instance}, cframevector: CFrame|Vector3, sizeradius: Vector3|number, debugpart: boolean?): {BasePart}
+function Collisions.cast(castshape: types.CastShape, listtype: types.CastList, search: {Instance}, cframevector: CFrame|Vector3, sizeradius: Vector3|number): {BasePart}
 	local Overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
 	assert(typeof(Overlap) == "OverlapParams")
 	Overlap.FilterDescendantsInstances = search
 
 	if castshape == "Box" then
-		if debugpart then
-			task.defer(Collisions.debugpart, cframevector, sizeradius, Enum.PartType.Block)
-		end
 		return workspace:GetPartBoundsInBox(cframevector, sizeradius, Overlap)
 	elseif castshape == "Ball" then
-		if debugpart then
-			task.defer(Collisions.debugpart, cframevector, Vector3.one * 2 * sizeradius, Enum.PartType.Ball)
-		end
 		return workspace:GetPartBoundsInRadius(cframevector, sizeradius, Overlap)
 	else
 		warn(`invalid shape {castshape}`)
@@ -104,28 +101,20 @@ function Collisions.cast(castshape: types.CastShape, listtype: types.CastList, s
 end
 
 --- casts a whitelist raycast at origin towards direction
-function Collisions.raywhitelist(origin: Vector3, direction: Vector3, whitelist: {Instance}, debugpart: boolean?): RaycastResult
+function Collisions.raywhitelist(origin: Vector3, direction: Vector3, whitelist: {Instance}): RaycastResult
 	WhitelistParams.FilterDescendantsInstances = whitelist
-	if debugpart then
-		local Distance = direction.Magnitude
-		task.defer(Collisions.debugpart, CFrame.lookAt(origin, origin + direction) * CFrame.new(0, 0, -Distance * 0.5), Vector3.new(0.5, 0.5, Distance), Enum.PartType.Block)
-	end
 	return workspace:Raycast(origin, direction, WhitelistParams)
 end
 
 --- casts a blacklist raycast at origin towards direction
-function Collisions.rayblacklist(origin: Vector3, direction: Vector3, blacklist: {Instance}, debugpart: boolean?): RaycastResult
+function Collisions.rayblacklist(origin: Vector3, direction: Vector3, blacklist: {Instance}): RaycastResult
 	BlacklistParams.FilterDescendantsInstances = blacklist
-	if debugpart then
-		local Distance = direction.Magnitude
-		task.defer(Collisions.debugpart, CFrame.lookAt(origin, origin + direction) * CFrame.new(0, 0, -Distance * 0.5), Vector3.new(0.5, 0.5, Distance), Enum.PartType.Block)
-	end
 	return workspace:Raycast(origin, direction, BlacklistParams)
 end
 
 --- fancasts at origin towards direction
-function Collisions.fancast(origin: Vector3, direction: Vector3, theta: number, search: {Instance}, isblacklist: boolean?): {RaycastResult}
-	local Step = (math.rad(theta * 0.5)) / FancastResolution
+function Collisions.fancast(origin: Vector3, direction: Vector3, angle: number, search: {Instance}, isblacklist: boolean?): {RaycastResult}
+	local Step = (math.rad(angle * 0.5)) / FancastResolution
 	local Distance = direction.Magnitude
 	local C0 = CFrame.lookAt(origin, origin + direction.Unit)
 
@@ -152,54 +141,115 @@ function Collisions.fancast(origin: Vector3, direction: Vector3, theta: number, 
 	return Results
 end
 
---- returns vertices of Model or Part
-function Collisions.vertices(pv: Model | Part): {Vector3}
-	local C0, S0
-	if pv:IsA("Model") then
-		C0 = pv:GetPivot()
-		S0 = pv:GetExtentsSize() * 0.5
-	else
-		C0 = pv.CFrame
-		S0 = pv.Size * 0.5
-	end
-	return {
-		(C0 * (S0 --[[* Vert1]]));
-		(C0 * (S0 * Vert2));
-		(C0 * (S0 * Vert3));
-		(C0 * (S0 * Vert4));
-		(C0 * (-S0 --[[* Vert5]]));
-		(C0 * (S0 * Vert6));
-		(C0 * (S0 * Vert7));
-		(C0 * (S0 * Vert8));
-	}
+--- choreographs a box-shaped hitbox
+function Collisions.choreographBox(at: Vector3, towards: Vector3, size: Vector3, time: number): typeof(Choreographs.Box)
+	local thisbox = Choreographs.Box:Clone()
+	thisbox.CFrame = CFrame.lookAt(at, towards)
+	thisbox.Parent = workspace
+
+	thisbox.Inner.Size = size
+	thisbox.Outer.Size = size
+
+	Tween(thisbox.Inner, {Size = Vector3.zero, Visible = false}, time)
+
+	task.delay(time, ChoreographOut, thisbox, {Size = Vector3.zero, Visible = false})
+
+	return thisbox
 end
 
---- creates a debug part for 0.1 seconds
-function Collisions.debugpart(cframevector: CFrame|Vector3, sizeradius: Vector3|number, shape: Enum.PartType?, forever: boolean?): BasePart
-	local P = DebugPart:Clone() :: Part
+--- choreographs a planar hitbox
+function Collisions.choreographPlane(at: Vector3, towards: Vector3, size: Vector3, time: number): typeof(Choreographs.Plane)
+	local thisplane = Choreographs.Plane:Clone()
+	thisplane.CFrame = CFrame.lookAt(at, towards)
+	thisplane.Parent = workspace
 
-	if typeof(cframevector) == "CFrame" then
-		P.CFrame = cframevector
-	else
-		P.Position = cframevector
-	end
+	local realsize = Vector3.new(size.X, 2, size.Y)
+	thisplane.Inner.Size = realsize
+	thisplane.Outer.Size = realsize
 
-	if type(sizeradius) == "number" then
-		P.Size = Vector3.one * sizeradius
-	else
-		P.Size = sizeradius
-	end
+	Tween(thisplane.Inner, {Size = 2 * Vector3.yAxis, Visible = false}, time)
 
-	P.Shape = shape or Enum.PartType.Block
-	P.Parent = workspace
+	task.delay(time, ChoreographOut, thisplane, {Size = 2 * Vector3.yAxis, Visible = false})
 
-	if not forever then
-		task.delay(0.1, function()
-			P:Destroy()
-		end)
-	end
+	return thisplane
+end
 
-	return P
+--- choreographs a radial hitbox
+function Collisions.choreographRadius(at: Vector3, radius: number, time: number): typeof(Choreographs.Radius)
+	local thisradius = Choreographs.Radius:Clone()
+	thisradius.Position = at
+	thisradius.Parent = workspace
+
+	thisradius.Inner.Radius = radius
+	thisradius.Outer.Radius = radius
+
+	Tween(thisradius.Inner, {Radius = 0, Visible = false}, time)
+
+	task.delay(time, ChoreographOut, thisradius, {Radius = 0, Visible = false})
+
+	return thisradius
+end
+
+--- choreographs a ball-shaped hitbox
+function Collisions.choreographBall(at: Vector3, towards: Vector3, radius: number, time: number): typeof(Choreographs.Ball)
+	local thisball = Choreographs.Ball:Clone()
+	thisball.CFrame = CFrame.lookAt(at, towards)
+	thisball.Parent = workspace
+
+	thisball.Inner.Radius = radius
+	thisball.Outer.Radius = radius
+
+	Tween(thisball.Inner, {Radius = 0, Visible = false}, time)
+
+	task.delay(time, ChoreographOut, thisball, {Radius = 0, Visible = false})
+
+	return thisball
+end
+
+--- choreographs a beam-shaped hitbox
+function Collisions.choreographBeam(at: Vector3, towards: Vector3, radius: number, distance: number, time: number): typeof(Choreographs.Beam)
+	local thisbeam = Choreographs.Beam:Clone()
+	thisbeam.CFrame = CFrame.lookAt(at, towards)
+	thisbeam.Parent = workspace
+
+	thisbeam.Inner.Height = distance
+	thisbeam.Outer.Height = distance
+	thisbeam.Inner.Radius = radius
+	thisbeam.Outer.Radius = radius
+
+	local cf = CFrame.new(0, 0, -distance * 0.5)
+	thisbeam.Inner.CFrame = cf
+	thisbeam.Outer.CFrame = cf
+
+	Tween(thisbeam.Inner, {Radius = 0, Visible = false}, time)
+
+	task.delay(time, ChoreographOut, thisbeam, {Radius = 0, Visible = false})
+
+	return thisbeam
+end
+
+--- choreographs a cone-shaped hitbox
+function Collisions.choreographCone(at: Vector3, towards: Vector3, angle: number, distance: number, time: number): typeof(Choreographs.Cone)
+	local thiscone = Choreographs.Cone:Clone()
+	thiscone.CFrame = CFrame.lookAt(at, towards)
+	thiscone.Parent = workspace
+
+	thiscone.Inner.Height = distance
+	thiscone.Outer.Height = distance
+
+	local r = distance * math.tan(math.rad(angle))
+	thiscone.Inner.Radius = r
+	thiscone.Outer.Radius = r
+
+	local v = Vector3.zAxis * -distance * 0.5
+	thiscone.Inner.SizeRelativeOffset = v
+	thiscone.Outer.SizeRelativeOffset = v
+
+	Tween(thiscone.Inner, {Radius = 0, Visible = false}, time)
+
+	task.delay(time, ChoreographOut, thiscone, {Radius = 0, Visible = false})
+
+	return thiscone
 end
 
 return Collisions
