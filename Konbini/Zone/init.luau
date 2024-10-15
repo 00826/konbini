@@ -33,7 +33,8 @@ local Zone = {
 	SyncTimes = {};
 }
 
---- creates empty zone with name and placement/emplacement/never allocation size `(?=128)`
+--- creates empty zone \
+--- size `(?=128)`: array allocation for placement/emplacement/never
 function Zone.create(zoneid: string, size: number?): types.Zone
 	size = size or 128
 

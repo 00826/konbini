@@ -22,17 +22,8 @@ local OverlapBlack = OverlapParams.new()
 OverlapBlack.FilterType = Enum.RaycastFilterType.Exclude
 OverlapBlack.RespectCanCollide = false
 
-local f = function() end
-local FancastResolution = 10
-
 local function Tween(object: Instance, properties: {[string]: any}, time: number, ...)
 	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
-end
-
-local function ChoreographOut(C: any, properties: {[string]: any})
-	Tween(C.Outer, properties, 0.1)
-	task.wait(0.1)
-	C:Destroy()
 end
 
 ---@native
@@ -44,10 +35,10 @@ end
 
 --- ### Collisions.luau
 ---
---- collision solver
---- avoids using OverlapParams.new() spam when raycasting/shapecasting \
---- wraps GetPartBoundsInBox/GetPartBoundsInRadius/GetPartsInPart into a single function
-local Collisions = {}
+--- collision solver and spatial query wrapper
+local Collisions = {
+	choreographtime = 1/15;
+}
 
 --- sets collision group of baseparts under model
 function Collisions.setmodelcollisiongroup(model: Model, collisiongroup: string)
@@ -61,13 +52,13 @@ function Collisions.setmodelcollisiongroup(model: Model, collisiongroup: string)
 end
 
 --- simulates raycast against models with theoretical furthest possible raycast
-function Collisions.quickcast(origin: Vector3, distance: number, search: {Model}): {Model}
+function Collisions.quickcast(at: Vector3, distance: number, search: {Model}): {Model}
 	local found = table.create(#search)
 	for _, Model in search do
 		local C0, Size = Model:GetBoundingBox()
 		Size *= 0.5
 
-		if FastDistance(origin, C0.Position) <= (math.max(Size.X, Size.Y, Size.Z) + distance) then
+		if FastDistance(at, C0.Position) <= (math.max(Size.X, Size.Y, Size.Z) + distance) then
 			table.insert(found, Model)
 		end
 	end
@@ -77,68 +68,92 @@ end
 
 --- non-cancollide-safe BasePart:GetTouchingParts()
 function Collisions.collide(part: BasePart): {BasePart}
-	local C = part.Touched:Connect(f)
+	local C = part.Touched:Connect(function() end)
 	local T = part:GetTouchingParts()
 	C:Disconnect()
 	return T
 end
 
---- all-in-one `workspace:GetPartBoundsInBox()`, `workspace:GetPartBoundsInRadius()`
-function Collisions.cast(castshape: types.CastShape, listtype: types.CastList, search: {Instance}, cframevector: CFrame|Vector3, sizeradius: Vector3|number): {BasePart}
+--- `workspace:GetPartBoundsInBox()`
+function Collisions.box(listtype: types.CastList, search: {Instance}, at: CFrame, size: Vector3): {BasePart}
 	local Overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
 	assert(typeof(Overlap) == "OverlapParams")
 	Overlap.FilterDescendantsInstances = search
 
-	if castshape == "Box" then
-		return workspace:GetPartBoundsInBox(cframevector, sizeradius, Overlap)
-	elseif castshape == "Ball" then
-		return workspace:GetPartBoundsInRadius(cframevector, sizeradius, Overlap)
-	else
-		warn(`invalid shape {castshape}`)
-	end
-
-	return table.create(0)
+	return workspace:GetPartBoundsInBox(at, size, Overlap)
 end
 
---- casts a whitelist raycast at origin towards direction
-function Collisions.raywhitelist(origin: Vector3, direction: Vector3, whitelist: {Instance}): RaycastResult
+--- `workspace:GetPartBoundsInRadius()`
+function Collisions.ball(listtype: types.CastList, search: {Instance}, at: Vector3, radius: number): {BasePart}
+	local Overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
+	assert(typeof(Overlap) == "OverlapParams")
+	Overlap.FilterDescendantsInstances = search
+
+	return workspace:GetPartBoundsInRadius(at, radius, Overlap)
+end
+
+--- returns: \
+--- `distance`: units between `at` and its nearest point on `target` \
+--- `radians`: angle between the cone cast with `at & look` against `target` \
+--- `position`: nearest point on target towards its position on cone
+function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart): (number, number, Vector3)
+	local distance = FastDistance(at, target:GetClosestPointOnSurface(at))
+	local pivot = at + (look * distance)
+	local point = target:GetClosestPointOnSurface(pivot)
+	return distance, look:Angle((point - at).Unit), point
+
+	--faster, but less accurate against larger target sizes.
+	--hard-coding to swap depending on target mass is out-of-scope (hypocritical)
+	--[[local distance = FastDistance(at, target.Position)
+	local pivot = at + (look * distance)
+	return distance, look:Angle((target:GetClosestPointOnSurface(pivot) - at).Unit)]]
+end
+
+--- `workspace:RaycastWhitelist()`
+function Collisions.raywhitelist(at: Vector3, direction: Vector3, whitelist: {Instance}): RaycastResult
 	WhitelistParams.FilterDescendantsInstances = whitelist
-	return workspace:Raycast(origin, direction, WhitelistParams)
+	return workspace:Raycast(at, direction, WhitelistParams)
 end
 
---- casts a blacklist raycast at origin towards direction
-function Collisions.rayblacklist(origin: Vector3, direction: Vector3, blacklist: {Instance}): RaycastResult
+--- `workspace:RaycastBlacklist()`
+function Collisions.rayblacklist(at: Vector3, direction: Vector3, blacklist: {Instance}): RaycastResult
 	BlacklistParams.FilterDescendantsInstances = blacklist
-	return workspace:Raycast(origin, direction, BlacklistParams)
+	return workspace:Raycast(at, direction, BlacklistParams)
 end
 
---- fancasts at origin towards direction
-function Collisions.fancast(origin: Vector3, direction: Vector3, angle: number, search: {Instance}, isblacklist: boolean?): {RaycastResult}
-	local Step = (math.rad(angle * 0.5)) / FancastResolution
-	local Distance = direction.Magnitude
-	local C0 = CFrame.lookAt(origin, origin + direction.Unit)
+--- `workspace:Fancast()` \
+--- `resolution (?=3, minimum)`: # of rays that the fancast is composed of
+function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Vector3, radians: number, search: {Instance}, resolution: number?): {RaycastResult}
+	resolution = math.clamp(resolution or 3, 3, math.huge)
+	assert(resolution)
 
-	local Parts, Results = table.create(FancastResolution), table.create(FancastResolution * 2)
+	local bucket = table.create(resolution)
+	local results = table.create(resolution)
 
-	local function Fan(n: number)
-		local Look0 = (C0 * CFrame.Angles(0, n * Step, 0)).LookVector
+	local distance = direction.Magnitude
+	local step = radians / (resolution - 1)
+	local pivot = CFrame.new(at, at + direction) * CFrame.Angles(0, -0.5 * radians, 0)
 
-		local RaycastResult: RaycastResult = isblacklist and Collisions.rayblacklist(origin, Look0 * Distance, search) or Collisions.raywhitelist(origin, Look0 * Distance, search)
+	for i = 1, resolution do
+		local real = pivot * CFrame.Angles(0, (i - 1) * step, 0)
 
-		if RaycastResult then
-			if table.find(Parts, RaycastResult.Instance) then return end
-			table.insert(Parts, RaycastResult.Instance)
-			table.insert(Results, RaycastResult)
+		local result: RaycastResult? = nil
+		if listtype == "Whitelist" then
+			result = Collisions.raywhitelist(at, real.LookVector * distance, search)
+		elseif listtype == "Blacklist" then
+			result = Collisions.rayblacklist(at, real.LookVector * distance, search)
+		end
+
+		--- Collisions.choreographRay(at, real.LookVector * distance, result)
+
+		if result then
+			if table.find(bucket, result.Instance) then continue end
+			table.insert(bucket, result.Instance)
+			table.insert(results, result)
 		end
 	end
 
-	for i = 0, FancastResolution, 1 do
-		Fan(i)
-		if i == 0 then continue end --- skip doing 0th raycast twice
-		Fan(-i)
-	end
-
-	return Results
+	return results
 end
 
 --- choreographs a box-shaped hitbox
@@ -152,7 +167,7 @@ function Collisions.choreographBox(at: Vector3, towards: Vector3, size: Vector3,
 
 	Tween(thisbox.Inner, {Size = Vector3.zero, Visible = false}, time)
 
-	task.delay(time, ChoreographOut, thisbox, {Size = Vector3.zero, Visible = false})
+	task.delay(time, Collisions.choreographOut, thisbox, {Size = Vector3.zero, Visible = false})
 
 	return thisbox
 end
@@ -169,7 +184,7 @@ function Collisions.choreographPlane(at: Vector3, towards: Vector3, size: Vector
 
 	Tween(thisplane.Inner, {Size = 2 * Vector3.yAxis, Visible = false}, time)
 
-	task.delay(time, ChoreographOut, thisplane, {Size = 2 * Vector3.yAxis, Visible = false})
+	task.delay(time, Collisions.choreographOut, thisplane, {Size = 2 * Vector3.yAxis, Visible = false})
 
 	return thisplane
 end
@@ -185,7 +200,7 @@ function Collisions.choreographRadius(at: Vector3, radius: number, time: number)
 
 	Tween(thisradius.Inner, {Radius = 0, Visible = false}, time)
 
-	task.delay(time, ChoreographOut, thisradius, {Radius = 0, Visible = false})
+	task.delay(time, Collisions.choreographOut, thisradius, {Radius = 0, Visible = false})
 
 	return thisradius
 end
@@ -201,7 +216,7 @@ function Collisions.choreographBall(at: Vector3, towards: Vector3, radius: numbe
 
 	Tween(thisball.Inner, {Radius = 0, Visible = false}, time)
 
-	task.delay(time, ChoreographOut, thisball, {Radius = 0, Visible = false})
+	task.delay(time, Collisions.choreographOut, thisball, {Radius = 0, Visible = false})
 
 	return thisball
 end
@@ -223,7 +238,7 @@ function Collisions.choreographBeam(at: Vector3, towards: Vector3, radius: numbe
 
 	Tween(thisbeam.Inner, {Radius = 0, Visible = false}, time)
 
-	task.delay(time, ChoreographOut, thisbeam, {Radius = 0, Visible = false})
+	task.delay(time, Collisions.choreographOut, thisbeam, {Radius = 0, Visible = false})
 
 	return thisbeam
 end
@@ -247,9 +262,43 @@ function Collisions.choreographCone(at: Vector3, towards: Vector3, angle: number
 
 	Tween(thiscone.Inner, {Radius = 0, Visible = false}, time)
 
-	task.delay(time, ChoreographOut, thiscone, {Radius = 0, Visible = false})
+	task.delay(time, Collisions.choreographOut, thiscone, {Radius = 0, Visible = false})
 
 	return thiscone
+end
+
+--- choreographs a raycast with respect to its (possibly nil) resultant raycastresult
+function Collisions.choreographRay(origin: Vector3, direction: Vector3, result: RaycastResult?): typeof(Choreographs.Ray)
+	local thisray = Choreographs.Ray:Clone()
+	thisray.Parent = workspace
+
+	thisray.A.WorldPosition = origin
+	thisray.B.WorldPosition = origin + direction
+
+	if result then
+		thisray.C.Beam.Enabled = true
+		thisray.C.WorldPosition = origin
+		thisray.D.WorldPosition = result.Position
+		Tween(thisray.C.Beam, {Width0 = 0, Enabled = false}, Collisions.choreographtime)
+	else
+		thisray.C.Beam.Enabled = false
+	end
+
+	Tween(thisray.A.Beam, {Width0 = 0, Enabled = false}, Collisions.choreographtime)
+
+	task.delay(Collisions.choreographtime, function()
+		thisray:Destroy()
+	end)
+
+	return thisray
+end
+
+--- applies a shrink effect against choreograph instance `C` \
+--- C is destroyed after the effect is applied
+function Collisions.choreographOut(C: any, properties: {[string]: any})
+	Tween(C.Outer, properties, Collisions.choreographtime)
+	task.wait(Collisions.choreographtime)
+	C:Destroy()
 end
 
 return Collisions

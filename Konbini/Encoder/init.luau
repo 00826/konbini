@@ -283,7 +283,7 @@ function Encoder.unpackmatrix(m: buffer): { {number} }
 end
 
 --- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
---- `len (?=4, P(62,4)=677040)` string length
+--- `len (?=4, P(62,4)=677040)`: string length
 function Encoder.string(len: number?): string
 	local str = ""
 	for i = 1, len or 4 do
