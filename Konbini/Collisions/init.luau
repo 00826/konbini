@@ -163,7 +163,7 @@ function Collisions.choreographPlane(at: Vector3, towards: Vector3, size: Vector
 	thisplane.CFrame = CFrame.lookAt(at, towards)
 	thisplane.Parent = workspace
 
-	local realsize = Vector3.new(size.X, 2, size.Y)
+	local realsize = Vector3.new(size.X, 2, size.Z)
 	thisplane.Inner.Size = realsize
 	thisplane.Outer.Size = realsize
 
