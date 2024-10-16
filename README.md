@@ -19,7 +19,7 @@
 |[Animation.luau](./Konbini/Animation/init.luau)|aio animation handler|-|❌|
 |*[async.luau](./Konbini/async/init.luau)*|task async-await|-|❌|
 |*[Bind.luau](./Konbini/Bind/init.luau)*|bind functions|-|❌|
-|[Bullet.luau](./Konbini/Bullet/init.luau)|projectile solver|`Konbini.Encoder`<br>`Konbini.Time`<br>`Konbini.Vector3`|❌|
+|[Bullet.luau](./Konbini/Bullet/init.luau)|projectile solver|`Konbini.Encoder`<br>`Konbini.Time`|❌|
 |[CFrame.luau](./Konbini/CFrame/init.luau)|`CFrame` library extension|-|❌|
 |[Collisions.luau](./Konbini/Collisions/init.luau)|condensed spatial queries|-|❌|
 |[Couture.luau](./Konbini/Couture/init.luau)|near-client-authoritative accessory/cosmetic handling<br>game server has better things to do than weld accessories|-|❌|
