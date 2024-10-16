@@ -44,9 +44,17 @@
 ```lua
 --- UpperVariable
 --- lowervariable
---- PropertyOf, KeyOf
+--- PropertyOf, keyof, anotherKeyOf -- camel rare
 --- libraryConstructor
 --- isafunction
+
+--- ...
+--- <line break> -- "block opener"
+--- local definition
+--- definition.x
+--- definition.func()
+--- <line break> -- "block closer"
+--- ... | return definition -- "scope closer"
 
 --- types
 

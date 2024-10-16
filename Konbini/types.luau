@@ -1,12 +1,7 @@
 --- Animation.luau types
 
-export type AnimLibraryKey = Enum.HumanoidRigType | string
-export type AnimLibraryEntry = {
-	Id: string;
-	Priority: Enum.AnimationPriority;
-	AnimInstance: Animation?;
-}
-export type StepSoundKey = Enum.Material | string
+export type AnimLibraryEntry = {Id: string?, Priority: Enum.AnimationPriority?, Animation: Animation?} & {[string]: any}
+export type LocomotionState = "Idle" | "Walk" | "Run"
 
 --- Bar.luau types
 
