@@ -20,14 +20,14 @@
 |-|-|-|
 |`^`|positional character, start of string|-|
 |`$`|positional character, end of string|-|
-|`%`|escape character, end of string|-|
+|`%`|escape character|captures magic characters: `$%^*().[]+-?`|
 |-|-|-|
 |`(uppercase letter)`|represents the negation of its lowercase counterpart|-|
 |`.`|any|`me...ow` -> `me` .. `(3 characters)` .. `ow`|
 |`%w`|alphanumeric|`aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789`|
-|`%a`|upper\|lowercase letter|`aBcDeFgHiJkLmNoPqRsTuVwXyZ`|
-|`%u`|uppercase letter|`ABCDEFGHIJKLMNOPQRSTUVWXYZ`|
-|`%l`|lowercase letter|`abcdefghijklmnopqrstuvwxyz`|
+|`%a`|uppercase or lowercase|`aBcDeFgHiJkLmNoPqRsTuVwXyZ`|
+|`%u`|uppercase|`ABCDEFGHIJKLMNOPQRSTUVWXYZ`|
+|`%l`|lowercase|`abcdefghijklmnopqrstuvwxyz`|
 |`%d`|digit|`0123456789`|
 |`%p`|punctuation|`!@#;,.`|
 |`%s`|space|` `, `\n`, and `\r`|
