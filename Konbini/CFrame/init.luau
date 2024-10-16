@@ -34,6 +34,14 @@ local K_CFrame = {
 			_pi4 = CFrame.Angles(0, 0, -math.pi/4);
 		};
 	};
+	--- returns `CFrame.fromEulerAngles(v.X, v.Y, v.Z, Enum.RotationOrder.XYZ)`
+	anglesFromVector = function(v: Vector3)
+		return CFrame.fromEulerAngles(v.X, v.Y, v.Z, Enum.RotationOrder.XYZ)
+	end;
+	--- returns `Vector3.new(c:ToEulerAngles(Enum.RotationOrder.XYZ))`
+	vectorFromAngles = function(c: CFrame)
+		return Vector3.new(c:ToEulerAngles(Enum.RotationOrder.XYZ))
+	end;
 }
 
 --- applies selected axis from copyfrom to target \

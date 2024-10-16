@@ -4,7 +4,7 @@ local types = require(script.Parent.types)
 
 local TweenService = game:GetService("TweenService")
 
-local function Tween(object: Instance, properties: {[string]: any}, time: number, ...)
+local function tween(object: Instance, properties: {[string]: any}, time: number, ...)
 	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
 end
 
@@ -162,7 +162,7 @@ function Interface.scrolltext(TextLabel: TextLabel, Text: string?, Speed: number
 	TextLabel.MaxVisibleGraphemes = 0
 	if Text then TextLabel.Text = Text end
 	local n = utf8.len(TextLabel.ContentText) or 0
-	Tween(TextLabel, {MaxVisibleGraphemes = n}, n / (Speed or 40), Enum.EasingStyle.Sine)
+	tween(TextLabel, {MaxVisibleGraphemes = n}, n / (Speed or 40), Enum.EasingStyle.Sine)
 	return
 end
 

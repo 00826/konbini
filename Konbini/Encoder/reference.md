@@ -10,9 +10,24 @@
 |u24|24-bit integer|3|[ 0, 16,777,215 ]|unsigned 24-bit integer|
 |i32|long|4|[ -2,147,483,648, 2,147,483,647 ]|signed 32-bit integer|
 |u32|unsigned long|4|[ 0, 4,294,967,295 ]|unsigned 32-bit integer|
-|f32|float|4|floats: ± 3.40 * 10<sup>38</sup> (floats)<br>[0, 16,777,216] (integers)|32-bit float|
-|f64|double|8|± 1.80 * 10<sup>308</sup> (floats)<br>[± 9,007,199,254,740,992] (integers)|64-bit float|
+|f32|float|4|± 3.40 * 10<sup>38</sup> (floats)<br>[ 0, 16,777,216 ] (integers)|32-bit float|
+|f64|double|8|± 1.80 * 10<sup>308</sup> (floats)<br>[ ± 9,007,199,254,740,992 ] (integers)|64-bit float|
 |string|string|#string|#string|string|
+
+### unsigned int bit flagging
+
+|width|`2^n-1`|width|`2^n-1`|
+|-|-|-|-|
+|`1`|1|`11`|2,047|
+|`2`|3|`12`|4,095|
+|`3`|7|`13`|8,191|
+|`4`|15|`14`|16,383|
+|`5`|31|`15`|32,767|
+|`6`|63|`16`|65,535|
+|`7`|127|-|-|
+|`8`|255|`31`|2,147,483,647|
+|`9`|511|`32`|4,294,967,295|
+|`10`|1,023|-|-|
 
 ### luau regex
 
@@ -45,4 +60,3 @@
 |`*`|matches previous char 0 to n times|`meow*` -> `meo` .. `(any? character)`|
 |`+`|matches previous char 1 to n times|`meow+` -> `meow ... meowwwwww...`|
 |`?`|matches previous char 0 or 1 times|`meow?` -> `meo\|meow`|
-|-|-|-|

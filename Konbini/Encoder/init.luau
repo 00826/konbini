@@ -282,6 +282,21 @@ function Encoder.unpackmatrix(m: buffer): { {number} }
 	return u
 end
 
+--- writes value to bit-field-width of u32 stored in buffer at offset \
+--- returns new value, for convenience \
+--- accessible bit range: `[0, 31]`
+function Encoder.writeflagu32(b: buffer, offset: number, field: number, width: number, value: number): number
+	local x = bit32.replace(buffer.readu32(b, offset), value, field, width)
+	buffer.writeu32(b, offset, x)
+	return x
+end
+
+--- reads value stored along bit-field-width of u32 stored in buffer at offset \
+--- accessible bit range: `[0, 31]`
+function Encoder.readflagu32(b: buffer, offset: number, field: number, width: number): number
+	return bit32.extract(buffer.readu32(b, offset), field, width)
+end
+
 --- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
 --- `len (?=4, P(62,4)=677040)`: string length
 function Encoder.string(len: number?): string

@@ -10,15 +10,13 @@ local DefaultR = Random.new()
 ---
 --- extension of Vector3 library
 local K_Vector3 = {
-	yzAxis = Vector3.new(0, 1, 1);
-	xzAxis = Vector3.new(1, 0, 1);
-	xyAxis = Vector3.new(1, 1, 0);
+	yzAxis = Vector3.one - Vector3.xAxis;
+	xzAxis = Vector3.one - Vector3.yAxis;
+	xyAxis = Vector3.one - Vector3.zAxis;
 
-	xAxisHalf = Vector3.new(0.5, 0, 0);
-	yAxisHalf = Vector3.new(0, 0.5, 0);
-	zAxisHalf = Vector3.new(0, 0, 0.5);
-
-	gravity = 196;
+	xAxisHalf = Vector3.xAxis * 0.5;
+	yAxisHalf = Vector3.yAxis * 0.5;
+	zAxisHalf = Vector3.zAxis * 0.5;
 
 	--- returns `Vector3.one * w`
 	fromConstant = function(w: number)
@@ -249,51 +247,6 @@ function K_Vector3.stretch(a: Vector3, b: Vector3, r: number): Vector3
 		return b
 	end
 	return a + (K_Vector3.direction(a, b) * r)
-end
-
---- returns degree rotations interpreted as a rotation vector
-function K_Vector3.torotationvector(dX: number, dY: number, dZ: number): Vector3
-	return Vector3.new(dX, dY, dZ) * math.rad(1)
-end
-
---- returns rotation vector as `CFrame.Angles`
-function K_Vector3.rotationvectortoangles(rotationvector: Vector3): CFrame
-	return CFrame.Angles(rotationvector.X, rotationvector.Y, rotationvector.Z)
-end
-
---- returns, with respect to time elapsed: \
---- `CFrame`: rotation vector as `CFrame.Angles`
-function K_Vector3.solverotate(rotationvector: Vector3, time: number): CFrame
-	rotationvector *= time
-	return CFrame.Angles(rotationvector.X, rotationvector.Y, rotationvector.Z)
-end
-
---- returns, with respect to time elapsed: \
---- `Vector3`: size of transform as `Vector3(diameter, diameter, length)` \
---- `Vector3`: offset of transform as `Vector3(0, 0, length / 2)`
-function K_Vector3.solvetransform(size: Vector3, velocity: number, time: number): (Vector3, Vector3)
-	local Distance = velocity * time
-	return Vector3.new(size.X, size.Y, Distance), Vector3.new(0, 0, Distance * -0.5)
-end
-
---- returns, with respect to time elapsed: \
---- `Vector3`: offset of ballistic projectile \
---- *in contexts where `gravity == 0`, ballistic projectile will behave like a linear projectile*
-function K_Vector3.solveballistic(direction: Vector3, velocity: number, time: number, gravity: number?): Vector3
-	return (direction * (velocity * time)) - (K_Vector3.yAxisHalf * (gravity or K_Vector3.gravity) * (time * time))
-end
-
---- returns, with respect to time elapsed, \
---- where `a`/`c` are the start/end points, \
---- and `b` is a control point: \
---- `Vector3`: position of bezier-curve projectile \
---- `A`: interpolant used to solve the position \
---- *distance is approximated by adding the distances from `a` to `b` and `b` to `c`*
-function K_Vector3.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number): (Vector3, number)
-	local A = (time * velocity) / (K_Vector3.distance(a, b) + K_Vector3.distance(b, c))
-	local P0 = a:Lerp(b, A)
-	local P1 = b:Lerp(c, A)
-	return P0:Lerp(P1, A), A
 end
 
 --- returns vector `a` as a string

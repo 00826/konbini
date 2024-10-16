@@ -1,8 +1,9 @@
+--!strict
+
 local types = require(script.Parent.types)
 
 local Encoder = require(script.Parent.Encoder)
 local Time = require(script.Parent.Time)
-local KVector3 = require(script.Parent.Vector3)
 
 local emptywidth = 34
 
@@ -11,7 +12,12 @@ local ballisticwidth = emptywidth + 5
 local beamwidth = emptywidth + 2
 local bezierwidth = emptywidth + 14
 
-local frame = 1/60
+---@native
+local function fastdistance(a: Vector3, b: Vector3): number
+	b -= a
+	local x, y, z = b.X, b.Y, b.Z
+	return ((x * x) + (y * y) + (z * z)) ^ 0.5
+end
 
 --- ### Bullet.luau
 ---
@@ -22,7 +28,12 @@ local frame = 1/60
 --- `2`: ballistic \
 --- `3`: beam \
 --- `4`: bezier
-local Bullet = {}
+local Bullet = {
+	gravity = 196;
+	frame = 1/60;
+
+	coefficient = 0.5 * Vector3.yAxis; -- the 0.5 of 0.5*g*t*t
+}
 
 --- writes properties to base bullet range
 function Bullet.write(b: buffer, options: types.WriteOptions)
@@ -109,8 +120,8 @@ function Bullet.ballisticsolve(b: buffer, dt: number?)
 	local now = Time.now()
 	local elapsed = now - start
 
-	local thisframe = position + KVector3.solveballistic(unitvector, velocity, elapsed, gravity)
-	local stepframe = position + KVector3.solveballistic(unitvector, velocity, elapsed + (dt or frame), gravity)
+	local thisframe = position + Bullet.solveballistic(unitvector, velocity, elapsed, gravity)
+	local stepframe = position + Bullet.solveballistic(unitvector, velocity, elapsed + (dt or Bullet.frame), gravity)
 
 	return {
 		position = thisframe;
@@ -198,8 +209,8 @@ function Bullet.beziersolve(b: buffer, dt: number?)
 	local now = Time.now()
 	local elapsed = now - start
 
-	local thisframe, a = KVector3.solvebezier(startpoint, controlpoint, endpoint, speed, elapsed)
-	local stepframe = KVector3.solvebezier(startpoint, controlpoint, endpoint, speed, elapsed + (dt or frame))
+	local thisframe, a = Bullet.solvebezier(startpoint, controlpoint, endpoint, speed, elapsed)
+	local stepframe = Bullet.solvebezier(startpoint, controlpoint, endpoint, speed, elapsed + (dt or Bullet.frame))
 
 	return {
 		position = thisframe;
@@ -207,6 +218,37 @@ function Bullet.beziersolve(b: buffer, dt: number?)
 		deltavector = stepframe - thisframe;
 		interpolant = a;
 	}
+end
+
+--- returns, with respect to time elapsed: \
+--- `Vector3`: size of transform as `Vector3(diameter, diameter, length)` \
+--- `Vector3`: offset of transform as `Vector3(0, 0, length / 2)`
+--- @native
+function Bullet.solvetransform(size: Vector3, velocity: number, time: number): (Vector3, Vector3)
+	local distance = velocity * time
+	return Vector3.new(size.X, size.Y, distance), Vector3.new(0, 0, -0.5 * distance)
+end
+
+--- returns, with respect to time elapsed: \
+--- `Vector3`: offset of ballistic projectile \
+--- *in contexts where `gravity == 0`, ballistic projectile will behave like a linear projectile*
+--- @native
+function Bullet.solveballistic(direction: Vector3, velocity: number, time: number, gravity: number?): Vector3
+	return (direction * (velocity * time)) - (Bullet.coefficient * (gravity or Bullet.gravity) * (time * time))
+end
+
+--- returns, with respect to time elapsed, \
+--- where `a`/`c` are the start/end points, \
+--- and `b` is a control point: \
+--- `Vector3`: position of bezier-curve projectile \
+--- `A`: interpolant used to solve the position \
+--- *distance is approximated by adding the distances from `a` to `b` and `b` to `c`*
+--- @native
+function Bullet.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number): (Vector3, number)
+	local A = (time * velocity) / (fastdistance(a, b) + fastdistance(b, c))
+	local P0 = a:Lerp(b, A)
+	local P1 = b:Lerp(c, A)
+	return P0:Lerp(P1, A), A
 end
 
 return Bullet

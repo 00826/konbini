@@ -22,14 +22,14 @@ local OverlapBlack = OverlapParams.new()
 OverlapBlack.FilterType = Enum.RaycastFilterType.Exclude
 OverlapBlack.RespectCanCollide = false
 
-local function Tween(object: Instance, properties: {[string]: any}, time: number, ...)
+local function tween(object: Instance, properties: {[string]: any}, time: number, ...)
 	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
 end
 
 ---@native
-local function FastDistance(point0: Vector3, point1: Vector3): number
-	point1 -= point0
-	local x, y, z = point1.X, point1.Y, point1.Z
+local function fastdistance(a: Vector3, b: Vector3): number
+	b -= a
+	local x, y, z = b.X, b.Y, b.Z
 	return ((x * x) + (y * y) + (z * z)) ^ 0.5
 end
 
@@ -58,7 +58,7 @@ function Collisions.quickcast(at: Vector3, distance: number, search: {Model}): {
 		local C0, Size = Model:GetBoundingBox()
 		Size *= 0.5
 
-		if FastDistance(at, C0.Position) <= (math.max(Size.X, Size.Y, Size.Z) + distance) then
+		if fastdistance(at, C0.Position) <= (math.max(Size.X, Size.Y, Size.Z) + distance) then
 			table.insert(found, Model)
 		end
 	end
@@ -97,14 +97,14 @@ end
 --- `radians`: angle between the cone cast with `at & look` against `target` \
 --- `position`: nearest point on target towards its position on cone
 function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart): (number, number, Vector3)
-	local distance = FastDistance(at, target:GetClosestPointOnSurface(at))
+	local distance = fastdistance(at, target:GetClosestPointOnSurface(at))
 	local pivot = at + (look * distance)
 	local point = target:GetClosestPointOnSurface(pivot)
 	return distance, look:Angle((point - at).Unit), point
 
 	--faster, but less accurate against larger target sizes.
 	--hard-coding to swap depending on target mass is out-of-scope (hypocritical)
-	--[[local distance = FastDistance(at, target.Position)
+	--[[local distance = fastdistance(at, target.Position)
 	local pivot = at + (look * distance)
 	return distance, look:Angle((target:GetClosestPointOnSurface(pivot) - at).Unit)]]
 end
@@ -165,7 +165,7 @@ function Collisions.choreographBox(at: Vector3, towards: Vector3, size: Vector3,
 	thisbox.Inner.Size = size
 	thisbox.Outer.Size = size
 
-	Tween(thisbox.Inner, {Size = Vector3.zero, Visible = false}, time)
+	tween(thisbox.Inner, {Size = Vector3.zero, Visible = false}, time)
 
 	task.delay(time, Collisions.choreographOut, thisbox, {Size = Vector3.zero, Visible = false})
 
@@ -182,7 +182,7 @@ function Collisions.choreographPlane(at: Vector3, towards: Vector3, size: Vector
 	thisplane.Inner.Size = realsize
 	thisplane.Outer.Size = realsize
 
-	Tween(thisplane.Inner, {Size = 2 * Vector3.yAxis, Visible = false}, time)
+	tween(thisplane.Inner, {Size = 2 * Vector3.yAxis, Visible = false}, time)
 
 	task.delay(time, Collisions.choreographOut, thisplane, {Size = 2 * Vector3.yAxis, Visible = false})
 
@@ -198,7 +198,7 @@ function Collisions.choreographRadius(at: Vector3, radius: number, time: number)
 	thisradius.Inner.Radius = radius
 	thisradius.Outer.Radius = radius
 
-	Tween(thisradius.Inner, {Radius = 0, Visible = false}, time)
+	tween(thisradius.Inner, {Radius = 0, Visible = false}, time)
 
 	task.delay(time, Collisions.choreographOut, thisradius, {Radius = 0, Visible = false})
 
@@ -214,7 +214,7 @@ function Collisions.choreographBall(at: Vector3, towards: Vector3, radius: numbe
 	thisball.Inner.Radius = radius
 	thisball.Outer.Radius = radius
 
-	Tween(thisball.Inner, {Radius = 0, Visible = false}, time)
+	tween(thisball.Inner, {Radius = 0, Visible = false}, time)
 
 	task.delay(time, Collisions.choreographOut, thisball, {Radius = 0, Visible = false})
 
@@ -236,7 +236,7 @@ function Collisions.choreographBeam(at: Vector3, towards: Vector3, radius: numbe
 	thisbeam.Inner.CFrame = cf
 	thisbeam.Outer.CFrame = cf
 
-	Tween(thisbeam.Inner, {Radius = 0, Visible = false}, time)
+	tween(thisbeam.Inner, {Radius = 0, Visible = false}, time)
 
 	task.delay(time, Collisions.choreographOut, thisbeam, {Radius = 0, Visible = false})
 
@@ -260,7 +260,7 @@ function Collisions.choreographCone(at: Vector3, towards: Vector3, angle: number
 	thiscone.Inner.SizeRelativeOffset = v
 	thiscone.Outer.SizeRelativeOffset = v
 
-	Tween(thiscone.Inner, {Radius = 0, Visible = false}, time)
+	tween(thiscone.Inner, {Radius = 0, Visible = false}, time)
 
 	task.delay(time, Collisions.choreographOut, thiscone, {Radius = 0, Visible = false})
 
@@ -279,12 +279,12 @@ function Collisions.choreographRay(origin: Vector3, direction: Vector3, result: 
 		thisray.C.Beam.Enabled = true
 		thisray.C.WorldPosition = origin
 		thisray.D.WorldPosition = result.Position
-		Tween(thisray.C.Beam, {Width0 = 0, Enabled = false}, Collisions.choreographtime)
+		tween(thisray.C.Beam, {Width0 = 0, Enabled = false}, Collisions.choreographtime)
 	else
 		thisray.C.Beam.Enabled = false
 	end
 
-	Tween(thisray.A.Beam, {Width0 = 0, Enabled = false}, Collisions.choreographtime)
+	tween(thisray.A.Beam, {Width0 = 0, Enabled = false}, Collisions.choreographtime)
 
 	task.delay(Collisions.choreographtime, function()
 		thisray:Destroy()
@@ -296,7 +296,7 @@ end
 --- applies a shrink effect against choreograph instance `C` \
 --- C is destroyed after the effect is applied
 function Collisions.choreographOut(C: any, properties: {[string]: any})
-	Tween(C.Outer, properties, Collisions.choreographtime)
+	tween(C.Outer, properties, Collisions.choreographtime)
 	task.wait(Collisions.choreographtime)
 	C:Destroy()
 end
