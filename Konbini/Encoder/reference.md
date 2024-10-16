@@ -1,4 +1,4 @@
-### buffer reference table
+### int/float types
 
 |alias|type|byte size (offset)|range|description|
 |-|-|-|-|-|
@@ -13,3 +13,36 @@
 |f32|float|4|floats: ± 3.40 * 10<sup>38</sup> (floats)<br>[0, 16,777,216] (integers)|32-bit float|
 |f64|double|8|± 1.80 * 10<sup>308</sup> (floats)<br>[± 9,007,199,254,740,992] (integers)|64-bit float|
 |string|string|#string|#string|string|
+
+### luau regex
+
+|pattern|type|example|
+|-|-|-|
+|`^`|positional character, start of string|-|
+|`$`|positional character, end of string|-|
+|`%`|escape character, end of string|-|
+|-|-|-|
+|`(uppercase letter)`|represents the negation of its lowercase counterpart|-|
+|`.`|any|`me...ow` -> `me` .. `(3 characters)` .. `ow`|
+|`%w`|alphanumeric|`aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789`|
+|`%a`|upper\|lowercase letter|`aBcDeFgHiJkLmNoPqRsTuVwXyZ`|
+|`%u`|uppercase letter|`ABCDEFGHIJKLMNOPQRSTUVWXYZ`|
+|`%l`|lowercase letter|`abcdefghijklmnopqrstuvwxyz`|
+|`%d`|digit|`0123456789`|
+|`%p`|punctuation|`!@#;,.`|
+|`%s`|space|` `, `\n`, and `\r`|
+|`%c`|control|-|
+|`%x`|hexadecimal|`0123456789ABCDEF`|
+|`%z`|null|`\0`|
+|-|-|-|
+|`[]`|establishes a range|-|
+|`[ab]`|`i = "a" \| "b"`|-|
+|`[^ab]`|`i = "a" NOR "b"`|-|
+|`[a-z]`|`i ∈ {a ... z}`|-|
+|`[0-5]`|`i ∈ {0, ... 5}`|-|
+|`[a-zA-Z0-9]`|`i ∈ {a ... z} \| {A ... Z} \| {0 ... 9}`|-|
+|-|-|-|
+|`*`|matches previous char 0 to n times|`meow*` -> `meo` .. `(any? character)`|
+|`+`|matches previous char 1 to n times|`meow+` -> `meow ... meowwwwww...`|
+|`?`|matches previous char 0 or 1 times|`meow?` -> `meo\|meow`|
+|-|-|-|

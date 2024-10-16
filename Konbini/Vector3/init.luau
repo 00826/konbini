@@ -24,6 +24,24 @@ local K_Vector3 = {
 	fromConstant = function(w: number)
 		return Vector3.one * w
 	end;
+	--- returns vector composed of `"XYZ" (%u pattern)` axes \
+	--- characters can be repeated
+	isolateAxes = function(a: Vector3, axes: string)
+		local b = Vector3.zero
+
+		string.gsub(axes, "%u", function(sub: string)
+			if sub == "X" then
+				b += Vector3.xAxis * a.X
+			elseif sub == "Y" then
+				b += Vector3.yAxis * a.Y
+			elseif sub == "Z" then
+				b += Vector3.zAxis * a.Z
+			end
+			return sub
+		end)
+
+		return b
+	end;
 }
 
 --- returns `b.Y - a.Y`
