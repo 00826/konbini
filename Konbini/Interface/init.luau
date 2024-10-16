@@ -157,12 +157,13 @@ function Interface.importsounds(sounds: {Sound}): ()
 	end
 end
 
---- scrolls textlabel text
-function Interface.scrolltext(TextLabel: TextLabel, Text: string?, Speed: number?): ()
-	TextLabel.MaxVisibleGraphemes = 0
-	if Text then TextLabel.Text = Text end
-	local n = utf8.len(TextLabel.ContentText) or 0
-	tween(TextLabel, {MaxVisibleGraphemes = n}, n / (Speed or 40), Enum.EasingStyle.Sine)
+--- scrolls textlabel text \
+--- `speed (?=40)` scrolling speed
+function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?): ()
+	textlabel.MaxVisibleGraphemes = 0
+	if text then textlabel.Text = text end
+	local n = utf8.len(textlabel.ContentText) or 0
+	tween(textlabel, {MaxVisibleGraphemes = n}, n / (speed or 40), Enum.EasingStyle.Sine)
 	return
 end
 
@@ -509,8 +510,15 @@ function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayou
 	return gridorlist:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateSize)
 end
 
---- sets padding values of uipadding instance
-function Interface.pad(uipadding: UIPadding, value: UDim): ()
+--- applies `UIPadding` instance with padding values to guiobject, instantiating one if it has not been created already
+function Interface.pad(guiobject: GuiObject, value: UDim): ()
+	local uipadding = guiobject:FindFirstChildOfClass("UIPadding")
+	if not uipadding then
+		uipadding = Instance.new("UIPadding") ; -- this semicolon is INSANE
+		(uipadding::any).Parent = Interface.pad
+	end
+	assert(uipadding)
+
 	uipadding.PaddingTop = value
 	uipadding.PaddingLeft = value
 	uipadding.PaddingRight = value
