@@ -42,6 +42,12 @@
 ## design language
 
 ```lua
+--- UpperVariable
+--- lowervariable
+--- PropertyOf, KeyOf
+--- libraryConstructor
+--- isafunction
+
 --- types
 
 --- services
