@@ -14,7 +14,7 @@ local Misc = {
 			(t == "string" and value ~= "") or
 			(t == "vector" and value.Magnitude > 0) or
 			(t == "table" and next(value) ~= nil) or
-			(t == "function" and (value :: () -> ())()) or false
+			(t == "function" and (value : -> ())()) or false
 	end
 }
 

@@ -88,14 +88,14 @@ function Inputs.cursor(): types.Cursor
 end
 
 --- adds instance to cursor blacklist
-function Inputs.cursorblacklistadd(thing: Instance): ()
+function Inputs.cursorblacklistadd(thing: Instance)
 	if not table.find(Inputs.CursorBlacklist, thing) then
 		table.insert(Inputs.CursorBlacklist, thing)
 	end
 end
 
 --- removes instance from cursor blacklist
-function Inputs.cursorblacklistremove(thing: Instance): ()
+function Inputs.cursorblacklistremove(thing: Instance)
 	table.remove(Inputs.CursorBlacklist, table.find(Inputs.CursorBlacklist, thing) or 0)
 end
 
@@ -208,7 +208,7 @@ function Inputs.gamepadcursorstatechanged(f: (GamepadCursorEnabled: boolean) -> 
 end
 
 --- sets visibility of mouse icon
-function Inputs.setmouseiconenabled(state: boolean): ()
+function Inputs.setmouseiconenabled(state: boolean)
 	UIS.MouseIconEnabled = state
 end
 
@@ -275,7 +275,7 @@ end
 --- ---  ┣━ UIStroke: UIStroke?
 --- ---  ┗━ Button: TextButton
 --- ```
-function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState) -> ()): ()
+function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState) -> ())
 	for KeyId, KeyEnum in Inputs.Dynamic do
 		local ButtonFrame = gamepadobject:FindFirstChild(KeyId :: types.DynamicGamepadKey)
 		if not ButtonFrame then warn(gamepadobject, KeyId); continue end

@@ -45,7 +45,7 @@ function Data.read(player: Player, key: string): unknown
 end
 
 --- sends select keys and their associated value to player
-function Data.sync(player: Player, keys: {string}?): ()
+function Data.sync(player: Player, keys: {string}?)
 	assert(IsServer)
 
 	local SaveData = ServerCache[player].Data
@@ -59,7 +59,7 @@ function Data.sync(player: Player, keys: {string}?): ()
 end
 
 --- is called when a sync packet is received
-function Data.recv(packet: types.SaveTemplate): ()
+function Data.recv(packet: types.SaveTemplate)
 	assert(not IsServer)
 
 	for k, v in packet do
@@ -100,7 +100,7 @@ end
 --- "24103210 12345 67890"
 --- "24103210, 12345, 67890"
 --- ```
-function Data.wipe(gameid: number, lazystring: string): ()
+function Data.wipe(gameid: number, lazystring: string)
 	local DataStore = DSS:GetDataStore(Data.Config.Name)
 	assert(game.GameId == gameid, "gameid mismatch")
 	assert(RunService:IsStudio() and RunService:IsEdit() and IsServer and DataStore)

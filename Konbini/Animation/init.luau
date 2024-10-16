@@ -166,12 +166,12 @@ function Animation.__index:LoadFromRef(ref: string): AnimationTrack
 end
 
 --- mutes step sounds
-function Animation.__index:MuteStepSounds(time: number): ()
+function Animation.__index:MuteStepSounds(time: number)
 	buffer.writef32(self.ScalarBuffer, 8, os.clock() + time)
 end
 
 --- destroys controller
-function Animation.__index:Destroy(): ()
+function Animation.__index:Destroy()
 	if self.CurrentLoopAnim then
 		self.CurrentLoopAnim:Stop()
 	end
@@ -224,7 +224,7 @@ function Animation.addanimator(rig: Model): Animator?
 end
 
 --- stops all playing animation tracks
-function Animation.stopplaying(A: Animator): ()
+function Animation.stopplaying(A: Animator)
 	for _, AnimTrack in A:GetPlayingAnimationTracks() do
 		AnimTrack:Stop()
 	end
@@ -280,7 +280,7 @@ function Animation.playfromref(rig: Model, ref: string): AnimationTrack?
 end
 
 --- defines animation library for functions/methods that use anim references
-function Animation.defineanimlibrary(T: { [types.AnimLibraryKey]: { [string]: types.AnimLibraryEntry } }): ()
+function Animation.defineanimlibrary(T: { [types.AnimLibraryKey]: { [string]: types.AnimLibraryEntry } })
 	for RigType, AnimTable in T do
 		AnimLibrary[RigType] = AnimTable
 		for k, v in AnimTable do
@@ -295,7 +295,7 @@ function Animation.defineanimlibrary(T: { [types.AnimLibraryKey]: { [string]: ty
 end
 
 --- defines step sounds
-function Animation.definestepsounds(T: { [types.StepSoundKey]: Sound }): ()
+function Animation.definestepsounds(T: { [types.StepSoundKey]: Sound })
 	for Material, Sound in T do
 		StepSounds[Material] = Sound
 	end

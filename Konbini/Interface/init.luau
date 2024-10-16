@@ -140,7 +140,7 @@ function Interface.bezier(A: number, points: {UDim2}): UDim2
 end
 
 --- plays imported sound
-function Interface.playsound(ref: string): ()
+function Interface.playsound(ref: string)
 	local Sound = Interface.ButtonSounds[ref]
 	assert(Sound, `{ref} not an imported sound`)
 
@@ -151,7 +151,7 @@ function Interface.playsound(ref: string): ()
 end
 
 --- imports sounds
-function Interface.importsounds(sounds: {Sound}): ()
+function Interface.importsounds(sounds: {Sound})
 	for _, Sound in sounds do
 		Interface.ButtonSounds[Sound.Name] = Sound
 	end
@@ -159,7 +159,7 @@ end
 
 --- scrolls textlabel text \
 --- `speed (?=40)` scrolling speed
-function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?): ()
+function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?)
 	textlabel.MaxVisibleGraphemes = 0
 	if text then textlabel.Text = text end
 	local n = utf8.len(textlabel.ContentText) or 0
@@ -214,7 +214,7 @@ function Interface.connectbutton(button: GuiButton, connectfunctions: types.Butt
 end
 
 --- applies sprite to imagelabel
-function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite): ()
+function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite)
 	local Layout = sprite.Layout
 
 	if Layout then
@@ -511,7 +511,7 @@ function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayou
 end
 
 --- applies `UIPadding` instance with padding values to guiobject, instantiating one if it has not been created already
-function Interface.pad(guiobject: GuiObject, value: UDim): ()
+function Interface.pad(guiobject: GuiObject, value: UDim)
 	local uipadding = guiobject:FindFirstChildOfClass("UIPadding")
 	if not uipadding then
 		uipadding = Instance.new("UIPadding") ; -- this semicolon is INSANE

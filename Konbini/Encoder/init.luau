@@ -24,7 +24,7 @@ function Encoder.readvector3(b: buffer, offset: number): Vector3
 end
 
 --- writes Vector3 to buffer
-function Encoder.writevector3(b: buffer, offset: number, value: Vector3): ()
+function Encoder.writevector3(b: buffer, offset: number, value: Vector3)
 	buffer.writef32(b, offset, value.X)
 	buffer.writef32(b, offset + 4, value.Y)
 	buffer.writef32(b, offset + 8, value.Z)
@@ -41,7 +41,7 @@ end
 
 --- writes unit vector to buffer \
 --- `x,y,z`: mapped to `[-127, 127]`
-function Encoder.writeunitvector(b: buffer, offset: number, value: Vector3): ()
+function Encoder.writeunitvector(b: buffer, offset: number, value: Vector3)
 	buffer.writei8(b, offset + 0, math.clamp(value.X * 127, -127, 127))
 	buffer.writei8(b, offset + 1, math.clamp(value.Y * 127, -127, 127))
 	buffer.writei8(b, offset + 2, math.clamp(value.Z * 127, -127, 127))
@@ -61,7 +61,7 @@ function Encoder.readcframe(b: buffer, offset: number): CFrame
 end
 
 --- writes CFrame to buffer
-function Encoder.writecframe(b: buffer, offset: number, value: CFrame): ()
+function Encoder.writecframe(b: buffer, offset: number, value: CFrame)
 	buffer.writef32(b, offset, value.X)
 	buffer.writef32(b, offset + 4, value.Y)
 	buffer.writef32(b, offset + 8, value.Z)
@@ -78,7 +78,7 @@ function Encoder.readboolean(b: buffer, offset: number): boolean
 end
 
 --- writes boolean to buffer
-function Encoder.writeboolean(b: buffer, offset: number, value: boolean?): ()
+function Encoder.writeboolean(b: buffer, offset: number, value: boolean?)
 	buffer.writeu8(b, offset, value and 1 or 0)
 end
 

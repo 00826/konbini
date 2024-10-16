@@ -25,7 +25,7 @@ for _, Remote: types.Remote in script:GetChildren() do
 end
 
 --- sends `...` via remote to client(s) of clientarg
-function Network.toclient(remote: string, clientarg: types.ClientArg?, ...: any?): ()
+function Network.toclient(remote: string, clientarg: types.ClientArg?, ...: any?)
 	local Remote = Network.Cache[remote]
 	if typeof(clientarg) == "nil" then
 		Remote:FireAllClients(...)
@@ -58,7 +58,7 @@ function Network.toclient(remote: string, clientarg: types.ClientArg?, ...: any?
 end
 
 --- sends `...` via remote to server
-function Network.toserver(remote: string, ...: any?): ()
+function Network.toserver(remote: string, ...: any?)
 	local Remote = Network.Cache[remote]
 
 	Remote:FireServer(...)

@@ -27,7 +27,7 @@ function K_Table.queue_back<T>(queue: {T}): T?
 end
 
 --- adds a value to the back of queue
-function K_Table.queue_push<T>(queue: {T}, value: T): ()
+function K_Table.queue_push<T>(queue: {T}, value: T)
 	table.insert(queue, value)
 end
 
@@ -41,14 +41,14 @@ function K_Table.queue_ifandonlyif<T>(queue: {T}, value: T): boolean
 end
 
 --- pushes all values of source into queue
-function K_Table.queue_fill<T>(queue: {T}, source: {T}): ()
+function K_Table.queue_fill<T>(queue: {T}, source: {T})
 	for _, v in source do
 		table.insert(queue, v)
 	end
 end
 
 --- pops all values in queue, calling `f(value)` as they are popped
-function K_Table.queue_flush<T>(queue: {T}, f: (value: T) -> ()): ()
+function K_Table.queue_flush<T>(queue: {T}, f: (value: T) -> ())
 	local value = table.remove(queue, 1)
 	if value then
 		f(value)

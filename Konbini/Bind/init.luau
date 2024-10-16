@@ -13,7 +13,7 @@ function Bind.__index:Connect(f: (...any) -> ()): types.Disconnect
 end
 
 --- passes vararg to all bound functions
-function Bind.__index:Fire(...: any): ()
+function Bind.__index:Fire(...: any)
 	for i = #self.funcs, 1, -1 do
 		local f = self.funcs[i]
 		if getfenv(f).script.Parent == nil then
@@ -26,7 +26,7 @@ function Bind.__index:Fire(...: any): ()
 end
 
 --- recursively resumes all yielded threads and passes vararg `...` into `task.defer(coroutine, ...)`
-function Bind.__index:Resume(...: any): ()
+function Bind.__index:Resume(...: any)
 	local co = table.remove(self.yields)
 	if co then
 		task.defer(co, ...)
@@ -43,18 +43,18 @@ function Bind.__index:Wait(): ...any
 end
 
 --- disconnects bound function
-function Bind.__index:Disconnect(f: (...any) -> ()): ()
+function Bind.__index:Disconnect(f: (...any) -> ())
 	table.remove(self.funcs, table.find(self.funcs, f) or 0)
 end
 
 --- disconnects all bound functions and resumes all yielded threads
-function Bind.__index:DisconnectAll(): ()
+function Bind.__index:DisconnectAll()
 	table.clear(self.funcs)
 	self:Resume()
 end
 
 --- destroys bind, clears all connected functions, and resumes all yielded threads
-function Bind.__index:Destroy(): ()
+function Bind.__index:Destroy()
 	local Name = self.Name
 	self:DisconnectAll()
 	table.clear(self)
