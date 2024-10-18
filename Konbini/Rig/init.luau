@@ -163,6 +163,18 @@ function Rig.applybodymover(target: Model|BasePart, class: types.MoverClass, tim
 	return NewMover
 end
 
+--- returns `target.PrimaryPart:GetNetworkOwner() == (owner or Players.LocalPlayer)`
+function Rig.isnetworkowner(target: Model, owner: Player?): boolean
+	assert(target.PrimaryPart, `{target} has no primarypart`)
+	return target.PrimaryPart:GetNetworkOwner() == (owner or Players.LocalPlayer)
+end
+
+--- sets network owner of target primarypart to owner
+function Rig.setnetworkowner(target: Model, owner: Player?)
+	assert(target.PrimaryPart, `{target} has no primarypart`)
+	target.PrimaryPart:SetNetworkOwner(owner)
+end
+
 if IsServer then
 else
 	MoverRemote.OnClientEvent:Connect(Rig.applybodymover)
