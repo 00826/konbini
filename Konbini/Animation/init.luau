@@ -34,10 +34,10 @@ end
 
 --- plays animation from defined library
 --- `priority (?=library[name].Priority|Enum.AnimationPriority.Movement)` animationtrack priority \
+--- `speed (?=1)` animationtrack speed \
 --- `fadetime (?=0.1)` animationtrack fadetime \
---- `weight (?=1)` animationtrack weight \
---- `speed (?=1)` animationtrack speed
-function Animation.play(a: Animator|Model, library: string, name: string, priority: Enum.AnimationPriority?, fadetime: number?, weight: number?, speed: number?): AnimationTrack
+--- `weight (?=1)` animationtrack weight
+function Animation.play(a: Animator|Model, library: string, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?): AnimationTrack
 	local lib = Animation.libraries[library]
 	assert(lib, `library "{library}" not defined`)
 
