@@ -109,21 +109,26 @@ function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart): (number,
 	return distance, look:Angle((target:GetClosestPointOnSurface(pivot) - at).Unit)]]
 end
 
---- `workspace:RaycastWhitelist()`
-function Collisions.raywhitelist(at: Vector3, direction: Vector3, whitelist: {Instance}): RaycastResult
+--- `workspace:RaycastWhitelist()` \
+--- `collisiongroup (?="Default")`
+function Collisions.raywhitelist(at: Vector3, direction: Vector3, whitelist: {Instance}, collisiongroup: string?): RaycastResult
 	WhitelistParams.FilterDescendantsInstances = whitelist
+	WhitelistParams.CollisionGroup = collisiongroup  or "Default"
 	return workspace:Raycast(at, direction, WhitelistParams)
 end
 
---- `workspace:RaycastBlacklist()`
-function Collisions.rayblacklist(at: Vector3, direction: Vector3, blacklist: {Instance}): RaycastResult
+--- `workspace:RaycastBlacklist()` \
+--- `collisiongroup (?="Default")`
+function Collisions.rayblacklist(at: Vector3, direction: Vector3, blacklist: {Instance}, collisiongroup: string?): RaycastResult
 	BlacklistParams.FilterDescendantsInstances = blacklist
+	WhitelistParams.CollisionGroup = collisiongroup  or "Default"
 	return workspace:Raycast(at, direction, BlacklistParams)
 end
 
 --- `workspace:Fancast()` \
---- `resolution (?=3, minimum)`: # of rays that the fancast is composed of
-function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Vector3, radians: number, search: {Instance}, resolution: number?): {RaycastResult}
+--- `resolution (?=3, minimum)`: # of rays that the fancast is composed of \
+--- `collisiongroup (?="Default")`
+function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Vector3, radians: number, search: {Instance}, resolution: number?, collisiongroup: string?): {RaycastResult}
 	resolution = math.clamp(resolution or 3, 3, math.huge)
 	assert(resolution)
 
@@ -139,9 +144,9 @@ function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Ve
 
 		local result: RaycastResult? = nil
 		if listtype == "Whitelist" then
-			result = Collisions.raywhitelist(at, real.LookVector * distance, search)
+			result = Collisions.raywhitelist(at, real.LookVector * distance, search, collisiongroup)
 		elseif listtype == "Blacklist" then
-			result = Collisions.rayblacklist(at, real.LookVector * distance, search)
+			result = Collisions.rayblacklist(at, real.LookVector * distance, search, collisiongroup)
 		end
 
 		--- Collisions.choreographRay(at, real.LookVector * distance, result)
