@@ -33,7 +33,7 @@ end
 --- writes unit vector from buffer
 function Encoder.readunitvector(b: buffer, offset: number): Vector3
 	return Vector3.new(
-		buffer.readi8(b, offset + 0),
+		buffer.readi8(b, offset),
 		buffer.readi8(b, offset + 1),
 		buffer.readi8(b, offset + 2)
 	) * int8
@@ -42,7 +42,7 @@ end
 --- writes unit vector to buffer \
 --- `x,y,z`: mapped to `[-127, 127]`
 function Encoder.writeunitvector(b: buffer, offset: number, value: Vector3)
-	buffer.writei8(b, offset + 0, math.clamp(value.X * 127, -127, 127))
+	buffer.writei8(b, offset, math.clamp(value.X * 127, -127, 127))
 	buffer.writei8(b, offset + 1, math.clamp(value.Y * 127, -127, 127))
 	buffer.writei8(b, offset + 2, math.clamp(value.Z * 127, -127, 127))
 end
@@ -149,7 +149,7 @@ function Encoder.writei24(b: buffer, offset: number, value: number)
 	end
 	local abs = math.abs(value)
 
-	buffer.writeu8(b, offset + 0, bit32.extract(abs, 0, 8))
+	buffer.writeu8(b, offset, bit32.extract(abs, 0, 8))
 	buffer.writeu8(b, offset + 1, bit32.extract(abs, 8, 8))
 
 	local x = bit32.extract(abs, 16, 8)
@@ -159,7 +159,7 @@ end
 --- reads signed 24-bit integer from buffer
 function Encoder.readi24(b: buffer, offset: number): number
 	local int = 0
-	int = bit32.replace(int, buffer.readu8(b, offset + 0), 0, 8)
+	int = bit32.replace(int, buffer.readu8(b, offset), 0, 8)
 	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
 	int = bit32.replace(int, buffer.readu8(b, offset + 2), 16, 8)
 	local sign = bit32.extract(int, 23, 1) == 1 and -1 or 1
@@ -172,7 +172,7 @@ end
 
 --- writes unsigned 24-bit integer to buffer
 function Encoder.writeu24(b: buffer, offset: number, value: number)
-	buffer.writeu8(b, offset + 0, bit32.extract(value, 0, 8))
+	buffer.writeu8(b, offset, bit32.extract(value, 0, 8))
 	buffer.writeu8(b, offset + 1, bit32.extract(value, 8, 8))
 	buffer.writeu8(b, offset + 2, bit32.extract(value, 16, 8))
 end
@@ -180,7 +180,7 @@ end
 --- reads unsigned 24-bit integer from buffer
 function Encoder.readu24(b: buffer, offset: number): number
 	local int = 0
-	int = bit32.replace(int, buffer.readu8(b, offset + 0), 0, 8)
+	int = bit32.replace(int, buffer.readu8(b, offset), 0, 8)
 	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
 	int = bit32.replace(int, buffer.readu8(b, offset + 2), 16, 8)
 	return int
