@@ -6,7 +6,7 @@ local RunService = game:GetService("RunService")
 
 local IsServer = RunService:IsServer()
 
-local EntityRemote = script:WaitForChild("EntityRemote") :: RemoteEvent
+local EntityRemote = script:WaitForChild("EntityRemote")
 
 local Bind = require(script.Parent.Bind)
 local KTable = require(script.Parent.Table)

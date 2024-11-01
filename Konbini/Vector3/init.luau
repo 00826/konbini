@@ -4,8 +4,6 @@
 
 local types = require(script.Parent.types)
 
-local DefaultR = Random.new()
-
 --- ### Vector3.luau
 ---
 --- extension of Vector3 library
@@ -85,13 +83,13 @@ end
 
 --- returns random unit vector
 function K_Vector3.randomdirection(R: Random?): Vector3
-	return (R or DefaultR):NextUnitVector()
+	return (R or types.R):NextUnitVector()
 end
 
 --- returns random unit vector within cone \
 --- `theta` is in degrees, dont @ me
 function K_Vector3.randomcone(normal: Vector3, theta: number, R: Random?): Vector3
-	R = R or DefaultR
+	R = R or types.R
 	return (
 		CFrame.new(Vector3.zero, normal)
 		* CFrame.Angles(0, 0, (R :: Random):NextNumber(0, math.pi * 2))
@@ -101,7 +99,7 @@ end
 
 --- returns random point within `[a, b]`
 function K_Vector3.randompoint(a: Vector3, b: Vector3, R: Random?): Vector3
-	R = R or DefaultR
+	R = R or types.R
 	return Vector3.new(
 		(R :: Random):NextNumber(a.X, b.X),
 		(R :: Random):NextNumber(a.Y, b.Y),

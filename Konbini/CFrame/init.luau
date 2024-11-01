@@ -2,7 +2,7 @@
 --!native
 --!optimize 2
 
-local DefaultR = Random.new()
+local types = require(script.Parent.types)
 
 --- ### CFrame.luau
 ---
@@ -96,7 +96,7 @@ end
 
 --- returns random pivot in volume
 function K_CFrame.randompivotinvolume(volumecframe: CFrame, volumesize: Vector3, R: Random?): CFrame
-	if not R then R = DefaultR end
+	if not R then R = types.R end
 	local SHalf = volumesize * 0.5
 	local X, Y, Z = SHalf.X, SHalf.Y, SHalf.Z
 	return R and volumecframe * CFrame.new(

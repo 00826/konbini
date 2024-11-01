@@ -1,6 +1,6 @@
 --!strict
 
-local DefaultR = Random.new()
+local types = require(script.Parent.types)
 
 local int8 = 1/127
 
@@ -302,9 +302,9 @@ end
 function Encoder.string(len: number?): string
 	local str = ""
 	for i = 1, len or 4 do
-		local value = DefaultR:NextInteger(1, 36)
+		local value = types.R:NextInteger(1, 36)
 		if value <= 26 then
-			local coinflip = DefaultR:NextInteger(0, 1) == 0
+			local coinflip = types.R:NextInteger(0, 1) == 0
 			if coinflip then
 				str ..= string.char(value + 64) -- [A-Z]
 			else

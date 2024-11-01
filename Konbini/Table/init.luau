@@ -2,9 +2,9 @@
 --!native
 --!optimize 2
 
-local Encoder = require(script.Parent.Encoder)
+local types = require(script.Parent.types)
 
-local DefaultR = Random.new()
+local Encoder = require(script.Parent.Encoder)
 
 --- ### Table.luau
 ---
@@ -150,7 +150,7 @@ end
 --- returns list of elements picked from drop table \
 --- assume sum of odds in drop table equate to 100
 function K_Table.pickfromdroptable(D: {[string]: number}, n: number, R: Random?): {string}
-	if not R then R = DefaultR end
+	if not R then R = types.R end
 	if not n then n = 1 end
 
 	assert(R)
@@ -173,7 +173,7 @@ end
 
 --- returns non-repeating list of elements picked from array
 function K_Table.pickfromlist<T>(A: {T}, n: number?, R: Random?): {T}
-	if not R then R = DefaultR end
+	if not R then R = types.R end
 	if not n then n = 1 end
 
 	assert(R)
@@ -197,7 +197,7 @@ end
 
 --- returns shuffled copy of array
 function K_Table.shuffle(A: {any}, R: Random?): {any}
-	R = R or DefaultR
+	R = R or types.R
 	assert(R)
 
 	local B = table.clone(A)

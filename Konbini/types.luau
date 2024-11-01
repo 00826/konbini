@@ -155,4 +155,4 @@ export type Zone = {
 	Never: {Instance}?;
 }
 
-return table.create(0)
+return { R = Random.new(); }
