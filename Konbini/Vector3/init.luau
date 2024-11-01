@@ -89,21 +89,19 @@ end
 --- returns random unit vector within cone \
 --- `theta` is in degrees, dont @ me
 function K_Vector3.randomcone(normal: Vector3, theta: number, R: Random?): Vector3
-	R = R or types.R
 	return (
 		CFrame.new(Vector3.zero, normal)
-		* CFrame.Angles(0, 0, (R :: Random):NextNumber(0, math.pi * 2))
-		* CFrame.Angles(math.acos((R :: Random):NextNumber(math.cos(math.rad(theta)), 1)), 0, 0)
+		* CFrame.Angles(0, 0, (R or types.R):NextNumber(0, math.pi * 2))
+		* CFrame.Angles(math.acos((R or types.R):NextNumber(math.cos(math.rad(theta)), 1)), 0, 0)
 	).LookVector
 end
 
 --- returns random point within `[a, b]`
 function K_Vector3.randompoint(a: Vector3, b: Vector3, R: Random?): Vector3
-	R = R or types.R
 	return Vector3.new(
-		(R :: Random):NextNumber(a.X, b.X),
-		(R :: Random):NextNumber(a.Y, b.Y),
-		(R :: Random):NextNumber(a.Z, b.Z)
+		(R or types.R):NextNumber(a.X, b.X),
+		(R or types.R):NextNumber(a.Y, b.Y),
+		(R or types.R):NextNumber(a.Z, b.Z)
 	)
 end
 

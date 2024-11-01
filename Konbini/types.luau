@@ -3,14 +3,6 @@
 export type AnimLibraryEntry = {Id: string?, Priority: Enum.AnimationPriority?, Animation: Animation?} & {[string]: any}
 export type LocomotionState = "Idle" | "Walk" | "Run"
 
---- Bar.luau types
-
-export type Axes = {
-	X: number?;
-	Y: number?;
-	Z: number?;
-}
-
 --- Bind.luau types
 
 export type Disconnect = () -> ()
@@ -70,6 +62,8 @@ export type Tree = {
 	Parent: Instance?;
 } & { [string]: any }
 
+export type MoverClass = "BodyGyro" | "BodyVelocity" | "BodyPosition" | "VectorForce"
+
 --- Interface.luau
 
 export type ButtonFunctions = {
@@ -115,10 +109,6 @@ export type ClientArg =
 	| Player
 	| { number|Player }
 	| ((Player) -> boolean)
-
---- Rig.luau
-
-export type MoverClass = "BodyGyro" | "BodyVelocity" | "BodyPosition" | "VectorForce"
 
 --- Time.luau
 
