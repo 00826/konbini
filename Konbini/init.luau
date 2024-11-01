@@ -21,7 +21,6 @@ return table.freeze{
 	Math = require(script:WaitForChild("Math"));
 	Misc = require(script:WaitForChild("Misc"));
 	Network = require(script:WaitForChild("Network"));
-	Rig = require(script:WaitForChild("Rig"));
 	Table = require(script:WaitForChild("Table"));
 	Time = require(script:WaitForChild("Time"));
 	Tween = require(script:WaitForChild("Tween"));
