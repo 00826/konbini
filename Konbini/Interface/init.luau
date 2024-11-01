@@ -123,6 +123,22 @@ local Interface = {
 			return LastKeypoint and LastKeypoint.Value or Color3.fromRGB(255, 255, 255)
 		end;
 	};
+	AspectRatios = table.freeze{
+		--- `1:1`
+		Square = 1/1;
+		--- `4:3`
+		Classy = 4/3;
+		--- `1.618:1`
+		GoldenRatio = (1 + 5^0.5) * 0.5;
+		--- `16:9`
+		Standard = 16/9;
+		--- `21:9`
+		Ultrawide = 21/9;
+		--- `1.85:1`
+		Cinema = 37/20;
+		--- `6:13`
+		Portrait = 6/13;
+	};
 
 	suffixes = table.freeze{""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
