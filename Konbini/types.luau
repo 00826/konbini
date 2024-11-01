@@ -97,9 +97,6 @@ export type ButtonSounds = {
 	--- `.MouseEnter` \
 	--- `.SelectionGained`
 	Enter: string?;
-	--- `.MouseLeave` \
-	--- `.SelectionLost`
-	Leave: string?;
 }
 
 export type SpriteLayout = {

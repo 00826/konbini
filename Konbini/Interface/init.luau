@@ -164,59 +164,59 @@ function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number
 	if text then textlabel.Text = text end
 	local n = utf8.len(textlabel.ContentText) or 0
 	tween(textlabel, {MaxVisibleGraphemes = n}, n / (speed or 40), Enum.EasingStyle.Sine)
-	return
 end
 
 --- connects button events to guibutton
-function Interface.connectbutton(button: GuiButton, buttonfunctions: types.ButtonFunctions, buttonsounds: types.ButtonSounds): {RBXScriptConnection}
-	local t = table.create(9)
+function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunctions, sounds: types.ButtonSounds): {RBXScriptConnection}
+	local connections = table.create(9)
 
-	if buttonfunctions.ClickDown then
-		table.insert(t, button.MouseButton1Down:Connect(buttonfunctions.ClickDown))
+	if functions.ClickDown then
+		table.insert(connections, button.MouseButton1Down:Connect(functions.ClickDown))
 	end
-	if buttonfunctions.ClickUp then
-		table.insert(t, button.MouseButton1Up:Connect(function(...)
-			buttonfunctions.ClickUp(...)
+	if functions.ClickUp then
+		table.insert(connections, button.MouseButton1Up:Connect(function(...)
+			functions.ClickUp(...)
 
-			if buttonsounds.Click then
-				Interface.playsound(buttonsounds.Click)
+			if sounds.Click then
+				Interface.playsound(sounds.Click)
 			end
 		end))
 	end
 
-	if buttonfunctions.RClickDown then
-		table.insert(t, button.MouseButton2Down:Connect(buttonfunctions.RClickDown))
+	if functions.RClickDown then
+		table.insert(connections, button.MouseButton2Down:Connect(functions.RClickDown))
 	end
-	if buttonfunctions.RClickUp then
-		table.insert(t, button.MouseButton2Up:Connect(function(...)
-			buttonfunctions.RClickUp(...)
+	if functions.RClickUp then
+		table.insert(connections, button.MouseButton2Up:Connect(function(...)
+			functions.RClickUp(...)
 
-			if buttonsounds.RClick then
-				Interface.playsound(buttonsounds.RClick)
+			if sounds.RClick then
+				Interface.playsound(sounds.RClick)
 			end
 		end))
 	end
 
-	if buttonfunctions.Enter then
-		local function Enter(...)
-			buttonfunctions.Enter(...)
+	if functions.Enter then
+		local function e(...)
+			functions.Enter(...)
 
-			if buttonsounds.Enter then
-				Interface.playsound(buttonsounds.Enter)
+			if sounds.Enter then
+				Interface.playsound(sounds.Enter)
 			end
 		end
-		table.insert(t, button.MouseEnter:Connect(Enter))
-		table.insert(t, button.SelectionGained:Connect(Enter))
+
+		table.insert(connections, button.MouseEnter:Connect(e))
+		table.insert(connections, button.SelectionGained:Connect(e))
 	end
-	if buttonfunctions.Leave then
-		table.insert(t, button.MouseLeave:Connect(buttonfunctions.Leave))
-		table.insert(t, button.SelectionLost:Connect(buttonfunctions.Leave))
+	if functions.Leave then
+		table.insert(connections, button.MouseLeave:Connect(functions.Leave))
+		table.insert(connections, button.SelectionLost:Connect(functions.Leave))
 	end
-	if buttonfunctions.Move then
-		table.insert(t, button.MouseMoved:Connect(buttonfunctions.Move))
+	if functions.Move then
+		table.insert(connections, button.MouseMoved:Connect(functions.Move))
 	end
 
-	return t
+	return connections
 end
 
 --- applies sprite to imagelabel
