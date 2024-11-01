@@ -10,9 +10,13 @@ export type Disconnect = () -> ()
 --- Bullet.luau types
 
 export type WriteOptions = {
+	--- string id
 	id: string?;
+	--- initial time
 	time: number?;
+	--- initial position
 	position: Vector3?;
+	--- initial direction
 	direction: Vector3?;
 }
 
@@ -67,13 +71,35 @@ export type MoverClass = "BodyGyro" | "BodyVelocity" | "BodyPosition" | "VectorF
 --- Interface.luau
 
 export type ButtonFunctions = {
-	["ClickDown"]: ((x: number?, y: number?) -> ())?;
-	["ClickUp"]: ((x: number?, y: number?) -> ())?;
-	["RClickDown"]: ((x: number?, y: number?) -> ())?;
-	["RClickUp"]: ((x: number?, y: number?) -> ())?;
-	["Enter"]: ((x: number?, y: number?) -> ())?;
-	["Leave"]: ((x: number?, y: number?) -> ())?;
-	["Move"]: ((x: number?, y: number?) -> ())?;
+	--- `.MouseButton1Down`
+	ClickDown: ((x: number?, y: number?) -> ())?;
+	--- `.MouseButton1Up`
+	ClickUp: ((x: number?, y: number?) -> ())?;
+	--- `.MouseButton2Down`
+	RClickDown: ((x: number?, y: number?) -> ())?;
+	--- `.MouseButton2Up`
+	RClickUp: ((x: number?, y: number?) -> ())?;
+	--- `.MouseEnter` \
+	--- `.SelectionGained`
+	Enter: ((x: number?, y: number?) -> ())?;
+	--- `.MouseLeave` \
+	--- `.SelectionLost`
+	Leave: ((x: number?, y: number?) -> ())?;
+	--- `.MouseMoved`
+	Move: ((x: number?, y: number?) -> ())?;
+}
+
+export type ButtonSounds = {
+	--- `.MouseButton1Up`
+	Click: string?;
+	--- `.MouseButton2Up`
+	RClick: string?;
+	--- `.MouseEnter` \
+	--- `.SelectionGained`
+	Enter: string?;
+	--- `.MouseLeave` \
+	--- `.SelectionLost`
+	Leave: string?;
 }
 
 export type SpriteLayout = {
@@ -115,8 +141,11 @@ export type ClientArg =
 export type Notation = "DD:HH:MM:SS" | "HH:MM:SS" | "MM:SS" | "M:SS"
 export type Format = number | "Hour" | "Biphase" | "Day" | "Week" | "Season" | "Biseason" | "Year"
 export type FormatResult = {
+	--- unique, non-recurring string describing format time
 	Timestamp: string;
+	--- unique, non-recurring number describing format time
 	Seed: number;
+	--- time until format changes
 	Until: number;
 }
 

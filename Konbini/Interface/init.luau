@@ -168,46 +168,52 @@ function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number
 end
 
 --- connects button events to guibutton
-function Interface.connectbutton(button: GuiButton, connectfunctions: types.ButtonFunctions, muteclicksounds: boolean?): {RBXScriptConnection}
+function Interface.connectbutton(button: GuiButton, buttonfunctions: types.ButtonFunctions, buttonsounds: types.ButtonSounds): {RBXScriptConnection}
 	local t = table.create(9)
 
-	if connectfunctions.ClickDown then
-		table.insert(t, button.MouseButton1Down:Connect(connectfunctions.ClickDown))
+	if buttonfunctions.ClickDown then
+		table.insert(t, button.MouseButton1Down:Connect(buttonfunctions.ClickDown))
 	end
-	if connectfunctions.ClickUp then
+	if buttonfunctions.ClickUp then
 		table.insert(t, button.MouseButton1Up:Connect(function(...)
-			connectfunctions.ClickUp(...)
-			if muteclicksounds == true then return end
-			Interface.playsound("Click")
+			buttonfunctions.ClickUp(...)
+
+			if buttonsounds.Click then
+				Interface.playsound(buttonsounds.Click)
+			end
 		end))
 	end
 
-	if connectfunctions.RClickDown then
-		table.insert(t, button.MouseButton2Down:Connect(connectfunctions.RClickDown))
+	if buttonfunctions.RClickDown then
+		table.insert(t, button.MouseButton2Down:Connect(buttonfunctions.RClickDown))
 	end
-	if connectfunctions.RClickUp then
+	if buttonfunctions.RClickUp then
 		table.insert(t, button.MouseButton2Up:Connect(function(...)
-			connectfunctions.RClickUp(...)
-			if muteclicksounds == true then return end
-			Interface.playsound("Click")
+			buttonfunctions.RClickUp(...)
+
+			if buttonsounds.RClick then
+				Interface.playsound(buttonsounds.RClick)
+			end
 		end))
 	end
 
-	if connectfunctions.Enter then
+	if buttonfunctions.Enter then
 		local function Enter(...)
-			connectfunctions.Enter(...)
-			if muteclicksounds == true then return end
-			Interface.playsound("Hover")
+			buttonfunctions.Enter(...)
+
+			if buttonsounds.Enter then
+				Interface.playsound(buttonsounds.Enter)
+			end
 		end
 		table.insert(t, button.MouseEnter:Connect(Enter))
 		table.insert(t, button.SelectionGained:Connect(Enter))
 	end
-	if connectfunctions.Leave then
-		table.insert(t, button.MouseLeave:Connect(connectfunctions.Leave))
-		table.insert(t, button.SelectionLost:Connect(connectfunctions.Leave))
+	if buttonfunctions.Leave then
+		table.insert(t, button.MouseLeave:Connect(buttonfunctions.Leave))
+		table.insert(t, button.SelectionLost:Connect(buttonfunctions.Leave))
 	end
-	if connectfunctions.Move then
-		table.insert(t, button.MouseMoved:Connect(connectfunctions.Move))
+	if buttonfunctions.Move then
+		table.insert(t, button.MouseMoved:Connect(buttonfunctions.Move))
 	end
 
 	return t
