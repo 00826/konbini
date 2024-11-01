@@ -24,7 +24,8 @@ end
 --- extension of Instance library & instance-related functions
 local K_Instance = {
 	Movers = {};
-	choreographtime = 1/15;
+	choreographTime = 1/15;
+	emitContainer = workspace;
 }
 
 for _, BodyMover in script:WaitForChild("Movers"):GetChildren() do
@@ -275,7 +276,7 @@ function K_Instance.ClearChildrenWithCase(inst: Instance, shoulddelete: (Thing: 
 end
 
 --- emits sound at optional position or instance
-function K_Instance.EmitSound(sound: Sound, at: (Vector3|Instance)?)
+function K_Instance.emitSound(sound: Sound, at: (Vector3|Instance)?)
 	if typeof(at) == "Instance" then
 		local real: BasePart? = nil
 		if at:IsA("BasePart") then
@@ -440,14 +441,14 @@ function K_Instance.choreographRay(origin: Vector3, direction: Vector3, result: 
 		thisray.C.Beam.Enabled = true
 		thisray.C.WorldPosition = origin
 		thisray.D.WorldPosition = result.Position
-		tween(thisray.C.Beam, {Width0 = 0, Enabled = false}, K_Instance.choreographtime)
+		tween(thisray.C.Beam, {Width0 = 0, Enabled = false}, K_Instance.choreographTime)
 	else
 		thisray.C.Beam.Enabled = false
 	end
 
-	tween(thisray.A.Beam, {Width0 = 0, Enabled = false}, K_Instance.choreographtime)
+	tween(thisray.A.Beam, {Width0 = 0, Enabled = false}, K_Instance.choreographTime)
 
-	task.delay(K_Instance.choreographtime, function()
+	task.delay(K_Instance.choreographTime, function()
 		thisray:Destroy()
 	end)
 
@@ -457,21 +458,41 @@ end
 --- applies a shrink effect against choreograph instance `C` \
 --- C is destroyed after the effect is applied
 function K_Instance.choreographOut(C: any, properties: {[string]: any})
-	tween(C.Outer, properties, K_Instance.choreographtime)
-	task.wait(K_Instance.choreographtime)
+	tween(C.Outer, properties, K_Instance.choreographTime)
+	task.wait(K_Instance.choreographTime)
 	C:Destroy()
 end
 
-function K_Instance.emitpart(at: Vector3|Instance, properties: {}?, transform: (() -> ())?, destruct: number?)
-	
-end
+--- emits a clone of instance template `t` at vector3 or attached to basepart \
+--- `clone<t> -> parented -> deferred transform(?) -> delayed destruct(?) -> return clone<t>` \
+--- if both `at` and `t` are baseparts, then `t` will be unanchored and massless-ed *prior* to welding
+function K_Instance.emit<t>(template: t & Instance, at: Vector3|BasePart, transform: ((real: t) -> ())?, destruct: number?)
+	local real = template:Clone()
 
-function K_Instance.emitadornment(at: Vector3|Instance, properties: {}?, transform: (() -> ())?, destruct: number?)
-	
-end
+	if typeof(at) == "Vector3" then
+		real.Parent = K_Instance.emitContainer
+	elseif at:IsA("BasePart") then
+		real.Parent = at
+		if real:IsA("BasePart") then
+			real.Anchored = false
+			real.Massless = true
 
-function K_Instance.emitparticle(at: Vector3|Instance, properties: {}?, transform: ((e: ParticleEmitter) -> ())?, destruct: number?)
-	
+			K_Instance.Weld(at, real)
+		end
+	else
+		real:Destroy()
+		error(typeof(at))
+	end
+
+	if transform then
+		task.defer(transform, real)
+	end
+
+	if destruct then
+		task.delay(destruct, function() real:Destroy() end)
+	end
+
+	return real
 end
 
 --- memory-safe `Player:LoadCharacter()`
