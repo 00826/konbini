@@ -1,4 +1,5 @@
 --!strict
+--!native
 
 local types = require(script.Parent.types)
 
@@ -299,6 +300,20 @@ end
 --- accessible bit range: `[0, 31]`
 function Encoder.readflagu32(b: buffer, offset: number, field: number, width: number): number
 	return bit32.extract(buffer.readu32(b, offset), field, width)
+end
+
+--- equivalent to `bit32.replace(x, value, field, width)`
+function Encoder.writebits(x: number, field: number, width: number, value: number): number
+	return bit32.replace(x, value, field, width)
+end
+
+--- returns range of bits as a string
+function Encoder.readbits(x: number, field: number, range: number): string
+	local bitstring = ""
+	for i = 1, range do
+		bitstring ..= tostring(bit32.extract(x, field + i))
+	end
+	return bitstring
 end
 
 --- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
