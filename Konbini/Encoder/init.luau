@@ -261,7 +261,7 @@ function Encoder.readcolumnmatrix(m: buffer, column: number): number
 	return sum
 end
 
---- returns matrix as a three-dimensional numeric array \
+--- returns matrix as a two-dimensional numeric array \
 --- `precision (?=4)`: # of digits to display per value \
 --- `output (?=false)`: print matrix in output
 function Encoder.unpackmatrix(m: buffer, precision: number?, output: boolean?): { {number} }
