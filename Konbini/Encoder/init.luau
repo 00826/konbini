@@ -87,31 +87,34 @@ function Encoder.writeboolean(b: buffer, offset: number, value: boolean?)
 	buffer.writeu8(b, offset, value and 1 or 0)
 end
 
---- rotates range of values to the right
+--- rotates range of values with fixed variable size to the right
 --- ```
---- rrotatef64([1, 2, 3, 4, 5]) -> [5, 1, 2, 3, 4]
+--- rrotate(bufferu8[23, 33, 91], 0, 1, 3) -> [91, 23, 33]
 --- ```
-function Encoder.rrotatef64(b: buffer, offset: number, range: number)
-	local x = buffer.readf64(b, offset + range - 8)
-	buffer.copy(b, offset + 8, b, offset, range - 8)
-	buffer.writef64(b, offset, x)
+function Encoder.rrotate(b: buffer, offset: number, size: number, range: number)
+	local x = buffer.readstring(b, offset + (size * (range - 1)), size) --- pull last value [91]
+	buffer.copy(b, offset + size, b, offset, (size * range) - size) --- push range leading up to last value up by 1 place [23, 23, 33]
+	buffer.writestring(b, offset, x) --- write to first value
 end
 
---- rotates range of values to the left
+--- rotates range of values with fixed variable size to the left
 --- ```
---- lrotatef64([1, 2, 3, 4, 5]) -> [2, 3, 4, 5, 1]
+--- lrotate(bufferu8[23, 33, 91], 0, 1, 3) -> [33, 91, 23]
 --- ```
-function Encoder.lrotatef64(b: buffer, offset: number, range: number)
-	local x = buffer.readf64(b, offset)
-	buffer.copy(b, offset, b, offset + 8, range - 8)
-	buffer.writef64(b, offset + range - 8, x)
+function Encoder.lrotate(b: buffer, offset: number, size: number, range: number)
+	local last = (size * range) - size
+
+	local x = buffer.readstring(b, offset, size) --- pull first value [23]
+	buffer.copy(b, offset, b, offset + size, last) --- push range after the first value down by 1 place [33, 91, 91]
+	buffer.writestring(b, offset + last, x) --- write to last value
 end
 
---- swaps values stored at two offsets
-function Encoder.swapf64(b: buffer, x: number, y: number)
-	local z = buffer.readf64(b, x)
-	buffer.writef64(b, x, buffer.readf64(b, y))
-	buffer.writef64(b, y, z)
+--- swaps range of bytes stored at offsets `x` and `y` \
+--- `range (?=1)` range of bytes to swap
+function Encoder.swap(b: buffer, x: number, y: number, range: number?)
+	local z = buffer.readstring(b, x, range or 1)
+	buffer.writestring(b, x, buffer.readstring(b, y, range or 1))
+	buffer.writestring(b, y, z)
 end
 
 --- returns true if `a == b`
@@ -191,8 +194,9 @@ function Encoder.readu24(b: buffer, offset: number): number
 	return int
 end
 
---- returns an empty `i16`-width matrix-buffer \
---- *matrices are one-indexed (buffers are zero-indexed), as column/row info is stored in the first 2 bytes*
+--- returns an empty `int16`-width matrix-buffer \
+--- space complexity of `2 + (2*columns*rows)` \
+--- *matrix value placements start at offset `2`, as column/row info is stored in the first 2 bytes*
 function Encoder.creatematrix(columns: number, rows: number): buffer
 	local m = buffer.create( 2 + (2 * columns * rows) )
 
@@ -202,7 +206,7 @@ function Encoder.creatematrix(columns: number, rows: number): buffer
 	return m
 end
 
---- writes value to matrix-buffer
+--- writes value to `int16`-width matrix-buffer
 function Encoder.writematrix(m: buffer, column: number, row: number, value: number)
 	local width = 2 * buffer.readu8(m, 0)
 	local offset = (2 * column) + ((row - 1) * width)
@@ -210,7 +214,7 @@ function Encoder.writematrix(m: buffer, column: number, row: number, value: numb
 	buffer.writei16(m, offset, value)
 end
 
---- writes set of values to row of matrix-buffer \
+--- writes set of values to row of `int16`-width matrix-buffer \
 --- if values are omitted, the range is filled with zeroes
 function Encoder.writerowmatrix(m: buffer, row: number, values: {number}?)
 	local columns = buffer.readu8(m, 0)
@@ -226,7 +230,7 @@ function Encoder.writerowmatrix(m: buffer, row: number, values: {number}?)
 	end
 end
 
---- reads set of values along row of matrix-buffer
+--- reads set of values along row of `int16`-width matrix-buffer
 function Encoder.readrowmatrix(m: buffer, row: number): {number}
 	local columns = buffer.readu8(m, 0)
 	local width = 2 * columns
@@ -241,7 +245,7 @@ function Encoder.readrowmatrix(m: buffer, row: number): {number}
 	return r
 end
 
---- reads sum of values along column of matrix-buffer
+--- reads sum of values along column of `int16`-width matrix-buffer
 function Encoder.readcolumnmatrix(m: buffer, column: number): number
 	local rows = buffer.readu8(m, 1)
 	local width = 2 * buffer.readu8(m, 0)
@@ -257,14 +261,21 @@ function Encoder.readcolumnmatrix(m: buffer, column: number): number
 	return sum
 end
 
-function Encoder.unpackmatrix(m: buffer): { {number} }
+--- returns matrix as a three-dimensional numeric array \
+--- `precision (?=4)`: # of digits to display per value \
+--- `output (?=false)`: print matrix in output
+function Encoder.unpackmatrix(m: buffer, precision: number?, output: boolean?): { {number} }
 	local columns = buffer.readu8(m, 0)
 	local rows = buffer.readu8(m, 1)
 
 	local u = table.create(rows)
 	local sums = table.create(columns, 0)
 
-	print(`{columns}x{rows} (2 + {buffer.len(m)-2} bytes) matrix: `, m)
+	local digits = "%0" .. tostring(precision or 4) .. "d"
+
+	if output then
+		print(`{columns}x{rows} (2 + {buffer.len(m)-2} bytes) matrix: `, m)
+	end
 
 	for i = 1, rows do
 		local r = Encoder.readrowmatrix(m, i)
@@ -272,17 +283,21 @@ function Encoder.unpackmatrix(m: buffer): { {number} }
 
 		local strings = table.create(columns)
 		for a, b in ipairs(r) do
-			strings[a] = string.format("%04d", b)
+			strings[a] = string.format(digits, b)
 			sums[a] += b
 		end
-		print(`[{i}]	`, table.concat(strings, " "))
+		if output then
+			print(`[{i}]	`, table.concat(strings, " "))
+		end
 	end
 
 	for a, b in ipairs(sums) do
-		sums[a] = string.format("%04d", Encoder.readcolumnmatrix(m, a))::any
+		sums[a] = string.format(digits, Encoder.readcolumnmatrix(m, a))::any
 	end
-	print("----")
-	print(`[sum]	`, table.concat(sums, " "))
+	if output then
+		print("----")
+		print(`[sum]	`, table.concat(sums, " "))
+	end
 
 	return u
 end
