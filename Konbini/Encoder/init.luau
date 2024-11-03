@@ -4,6 +4,10 @@ local types = require(script.Parent.types)
 
 local int8 = 1/127
 
+local function subf(x: string): string
+	return #x == 1 and "0" .. x or x
+end
+
 --- ### Encoder.luau
 ---
 --- buffer and string helper functions
@@ -317,14 +321,182 @@ function Encoder.string(len: number?): string
 	return str
 end
 
---- replaces captures matching `flag .. "%w+"` in text with respect to replacement table
-function Encoder.alias(text: string, flag: string, replace: {[string]: string}): string
-	if string.find(text, flag) then
-		text = string.gsub(text, flag .. "%w+", function(s: string)
-			return replace[select(2, unpack(string.split(s, flag)))] or "[missing alias]"
-		end)
+--- replaces substrings in text matching capture pattern with respect to replacement table \
+--- `capture (?=%S+)`: capture substrings separated by whitespaces
+function Encoder.alias(text: string, replace: {[string]: string}, pattern: string?): string
+	return string.gsub(text, pattern or "%S+", function(s: string)
+		return replace[s] or s
+	end)
+end
+
+--- applies richtext color to substrings in text matching capture pattern with respect to Color3/hex code palette \
+--- `capture (?=%S+)`: capture substrings separated by whitespaces
+function Encoder.richcolor(text: string, palette: {[string]: Color3|string}, pattern: string?): string
+	return string.gsub(text, pattern or "%S+", function(s: string)
+		local color = palette[s]
+		if color then
+			if typeof(color) == "Color3" then
+				color = color:ToHex()
+			end
+
+			assert(typeof(color) == "string")
+			return [[<font color="#]] .. color .. [[">]] .. s .. [[</font>]]
+		end
+		return s
+	end)
+end
+
+--- formats time into a hour-minute-second-esque notation
+function Encoder.hourminutesecond(time: number, notation: types.Notation?): string
+	--[[
+		os.date("!%X", time) is the fastest for all inputs below 86400, because any input at or above 86400 breaks the formatting
+		string.gsub(string.format(), time, subf) is the second fastest for all inputs, never has a formatting break, but is ~10% slower than os.date("!%X", time)
+		combining both through comparing time >= 86400 gives a faster average across all possible inputs
+	]]
+	if notation == "DD:HH:MM:SS" then
+		if time >= 86400 then
+			local D = time // 86400
+			time -= D * 86400
+			local H = time // 3600
+			time -= H * 3600
+			local M = time // 60
+			time -= M * 60
+			return string.gsub(string.format(("%d:%d:%d:%d"), D, H, M, time), "%d+", subf)
+		else
+			return "00:" .. os.date("!%X", time)
+		end
+	elseif notation == "HH:MM:SS" then
+		if time >= 86400 then
+			local H = time // 3600
+			time -= H * 3600
+			local M = time // 60
+			time -= M * 60
+			return string.gsub(string.format(("%d:%d:%d"), H, M, time), "%d+", subf)
+		else
+			return os.date("!%X", time)
+		end
+	elseif notation == "MM:SS" then
+		if time >= 3600 then
+			local M = time // 60
+			time -= M * 60
+			return string.gsub(string.format(("%d:%d"), M, time), "%d+", subf)
+		else
+			return string.sub(os.date("!%X", time), 4, 8)
+		end
+	elseif notation == "M:SS" then
+		return string.gsub(string.sub(os.date("!%X", time), 4, 8), "^0", "")
 	end
-	return text
+	return os.date("!%X", time)
+end
+
+--- returns a timestamp of current utc time with respect to format option
+function Encoder.timestamp(format: types.Format): types.Timestamp
+	local T0 = os.date("!*t")
+	local T1 = table.clone(T0)
+
+	local Timestamp = {
+		Id = "";
+		Seed = 0;
+		Until = 0;
+	}
+	if type(format) == "number" then
+		--- `Format: 5`
+		--- `February 14, 2024, 06:44` --> `"2024_45_6_8"`
+		--- `Format: 10`
+		--- `February 14, 2024, 06:44` --> `"2024_45_6_4"`
+		--- `Format: 15`
+		--- `February 14, 2024, 06:44` --> `"2024_45_6_2"`
+		T1.min = format * math.ceil((T1.min + 1) / format)
+		T1.sec = 0
+
+		local Year, YDay, Hour, QtrHour = T0.year, T0.yday, T0.hour, math.ceil((T0.min + 1) / format) - 1
+		Timestamp.Id = ("%d_%d_%d_%d"):format(Year, YDay, Hour, QtrHour)
+		Timestamp.Seed = tonumber(Year .. YDay .. Hour .. QtrHour) :: number
+	else
+		if format == "Hour" then
+			--- `February 14, 2024, 06:44` --> `"2024_45_6"`
+			T1.hour = math.floor(T1.hour + 1)
+			T1.min = 0
+			T1.sec = 0
+
+			local Year, YDay, Hour = T0.year, T0.yday, T0.hour
+			Timestamp.Id = ("%d_%d_%d"):format(Year, YDay, Hour)
+			Timestamp.Seed = tonumber(Year .. YDay .. Hour) :: number
+		elseif format == "Biphase" then
+			--- `February 14, 2024, 06:44` --> `"2024_45_AM"`
+			--- `February 14, 2024, 16:44` --> `"2024_45_PM"`
+			T1.hour = 12 * math.ceil((T1.hour + 1) / 12)
+			T1.min = 0
+			T1.sec = 0
+
+			local Year, YDay, Phase = T0.year, T0.yday, os.date("!%p")
+			Timestamp.Id = ("%d_%d_%s"):format(Year, YDay, Phase)
+			Timestamp.Seed = tonumber(Year .. YDay .. Phase:byte()) :: number
+		elseif format == "Day" then
+			--- `February 14, 2024` --> `"2024_45"`
+			T1.day += 1
+			T1.hour = 0
+			T1.min = 0
+			T1.sec = 0
+
+			local Year, YDay = T0.year, T0.yday
+			Timestamp.Id = ("%d_%d"):format(Year, YDay)
+			Timestamp.Seed = tonumber(Year .. YDay) :: number
+		elseif format == "Week" then
+			--- `February 14, 2024` --> `"2024_7_06"` (06th week of 2024)
+			T1.day += 8 - T0.wday
+			T1.hour = 0
+			T1.min = 0
+			T1.sec = 0
+
+			local Year, Week, YWeek = T0.year, T0.wday, os.date("!%U")
+			Timestamp.Id = ("%d_%d_%s"):format(Year, Week, YWeek)
+			Timestamp.Seed = tonumber(Year .. Week .. YWeek) :: number
+		elseif format == "Season" then
+			--- `February 14, 2024` --> `"2024_1"`
+			--- Mar-May: `1` (spring)
+			--- Jun-Aug: `2` (summer)
+			--- Sep-Nov: `3` (fall)
+			--- Dec-Feb: `4` (winter)
+			T1.month += 1 + ((11 - math.ceil((T1.month - 3) % 12)) % 3)
+			T1.day = 1
+			T1.hour = 0
+			T1.min = 0
+			T1.sec = 0
+
+			local Year, Month = T0.year, math.ceil((1 + ((T0.month - 3) % 12)) / 3)
+			Timestamp.Id = ("%d_%d"):format(Year, Month)
+			Timestamp.Seed = tonumber(Year .. Month) :: number
+		elseif format == "Biseason" then
+			--- `February 14, 2024` --> `"2024_1"`
+			--- Jan-Jun: `1` (SS)
+			--- Jul-Dec: `2` (FW)
+			T1.month = math.ceil(T1.month / 6)
+			T1.day = 1
+			T1.hour = 0
+			T1.min = 0
+			T1.sec = 0
+
+			local Year, Month = T0.year, math.ceil(T0.month / 6)
+			Timestamp.Id = ("%d_%d"):format(Year, Month)
+			Timestamp.Seed = tonumber(Year .. Month) :: number
+		elseif format == "Year" then
+			--- `February 14, 2024` --> `"2024"`
+			T1.year += 1
+			T1.month = 1
+			T1.day = 1
+			T1.hour = 0
+			T1.min = 0
+			T1.sec = 0
+
+			Timestamp.Id = tostring(T0.year)
+			Timestamp.Seed = tonumber(T0.year) :: number
+		end
+	end
+
+	Timestamp.Until = os.time(T1) - os.time(T0)
+
+	return Timestamp
 end
 
 return Encoder

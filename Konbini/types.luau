@@ -1,7 +1,10 @@
 --- Animation.luau types
 
 export type AnimLibraryEntry = {Id: string?, Priority: Enum.AnimationPriority?, Animation: Animation?} & {[string]: any}
-export type LocomotionState = "Idle" | "Walk" | "Run"
+export type LocomotionState = 
+	| "Idle"
+	| "Walk"
+	| "Run"
 
 --- Bind.luau types
 
@@ -22,12 +25,41 @@ export type WriteOptions = {
 
 --- Collisions.luau
 
-export type CastShape = "Box" | "Ball"
-export type CastList = "Whitelist" | "Blacklist"
+export type CastShape =
+	| "Box"
+	| "Ball"
+export type CastList =
+	| "Whitelist"
+	| "Blacklist"
 
 --- Data.luau
 
 export type SaveTemplate = typeof(require(script.Parent.Data.Config).SaveTemplate)
+
+--- Encoder.luau
+
+export type Notation = 
+	| "DD:HH:MM:SS"
+	| "HH:MM:SS"
+	| "MM:SS"
+	| "M:SS"
+export type Format =
+	| number
+	| "Hour"
+	| "Biphase"
+	| "Day"
+	| "Week"
+	| "Season"
+	| "Biseason"
+	| "Year"
+export type Timestamp = {
+	--- unique, non-recurring string describing format time
+	Id: string;
+	--- unique, non-recurring number describing format time
+	Seed: number;
+	--- time until format changes
+	Until: number;
+}
 
 --- Inputs.luau
 
@@ -66,7 +98,11 @@ export type Tree = {
 	Parent: Instance?;
 } & { [string]: any }
 
-export type MoverClass = "BodyGyro" | "BodyVelocity" | "BodyPosition" | "VectorForce"
+export type MoverClass =
+	| "BodyGyro"
+	| "BodyVelocity"
+	| "BodyPosition"
+	| "VectorForce"
 
 --- Interface.luau
 
@@ -117,7 +153,9 @@ export type Sprite = {
 	Layout: SpriteLayout;
 }
 
-export type LeftOrRight = "Left" | "Right"
+export type LeftOrRight =
+	| "Left"
+	| "Right"
 
 --- Math.luau
 
@@ -132,19 +170,6 @@ export type ClientArg =
 	| Player
 	| { number|Player }
 	| ((Player) -> boolean)
-
---- Time.luau
-
-export type Notation = "DD:HH:MM:SS" | "HH:MM:SS" | "MM:SS" | "M:SS"
-export type Format = number | "Hour" | "Biphase" | "Day" | "Week" | "Season" | "Biseason" | "Year"
-export type FormatResult = {
-	--- unique, non-recurring string describing format time
-	Timestamp: string;
-	--- unique, non-recurring number describing format time
-	Seed: number;
-	--- time until format changes
-	Until: number;
-}
 
 --- Vector3.luau
 
