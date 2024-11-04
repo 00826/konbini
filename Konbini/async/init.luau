@@ -37,7 +37,7 @@ function async.__index:thenrepeat(timeout: number?)
 	return self
 end
 
-function async.__index:thendo(f -> boolean, timeout: number?)
+function async.__index:thendo(f: () -> boolean, timeout: number?)
 	self.fun = f
 	self.result = false
 	self.timeout = timeout or 5
@@ -48,7 +48,7 @@ end
 ---
 --- oh to have a function like task.await() \
 --- all methods return itself for easy chaining
-return function(f -> boolean)
+return function(f: () -> boolean)
 	return setmetatable({
 		fun = f;
 		result = false;
