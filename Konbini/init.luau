@@ -15,6 +15,7 @@ return table.freeze{
 	Couture = require(script:WaitForChild("Couture"));
 	Data = require(script:WaitForChild("Data"));
 	Encoder = require(script:WaitForChild("Encoder"));
+	Entity = require(script:WaitForChild("Entity"));
 	Inputs = require(script:WaitForChild("Inputs"));
 	Instance = require(script:WaitForChild("Instance"));
 	Interface = require(script:WaitForChild("Interface"));
