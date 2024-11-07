@@ -359,6 +359,20 @@ function Encoder.alias(text: string, replace: {[string]: string}, pattern: strin
 	end)
 end
 
+--- applies richtext formatting to text \
+--- *assumes that richtext closure suffix follows pattern `string.match(prefix, "%a+")`*
+--- ```
+--- Encoder.richtext("italicize me", "i") --> <i>italicize me</i>
+--- Encoder.richtext("color me surprised", `font color="#ff00ff"`) --> <font color="#ff00ff">color me surprised</font>
+--- ```
+function Encoder.richformat(text: string, prefix: string)
+	local closure = string.match(prefix, "%a+")
+	assert(closure)
+
+	-- return `<{prefix}>{text}</{closure}>`
+	return "<" .. prefix .. ">" .. text .. "</" .. closure .. ">"
+end
+
 --- applies richtext color to substrings in text matching capture pattern with respect to Color3/hex code palette \
 --- `capture (?=%S+)`: capture substrings separated by whitespaces
 function Encoder.richcolor(text: string, palette: {[string]: Color3|string}, pattern: string?): string
@@ -374,6 +388,17 @@ function Encoder.richcolor(text: string, palette: {[string]: Color3|string}, pat
 		end
 		return s
 	end)
+end
+
+--- returns unicode offset formatted as luau string `"\u{CODEPOINT}"`
+function Encoder.codepoint(offset: number|string): string
+	if type(offset) == "string" then
+		return "\\u{" .. offset .. "}"
+	elseif type(offset) == "number" then
+		return "\\u{" .. string.format("%04d", offset) .. "}"
+	else
+		error(`expected number or string, got {type(offset)} "{offset}"`)
+	end
 end
 
 --- formats time into a hour-minute-second-esque notation
