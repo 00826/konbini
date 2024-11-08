@@ -12,7 +12,28 @@ end
 --- ### Encoder.luau
 ---
 --- buffer and string helper functions
-local Encoder = {}
+local Encoder = {
+	WidthLookup = {
+		i8 = 1; u8 = 1;
+		i16 = 2; u16 = 2;
+		i24 = 3; u24 = 3;
+		i32 = 4; u32 = 4; f32 = 4;
+		f64 = 8;
+	}
+}
+
+--- returns byte width with respect to int/float types
+function Encoder.sizeof(intfloats: {types.intfloat|number}): number
+	local size = 0
+	for _, width in intfloats do
+		if type(width) == "number" then
+			size += width
+		elseif type(width) == "string" then
+			size += Encoder.WidthLookup[width] or 0
+		end
+	end
+	return size
+end
 
 --- trims trailing whitespaces from string in buffer
 function Encoder.trimstring(str: string): string

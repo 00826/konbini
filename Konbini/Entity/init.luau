@@ -105,6 +105,11 @@ function Entity.removed(f: (e: {}, id: string) -> ()): types.Disconnect
 	return Bind("k_Entity_removed"):Connect(f)
 end
 
+--- sends full entity cache to player(kbps disaster)
+function Entity.all(player: Player)
+	EntityRemote:FireClient(player, Entity.Cache)
+end
+
 --- writes key-values of update `u` into `e`, such that `e` inherits all non-nil key-values of `u` \
 --- when possible, mutable data types (same-width buffers, same-type tables) have their references preserved
 function Entity.update(e: {}, u: {})

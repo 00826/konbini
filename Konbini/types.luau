@@ -38,6 +38,17 @@ export type SaveTemplate = typeof(require(script.Parent.Data.Config).SaveTemplat
 
 --- Encoder.luau
 
+export type intfloat = 
+	| "i8"
+	| "u8"
+	| "i16"
+	| "u16"
+	| "i24"
+	| "u24"
+	| "i32"
+	| "u32"
+	| "f32"
+	| "f64"
 export type Notation = 
 	| "DD:HH:MM:SS"
 	| "HH:MM:SS"
