@@ -15,7 +15,8 @@ end
 
 --- ### Interface.luau
 ---
---- contains quality-of-life functions for UI development
+--- quality-of-life interface functions \
+--- includes `UDim`, `UDim2`, `Vector2`, `Color3` constants & constructors
 local Interface = {
 	ButtonSounds = {} :: {[string]: Sound};
 
@@ -70,7 +71,7 @@ local Interface = {
 	};
 	Color3 = table.freeze{
 		white = Color3.fromRGB(255, 255, 255);
-		gray = Color3.fromRGB(128, 128, 128);
+		gray = Color3.fromRGB(148, 148, 148);
 		black = Color3.fromRGB(0, 0, 0);
 
 		--- returns `Color3.fromRGB(w, w, w)`
