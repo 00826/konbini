@@ -48,7 +48,12 @@ end
 --- ### Inputs.luau
 ---
 --- `UserInputService` wrapper \
---- compatible with pc, mobile, gamepad
+--- compatible with pc, mobile, gamepad \
+--- \
+--- PlatformId `0`: unknown \
+--- PlatformId `1`: pc \
+--- PlatformId `2`: mobile \
+--- PlatformId `3`: gamepad \
 local Inputs = {
 	TouchEnabled = UIS.TouchEnabled;
 	PlatformId = 0;
@@ -64,6 +69,8 @@ local Inputs = {
 	Aliases = require(script.Aliases);
 	Dynamic = require(script.Dynamic);
 	Platforms = require(script.Platforms);
+
+	Gamepad2D = script:WaitForChild("Gamepad2D");
 }
 
 local BlacklistParams = RaycastParams.new()
@@ -82,7 +89,7 @@ local function rayblacklist(origin: Vector3, direction: Vector3): RaycastResult
 	return workspace:Raycast(origin, direction, BlacklistParams)
 end
 
---- returns input-cursor, describing client input
+--- returns mutable input-cursor, describing client input
 function Inputs.cursor(): types.Cursor
 	return Cursor
 end
@@ -267,7 +274,7 @@ function Inputs.togglemobileinterface(thumbstickenabled: boolean?, jumpbuttonena
 	end)
 end
 
---- connects mobile gamepad for nicer inputs \
+--- connects 2d gamepad for nicer inputs \
 --- managing CAS buttons and their auto-positioning is painful and not worth the mental taxation
 --- ```
 --- --- gamepadobject: GuiObject
@@ -275,10 +282,10 @@ end
 --- ---  ┣━ UIStroke: UIStroke?
 --- ---  ┗━ Button: TextButton
 --- ```
-function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState) -> ())
+function Inputs.connectgamepad2d(gamepad2d: typeof(Inputs.Gamepad2D), f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState, InputFrame: Frame) -> ())
 	for KeyId, KeyEnum in Inputs.Dynamic do
-		local ButtonFrame = gamepadobject:FindFirstChild(KeyId :: types.DynamicGamepadKey)
-		if not ButtonFrame then warn(gamepadobject, KeyId); continue end
+		local ButtonFrame = gamepad2d:FindFirstChild(KeyId)
+		if not ButtonFrame then warn(gamepad2d, KeyId); continue end
 
 		local UIStroke = ButtonFrame:FindFirstChildOfClass("UIStroke")
 		local TextButton = ButtonFrame:FindFirstChildOfClass("TextButton")
@@ -286,12 +293,12 @@ function Inputs.connectmobilegamepad(gamepadobject: GuiObject, f: (KeyCode: Enum
 
 		TextButton:GetPropertyChangedSignal("GuiState"):Connect(function()
 			if TextButton.GuiState == Enum.GuiState.Press then
-				f(KeyEnum :: Enum.KeyCode, Enum.UserInputState.Begin)
+				f(KeyEnum, Enum.UserInputState.Begin, ButtonFrame)
 				if UIStroke then
 					UIStroke.Color = Color3.fromRGB(255, 255, 255)
 				end
 			elseif TextButton.GuiState == Enum.GuiState.Idle then
-				f(KeyEnum :: Enum.KeyCode, Enum.UserInputState.End)
+				f(KeyEnum, Enum.UserInputState.End, ButtonFrame)
 				if UIStroke then
 					UIStroke.Color = Color3.fromRGB(0, 0, 0)
 				end

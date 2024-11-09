@@ -40,15 +40,23 @@ function Entity.create(t: {[string]: any}?): ({[string]: any}, string)
 			end
 		end
 	end
-	return e, KTable.assign(Entity.Cache, e, 4)
+
+	local key = KTable.assign(Entity.Cache, e, 4)
+	Bind("k_Entity_added"):Fire(e, key)
+
+	return e, key
 end
 
---- removes entity `e` stored at `Cache[id]`
+--- removes entity `e` stored at `Cache[id]` \
+--- fires bind `k_Entity_removed` *prior* to removal
 --- does not automatically queue after removal
 function Entity.remove(id: string)
-	if Entity.Cache[id] then
+	Bind("k_Entity_removed"):Fire(Entity.Cache[id], id)
+
+	--[[if Entity.Cache[id] then
 		table.clear(Entity.Cache[id])
-	end
+	end]]
+
 	Entity.Cache[id] = nil
 end
 
@@ -118,12 +126,12 @@ function Entity.subset(scope: string, comp: (e: {}) -> boolean): {[string]: {}}
 end
 
 --- fires function when an entity is added
-function Entity.added(f: (e: {}, id: string) -> ()): types.Disconnect
+function Entity.added(f: (e: any, id: string) -> ()): types.Disconnect
 	return Bind("k_Entity_added"):Connect(f)
 end
 
 --- fires function when an entity is removed
-function Entity.removed(f: (e: {}, id: string) -> ()): types.Disconnect
+function Entity.removed(f: (e: any, id: string) -> ()): types.Disconnect
 	return Bind("k_Entity_removed"):Connect(f)
 end
 
