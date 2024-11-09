@@ -17,8 +17,8 @@ local KTable = require(script.Parent.Table)
 local Entity = {
 	Cache = {};
 	
-	rate = 1/40;
-	bucket = table.create(128);
+	Rate = 1/40;
+	Bucket = {} :: {[string]: {string}|boolean};
 }
 
 --- creates entity `e` from template `t (?={})`, creates id `id` \
@@ -43,7 +43,8 @@ function Entity.create(t: {[string]: any}?): ({[string]: any}, string)
 	return e, KTable.assign(Entity.Cache, e, 4)
 end
 
---- removes entity `e` stored at `Cache[id]` 
+--- removes entity `e` stored at `Cache[id]`
+--- does not automatically queue after removal
 function Entity.remove(id: string)
 	if Entity.Cache[id] then
 		table.clear(Entity.Cache[id])
@@ -51,9 +52,30 @@ function Entity.remove(id: string)
 	Entity.Cache[id] = nil
 end
 
---- queues entity at `Cache[id]` for the next replication cycle
-function Entity.queue(id: string)
-	KTable.queue_ifandonlyif(Entity.bucket, id)
+--- queues keys of entity at `Cache[id]` for the next replication cycle \
+--- if `keys` are omitted, then all keys will be queued
+function Entity.queue(id: string, keys: {string}?)
+	local e = Entity.Cache[id]
+	if not e then
+		Entity.Bucket[id] = false
+		return
+	end
+
+	if Entity.Bucket[id] == nil then
+		Entity.Bucket[id] = table.create(16)
+	end
+	local ref = Entity.Bucket[id]
+	assert(type(ref) == "table", "this should not happen")
+
+	if keys then
+		for _, key in keys do
+			KTable.queue_ifandonlyif(ref, key)
+		end
+	else
+		for key in e do
+			KTable.queue_ifandonlyif(ref, key)
+		end
+	end
 end
 
 --- returns first `id` that satisfies `e = Cache[id]`
@@ -151,23 +173,33 @@ if IsServer then
 	local elapsed = 0
 	RunService.Heartbeat:Connect(function(dt: number)
 		elapsed += dt
-		if elapsed < Entity.rate then return end
-		elapsed -= Entity.rate
+		if elapsed < Entity.Rate then return end
+		elapsed -= Entity.Rate
 
-		local len = #Entity.bucket
-		if len < 1 then
-			return
-		else
-			local ids = table.move(Entity.bucket, 1, len, 1, table.create(len))
-			table.clear(Entity.bucket)
-	
-			local packet = {}
-			for _, id in ids do
-				packet[id] = Entity.Cache[id] or false
+		local packet = {} :: typeof(Entity.Bucket)
+
+		for id, keys in Entity.Bucket do
+			if type(keys) == "table" then
+				-- update keys
+				packet[id] = {}
+				local e = Entity.Cache[id]
+				if not e then continue end
+				for _, key in keys do
+					(packet[id]::{})[key] = e[key]
+				end
+			elseif keys == false then
+				-- entity destroyed
+				packet[id] = false
+			else
+				warn(`fringe case this should not happen {id} {type(keys)} {keys}`)
 			end
-	
-			EntityRemote:FireAllClients(packet)
+
+			Entity.Bucket[id] = nil -- does this leak?
 		end
+
+		if next(packet) == nil then return end
+
+		EntityRemote:FireAllClients(packet)
 	end)
 else
 	EntityRemote.OnClientEvent:Connect(function(packet: {[string]: {}|boolean})

@@ -74,6 +74,19 @@ local Interface = {
 		gray = Color3.fromRGB(148, 148, 148);
 		black = Color3.fromRGB(0, 0, 0);
 
+		red = Color3.fromRGB(255, 85, 85);
+		orange = Color3.fromRGB(255, 170, 85);
+		yellow = Color3.fromRGB(255, 255, 85);
+		lime = Color3.fromRGB(170, 255, 85);
+		green = Color3.fromRGB(85, 255, 85);
+		turquoise = Color3.fromRGB(85, 255, 170);
+		cyan = Color3.fromRGB(85, 255, 255);
+		blue = Color3.fromRGB(85, 170, 255);
+		royal = Color3.fromRGB(85, 85, 255);
+		violet = Color3.fromRGB(170, 85, 255);
+		pink = Color3.fromRGB(255, 85, 255);
+		hotpink = Color3.fromRGB(255, 85, 170);
+
 		--- returns `Color3.fromRGB(w, w, w)`
 		fromConstant = function(w: number)
 			return Color3.fromRGB(w, w, w)
@@ -103,8 +116,21 @@ local Interface = {
 	};
 	ColorSequence = table.freeze{
 		white = ColorSequence.new(Color3.fromRGB(255, 255, 255));
-		gray = ColorSequence.new(Color3.fromRGB(128, 128, 128));
+		gray = ColorSequence.new(Color3.fromRGB(148, 148, 148));
 		black = ColorSequence.new(Color3.fromRGB(0, 0, 0));
+
+		red = ColorSequence.new(Color3.fromRGB(255, 85, 85));
+		orange = ColorSequence.new(Color3.fromRGB(255, 170, 85));
+		yellow = ColorSequence.new(Color3.fromRGB(255, 255, 85));
+		lime = ColorSequence.new(Color3.fromRGB(170, 255, 85));
+		green = ColorSequence.new(Color3.fromRGB(85, 255, 85));
+		turquoise = ColorSequence.new(Color3.fromRGB(85, 255, 170));
+		cyan = ColorSequence.new(Color3.fromRGB(85, 255, 255));
+		blue = ColorSequence.new(Color3.fromRGB(85, 170, 255));
+		royal = ColorSequence.new(Color3.fromRGB(85, 85, 255));
+		violet = ColorSequence.new(Color3.fromRGB(170, 85, 255));
+		pink = ColorSequence.new(Color3.fromRGB(255, 85, 255));
+		hotpink = ColorSequence.new(Color3.fromRGB(255, 85, 170));
 
 		--- returns `ColorSequence.new(Color3.fromRGB(w, w, w))`
 		fromConstant = function(w: number)
