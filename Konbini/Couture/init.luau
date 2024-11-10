@@ -42,6 +42,10 @@ local Couture = {
 		"Shirt";
 		"Pants";
 	};
+	FemaleTorsos = {
+		86499666; --- r15 torso
+		48474356; --- r6 torso
+	};
 	AssetPrefix = "rbxassetid://";
 }
 
@@ -211,6 +215,15 @@ function Couture.findattachment(character: Instance, attachmentref: string): Att
 	return
 end
 
+--- returns if player avatar is wearing a female torso with respect to `Couture.FemaleTorsos`
+function Couture.isusingfemaletorso(player: Player): boolean
+	local couturefolder = player:FindFirstChild("CoutureFolder")
+	if couturefolder then
+		return couturefolder:GetAttribute("UseFemaleTorso") == true
+	end
+	return false
+end
+
 --- applies player appearance to couture folder, creating relevant instances (couturefolder, humanoiddescription) if they do not already exist
 function Couture.refresh(player: Player): HumanoidDescription
 	assert(IsServer)
@@ -319,6 +332,13 @@ function Couture.refresh(player: Player): HumanoidDescription
 			end, newdescription, couturefolder)
 
 			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+		end
+	end)
+	task.defer(function()
+		if table.find(Couture.FemaleTorsos, newdescription.Torso) then
+			couturefolder:SetAttribute("UseFemaleTorso", true)
+		else
+			couturefolder:SetAttribute("UseFemaleTorso", false)
 		end
 	end)
 

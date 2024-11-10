@@ -53,7 +53,7 @@ end
 --- PlatformId `0`: unknown \
 --- PlatformId `1`: pc \
 --- PlatformId `2`: mobile \
---- PlatformId `3`: gamepad \
+--- PlatformId `3`: gamepad
 local Inputs = {
 	TouchEnabled = UIS.TouchEnabled;
 	PlatformId = 0;
@@ -106,23 +106,29 @@ function Inputs.cursorblacklistremove(thing: Instance)
 	table.remove(Inputs.CursorBlacklist, table.find(Inputs.CursorBlacklist, thing) or 0)
 end
 
---- returns key-value pair bound to keycode with respect to internal platform id
+--- returns key-value pair bound to keycode with respect to internal platform id \
+--- `Enum.KeyCode.Unknown (value 0)` immediately returns nil
 function Inputs.keybind(keycode: Enum.KeyCode, k: {[string]: types.Keybind}): (string?, types.Keybind?)
 	local PlatformId = Inputs.PlatformId
 	if PlatformId == 0 then
 		return
+	elseif keycode == Enum.KeyCode.Unknown then
+		return nil, nil
 	else
 		for keyid, keybind in k do
 			local reals = k[keyid].Reals
-			assert(type(reals) == "table")
+			local defaults = k[keyid].Defaults
 
-			local boundkey = reals[PlatformId]
+			assert(type(reals) == "table")
+			assert(type(defaults) == "table")
+
+			local boundkey = reals[PlatformId] or defaults[PlatformId]
 			if boundkey == keycode.Value then
 				return keyid, keybind
 			end
 		end
-		return
 	end
+	return
 end
 
 --- folds saved keybinds `j` into read-write keybind table `k`
@@ -171,7 +177,21 @@ function Inputs.keybindassert(j: {[string]: {number}}, k: {[string]: types.Keybi
 	end
 end
 
---- returns a platform id corresponding to `InputObject.UserInputType` \
+--- returns associated mouse button `Enum.KeyCode` with respect to inputobject
+function Inputs.inputobjecttomousekeycode(inputobject: InputObject): Enum.KeyCode?
+	local inputtype = inputobject.UserInputType
+	if inputtype == Enum.UserInputType.MouseButton1 then
+		return Enum.KeyCode.MouseLeftButton
+	elseif inputtype == Enum.UserInputType.MouseButton3 then
+		return Enum.KeyCode.MouseMiddleButton
+	elseif inputtype == Enum.UserInputType.MouseButton2 then
+		return Enum.KeyCode.MouseRightButton
+	end
+
+	return
+end
+
+--- returns a platform id corresponding to `inputobject.UserInputType` \
 --- `0`: unknown \
 --- `1`: pc \
 --- `2`: mobile \
@@ -181,17 +201,17 @@ function Inputs.platform(inputobject: InputObject): number
 end
 
 --- binds function to `UserInputService.InputBegan`
-function Inputs.began(f: (InputObject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
+function Inputs.began(f: (inputobject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
 	return Bind("k_Input_began"):Connect(f)
 end
 
 --- binds function to `UserInputService.InputEnded`
-function Inputs.ended(f: (InputObject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
+function Inputs.ended(f: (inputobject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
 	return Bind("k_Input_ended"):Connect(f)
 end
 
 --- binds function to `UserInputService.InputChanged`
-function Inputs.changed(f: (InputObject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
+function Inputs.changed(f: (inputobject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
 	return Bind("k_Input_changed"):Connect(f)
 end
 
@@ -322,10 +342,10 @@ else
 		Inputs.GuiInset = GuiService:GetGuiInset()
 	end)
 
-	local function UpdateMouse(InputObject: InputObject)
+	local function UpdateMouse(inputobject: InputObject)
 		local ScreenPosition = Vector2.zero
 		if Inputs.PlatformId == 2 then
-			local InputPosition: Vector2|Vector3 = InputObject.Position
+			local InputPosition: Vector2|Vector3 = inputobject.Position
 			if Inputs.MobileScreenCenter then
 				InputPosition = Inputs.MobileScreenCenter() or InputPosition
 			end
@@ -355,11 +375,11 @@ else
 
 	--- input changes
 
-	UIS.InputBegan:Connect(function(InputObject: InputObject, ...)
-		if Inputs.sinkthumbstickcheck(InputObject) then return end
-		Bind("k_Input_began"):Fire(InputObject, ...)
+	UIS.InputBegan:Connect(function(inputobject: InputObject, ...)
+		if Inputs.sinkthumbstickcheck(inputobject) then return end
+		Bind("k_Input_began"):Fire(inputobject, ...)
 
-		local Now, KeyCode = os.clock(), InputObject.KeyCode
+		local Now, KeyCode = os.clock(), inputobject.KeyCode
 		local KeyCodeTimeTable = Inputs.InputTimes
 
 		do --- doubletap inputs
@@ -370,7 +390,7 @@ else
 			end
 		end
 
-		UpdateMouse(InputObject)
+		UpdateMouse(inputobject)
 	end)
 	UIS.InputEnded:Connect(function(...)
 		Bind("k_Input_ended"):Fire(...)

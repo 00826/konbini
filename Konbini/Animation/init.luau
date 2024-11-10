@@ -133,4 +133,16 @@ function Animation.evaluate(animtrack: AnimationTrack?, library: string, name: s
 	return animtrack.Name ~= library .. "/" .. name
 end
 
+--- converts animation poses with respect to swap table
+function Animation.convert(container: Instance, swaptable: {[string]: string})
+	for _, thing in container:GetDescendants() do
+		if not thing:IsA("Pose") then continue end
+
+		local swap = swaptable[thing.Name]
+		if not swap then continue end
+
+		thing.Name = swap
+	end
+end
+
 return Animation

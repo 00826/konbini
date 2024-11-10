@@ -48,7 +48,7 @@ function Entity.create(t: {[string]: any}?): ({[string]: any}, string)
 end
 
 --- removes entity `e` stored at `Cache[id]` \
---- fires bind `k_Entity_removed` *prior* to removal
+--- fires bind `k_Entity_removed` *prior* to removal \
 --- does not automatically queue after removal
 function Entity.remove(id: string)
 	Bind("k_Entity_removed"):Fire(Entity.Cache[id], id)
