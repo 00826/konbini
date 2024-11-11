@@ -168,6 +168,40 @@ export type LeftOrRight =
 	| "Left"
 	| "Right"
 
+--- Keyframe.luau
+
+export type KeyframeInfo = {
+	Framerate: number;
+	Framerule: number;
+
+	Time: number;
+	Elapsed: number;
+	IsPaused: boolean;
+
+	Style: Enum.EasingStyle;
+	Direction: Enum.EasingDirection;
+
+	Initial: {[string]: any};
+	Goal: {[string]: any};
+
+	Pause: () -> ();
+	Resume: () -> ();
+	Stop: () -> ();
+}
+
+export type KeyframeType =
+	| number
+	| boolean
+	| Vector2
+	| Vector3
+	| CFrame
+	| Color3
+	| ColorSequence
+	| NumberRange
+	| NumberSequence
+	| UDim
+	| UDim2
+
 --- Math.luau
 
 export type UnitCircleVertex = { X: number, Z: number }

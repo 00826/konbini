@@ -32,14 +32,14 @@ local K_Math = {
 
 --- returns cooldown value of x with respect to deltatime \
 --- solves `"%x per second"`, where `x ∈ [0, 100]`
-function K_Math.cooldownrate(x: number, deltatime: number): number
-	return deltatime * (100 / x)
+function K_Math.cooldownrate(x: number, dt: number): number
+	return dt * (100 / x)
 end
 
 --- returns regen value of x with respect to deltatime \
 --- solves `"x per second"`, where `x ∈ ℝ`
-function K_Math.regenrate(x: number, deltatime: number): number
-	return deltatime * x
+function K_Math.regenrate(x: number, dt: number): number
+	return dt * x
 end
 
 --- returns `x ^ y` \
@@ -51,6 +51,12 @@ end
 --- returns `x ^ 0.5`
 function K_Math.sqrt(x: number): number
 	return x ^ 0.5
+end
+
+--- returns interpolant with respect to deltatime (`1 - (x ^ dt)`) \
+--- `x` is ideally passed in `e-` notation form (such as `10e-11`)
+function K_Math.interpolant(x: number, dt: number): number
+	return 1 - (x ^ dt)
 end
 
 --- linearly interpolates `x` towards `y` with respect to interpolant `a`
@@ -179,6 +185,15 @@ function K_Math.falloff(x: number, a: number, b: number, c: number): number
 	else
 		return 1
 	end
+end
+
+--- returns value of sine wave (`a * math.sin(x / b) + k`) with respect to time `t` \
+--- `a`: amplitude \
+--- `t`: time \
+--- `b`: frequency \
+--- `k`: offset of wave from 0
+function K_Math.sinewave(a: number, t: number, b: number, k: number): number
+	return a * math.sin(t / b) + k
 end
 
 --- scales numbersequence by `x`
