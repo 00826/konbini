@@ -67,10 +67,16 @@ local Inputs = {
 	GuiInset = Vector2.zero;
 
 	Aliases = require(script.Aliases);
-	Dynamic = require(script.Dynamic);
 	Platforms = require(script.Platforms);
 
 	Gamepad2D = script:WaitForChild("Gamepad2D");
+	Gamepad2DMap = require(script.Gamepad2DMap);
+
+	DPad2D = script:WaitForChild("DPad2D");
+	DPad2DMap = require(script.DPad2DMap);
+
+	Select2DColor = Color3.fromRGB(255, 255, 255);
+	Deselect2DColor = Color3.fromRGB(0, 0, 0);
 }
 
 local BlacklistParams = RaycastParams.new()
@@ -294,16 +300,16 @@ function Inputs.togglemobileinterface(thumbstickenabled: boolean?, jumpbuttonena
 	end)
 end
 
---- connects 2d gamepad for nicer inputs \
---- managing CAS buttons and their auto-positioning is painful and not worth the mental taxation
+--- connects on-screen gamepad \
+--- emits keycodes `ButtonY`, `ButtonX`, `ButtonB`, `ButtonA`, `ButtonR3`, `ButtonL1`, `ButtonR1`, `ButtonL2`, `ButtonR2`
 --- ```
---- --- gamepadobject: GuiObject
+--- --- Gamepad2D: GuiObject
 --- --- ┗┳ [KeyId]: GuiObject
---- ---  ┣━ UIStroke: UIStroke?
+--- ---  ┣━ ...: any
 --- ---  ┗━ Button: TextButton
 --- ```
-function Inputs.connectgamepad2d(gamepad2d: typeof(Inputs.Gamepad2D), f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState, InputFrame: Frame) -> ())
-	for KeyId, KeyEnum in Inputs.Dynamic do
+function Inputs.connectGamepad2D(gamepad2d: typeof(Inputs.Gamepad2D), f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState, InputFrame: Frame) -> ())
+	for KeyId, KeyEnum in Inputs.Gamepad2DMap do
 		local ButtonFrame = gamepad2d:FindFirstChild(KeyId)
 		if not ButtonFrame then warn(gamepad2d, KeyId); continue end
 
@@ -315,12 +321,45 @@ function Inputs.connectgamepad2d(gamepad2d: typeof(Inputs.Gamepad2D), f: (KeyCod
 			if TextButton.GuiState == Enum.GuiState.Press then
 				f(KeyEnum, Enum.UserInputState.Begin, ButtonFrame)
 				if UIStroke then
-					UIStroke.Color = Color3.fromRGB(255, 255, 255)
+					UIStroke.Color = Inputs.Select2DColor
 				end
 			elseif TextButton.GuiState == Enum.GuiState.Idle then
 				f(KeyEnum, Enum.UserInputState.End, ButtonFrame)
 				if UIStroke then
-					UIStroke.Color = Color3.fromRGB(0, 0, 0)
+					UIStroke.Color = Inputs.Deselect2DColor
+				end
+			end
+		end)
+	end
+end
+
+--- connects on-screen dpad \
+--- emits keycodes `DPadUp`, `DPadLeft`, `DPadRight`, `DPadDown`, `ButtonL3`
+--- ```
+--- --- DPad2D: GuiObject
+--- --- ┗┳ [KeyId]: GuiObject
+--- ---  ┣━ ...: any
+--- ---  ┗━ Button: TextButton
+--- ```
+function Inputs.connectDPad2D(dpad2d: typeof(Inputs.DPad2D), f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState, InputFrame: Frame) -> ())
+	for KeyId, KeyEnum in Inputs.DPad2DMap do
+		local ButtonFrame = dpad2d:FindFirstChild(KeyId)
+		if not ButtonFrame then warn(dpad2d, KeyId); continue end
+
+		local UIStroke = ButtonFrame:FindFirstChildOfClass("UIStroke")
+		local TextButton = ButtonFrame:FindFirstChildOfClass("TextButton")
+		if not TextButton then continue end
+
+		TextButton:GetPropertyChangedSignal("GuiState"):Connect(function()
+			if TextButton.GuiState == Enum.GuiState.Press then
+				f(KeyEnum, Enum.UserInputState.Begin, ButtonFrame)
+				if UIStroke then
+					UIStroke.Color = Inputs.Select2DColor
+				end
+			elseif TextButton.GuiState == Enum.GuiState.Idle then
+				f(KeyEnum, Enum.UserInputState.End, ButtonFrame)
+				if UIStroke then
+					UIStroke.Color = Inputs.Deselect2DColor
 				end
 			end
 		end)
