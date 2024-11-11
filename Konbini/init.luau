@@ -19,6 +19,7 @@ return table.freeze{
 	Inputs = require(script:WaitForChild("Inputs"));
 	Instance = require(script:WaitForChild("Instance"));
 	Interface = require(script:WaitForChild("Interface"));
+	Keyframe = require(script:WaitForChild("Keyframe"));
 	Math = require(script:WaitForChild("Math"));
 	Misc = require(script:WaitForChild("Misc"));
 	Network = require(script:WaitForChild("Network"));

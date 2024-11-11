@@ -129,6 +129,12 @@ local function interpolate(object: Instance, keyframeinfo: types.KeyframeInfo, d
 	if a >= 1 then
 		table.clear(Bucket[object] or table.create(0))
 		Bucket[object] = nil
+
+		if keyframeinfo.Destruct then
+			task.delay(keyframeinfo.Destruct, function()
+				object:Destroy()
+			end)
+		end
 	end
 end
 
@@ -144,8 +150,11 @@ end)
 --- `style(?=Enum.EasingDirection.Linear)`: effect easingstyle \
 --- `direction(?=Enum.EasingDirection.Out)`: effect easingdirection \
 --- `framerate(?=1/60)`: effect framerate \
---- all transformations are deferred
-return function(object: Instance, goal: {[string]: types.KeyframeType}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?): types.KeyframeInfo
+--- `destruct(?=nil)`: destroy object `n` seconds after effect completion \
+--- all transformations are deferred \
+--- \
+--- returns a mutable `KeyframeInfo` table for convenience
+return function(object: Instance, goal: {[string]: types.KeyframeType}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?, destruct: number?): types.KeyframeInfo
 	if Bucket[object] then
 		Bucket[object] = nil
 	end
@@ -163,6 +172,7 @@ return function(object: Instance, goal: {[string]: types.KeyframeType}, time: nu
 
 		Initial = {};
 		Goal = table.clone(goal);
+		Destruct = destruct;
 	}
 
 	keyframeinfo.Reset = function()

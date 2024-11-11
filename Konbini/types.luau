@@ -183,6 +183,7 @@ export type KeyframeInfo = {
 
 	Initial: {[string]: any};
 	Goal: {[string]: any};
+	Destruct: number?;
 
 	Pause: () -> ();
 	Resume: () -> ();
