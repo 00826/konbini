@@ -2,6 +2,9 @@
 
 local types = require(script.Parent.types)
 
+local Bind = require(script.Parent.Bind)
+local Encoder = require(script.Parent.Encoder)
+
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
@@ -10,8 +13,6 @@ local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 local GamepadService = game:GetService("GamepadService")
-
-local Bind = require(script.Parent.Bind)
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = nil :: PlayerGui?
@@ -110,6 +111,27 @@ end
 --- removes instance from cursor blacklist
 function Inputs.cursorblacklistremove(thing: Instance)
 	table.remove(Inputs.CursorBlacklist, table.find(Inputs.CursorBlacklist, thing) or 0)
+end
+
+--- packs cursor vectors into a buffer
+function Inputs.cursorpack()
+	local c = buffer.create(12+3+3) --- totally folded to 18
+	Encoder.writevector3(c, 0, Cursor.Position)
+	Encoder.writeunitvector(c, 12, Cursor.Normal)
+	Encoder.writeunitvector(c, 15, Cursor.Camera)
+
+	return c
+end
+
+--- unpacks cursor-buffer:
+--- `Position`: cursor world position
+--- `Normal`: cursor surface normal
+--- `Camera`: camera normal
+function Inputs.cursorunpack(c: buffer)
+	return
+		Encoder.readvector3(c, 0),
+		Encoder.readunitvector(c, 12),
+		Encoder.readunitvector(c, 15)
 end
 
 --- returns key-value pair bound to keycode with respect to internal platform id \

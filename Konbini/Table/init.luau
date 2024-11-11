@@ -172,6 +172,11 @@ end
 
 --- returns non-repeating list of elements picked from array
 function K_Table.pickfromlist<T>(A: {T}, n: number?, R: Random?): {T}
+	if #A == 0 then
+		warn(`empty array passed, returning new empty array`)
+		return table.create(0)
+	end
+
 	if not R then R = types.R end
 	if not n then n = 1 end
 

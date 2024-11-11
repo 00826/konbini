@@ -6,25 +6,18 @@ local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 
 local Ball = script:WaitForChild("BallSocketConstraint")
-local Choreographs = script:WaitForChild("Choreographs")
 local Motor = script:WaitForChild("Motor6D")
 local MoverRemote = script:WaitForChild("MoverRemote")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
-
-local function tween(object: Instance, properties: {[string]: any}, time: number, ...)
-	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
-end
 
 --- ### Instance.luau
 ---
 --- extension of Instance library & instance-related functions
 local K_Instance = {
 	Movers = {};
-	choreographTime = 1/15;
 	emitContainer = workspace;
 }
 
@@ -318,154 +311,9 @@ function K_Instance.emitSound(sound: Sound, at: (Vector3|Instance)?)
 	end
 end
 
---- choreographs a box-shaped hitbox
-function K_Instance.choreographBox(at: Vector3, towards: Vector3, size: Vector3, time: number): typeof(Choreographs.Box)
-	local thisbox = Choreographs.Box:Clone()
-	thisbox.CFrame = CFrame.lookAt(at, towards)
-	thisbox.Parent = workspace
-
-	thisbox.Inner.Size = size
-	thisbox.Outer.Size = size
-
-	tween(thisbox.Inner, {Size = Vector3.zero, Visible = false}, time)
-
-	task.delay(time, K_Instance.choreographOut, thisbox, {Size = Vector3.zero, Visible = false})
-
-	return thisbox
-end
-
---- choreographs a planar hitbox
-function K_Instance.choreographPlane(at: Vector3, towards: Vector3, size: Vector3, time: number): typeof(Choreographs.Plane)
-	local thisplane = Choreographs.Plane:Clone()
-	thisplane.CFrame = CFrame.lookAt(at, towards)
-	thisplane.Parent = workspace
-
-	local realsize = Vector3.new(size.X, 2, size.Z)
-	thisplane.Inner.Size = realsize
-	thisplane.Outer.Size = realsize
-
-	tween(thisplane.Inner, {Size = 2 * Vector3.yAxis, Visible = false}, time)
-
-	task.delay(time, K_Instance.choreographOut, thisplane, {Size = 2 * Vector3.yAxis, Visible = false})
-
-	return thisplane
-end
-
---- choreographs a radial hitbox
-function K_Instance.choreographRadius(at: Vector3, radius: number, time: number): typeof(Choreographs.Radius)
-	local thisradius = Choreographs.Radius:Clone()
-	thisradius.Position = at
-	thisradius.Parent = workspace
-
-	thisradius.Inner.Radius = radius
-	thisradius.Outer.Radius = radius
-
-	tween(thisradius.Inner, {Radius = 0, Visible = false}, time)
-
-	task.delay(time, K_Instance.choreographOut, thisradius, {Radius = 0, Visible = false})
-
-	return thisradius
-end
-
---- choreographs a ball-shaped hitbox
-function K_Instance.choreographBall(at: Vector3, towards: Vector3, radius: number, time: number): typeof(Choreographs.Ball)
-	local thisball = Choreographs.Ball:Clone()
-	thisball.CFrame = CFrame.lookAt(at, towards)
-	thisball.Parent = workspace
-
-	thisball.Inner.Radius = radius
-	thisball.Outer.Radius = radius
-
-	tween(thisball.Inner, {Radius = 0, Visible = false}, time)
-
-	task.delay(time, K_Instance.choreographOut, thisball, {Radius = 0, Visible = false})
-
-	return thisball
-end
-
---- choreographs a beam-shaped hitbox
-function K_Instance.choreographBeam(at: Vector3, towards: Vector3, radius: number, distance: number, time: number): typeof(Choreographs.Beam)
-	local thisbeam = Choreographs.Beam:Clone()
-	thisbeam.CFrame = CFrame.lookAt(at, towards)
-	thisbeam.Parent = workspace
-
-	thisbeam.Inner.Height = distance
-	thisbeam.Outer.Height = distance
-	thisbeam.Inner.Radius = radius
-	thisbeam.Outer.Radius = radius
-
-	local cf = CFrame.new(0, 0, -distance * 0.5)
-	thisbeam.Inner.CFrame = cf
-	thisbeam.Outer.CFrame = cf
-
-	tween(thisbeam.Inner, {Radius = 0, Visible = false}, time)
-
-	task.delay(time, K_Instance.choreographOut, thisbeam, {Radius = 0, Visible = false})
-
-	return thisbeam
-end
-
---- choreographs a cone-shaped hitbox
-function K_Instance.choreographCone(at: Vector3, towards: Vector3, angle: number, distance: number, time: number): typeof(Choreographs.Cone)
-	local thiscone = Choreographs.Cone:Clone()
-	thiscone.CFrame = CFrame.lookAt(at, towards)
-	thiscone.Parent = workspace
-
-	thiscone.Inner.Height = distance
-	thiscone.Outer.Height = distance
-
-	local r = distance * math.tan(math.rad(angle))
-	thiscone.Inner.Radius = r
-	thiscone.Outer.Radius = r
-
-	local v = Vector3.zAxis * -distance * 0.5
-	thiscone.Inner.SizeRelativeOffset = v
-	thiscone.Outer.SizeRelativeOffset = v
-
-	tween(thiscone.Inner, {Radius = 0, Visible = false}, time)
-
-	task.delay(time, K_Instance.choreographOut, thiscone, {Radius = 0, Visible = false})
-
-	return thiscone
-end
-
---- choreographs a raycast with respect to its (possibly nil) resultant raycastresult
-function K_Instance.choreographRay(origin: Vector3, direction: Vector3, result: RaycastResult?): typeof(Choreographs.Ray)
-	local thisray = Choreographs.Ray:Clone()
-	thisray.Parent = workspace
-
-	thisray.A.WorldPosition = origin
-	thisray.B.WorldPosition = origin + direction
-
-	if result then
-		thisray.C.Beam.Enabled = true
-		thisray.C.WorldPosition = origin
-		thisray.D.WorldPosition = result.Position
-		tween(thisray.C.Beam, {Width0 = 0, Enabled = false}, K_Instance.choreographTime)
-	else
-		thisray.C.Beam.Enabled = false
-	end
-
-	tween(thisray.A.Beam, {Width0 = 0, Enabled = false}, K_Instance.choreographTime)
-
-	task.delay(K_Instance.choreographTime, function()
-		thisray:Destroy()
-	end)
-
-	return thisray
-end
-
---- applies a shrink effect against choreograph instance `C` \
---- C is destroyed after the effect is applied
-function K_Instance.choreographOut(C: any, properties: {[string]: any})
-	tween(C.Outer, properties, K_Instance.choreographTime)
-	task.wait(K_Instance.choreographTime)
-	C:Destroy()
-end
-
 --- emits a clone of instance template `t` at vector3 or attached to basepart \
 --- `clone<t> -> parented -> deferred transform(?) -> delayed destruct(?) -> return clone<t>` \
---- if both `at` and `t` are baseparts, then `t` will be unanchored and massless-ed *prior* to welding
+--- if both `at` and `template` are baseparts, then `t` will be unanchored and massless-ed *prior* to welding. weldconstraint is parented to emitted clone of `t`
 function K_Instance.emit<t>(template: t & Instance, at: Vector3|BasePart, transform: ((real: t) -> ())?, destruct: number?)
 	local real = template:Clone()
 
