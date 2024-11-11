@@ -10,6 +10,7 @@ return table.freeze{
 	Animation = require(script:WaitForChild("Animation"));
 	async = require(script:WaitForChild("async"));
 	Bind = require(script:WaitForChild("Bind"));
+	Bullet = require(script:WaitForChild("Bullet"));
 	CFrame = require(script:WaitForChild("CFrame"));
 	Collisions = require(script:WaitForChild("Collisions"));
 	Couture = require(script:WaitForChild("Couture"));
