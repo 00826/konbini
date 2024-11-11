@@ -35,4 +35,8 @@ return {
 	[Enum.KeyCode.ButtonX] = "X";
 	[Enum.KeyCode.ButtonB] = "B";
 	[Enum.KeyCode.ButtonA] = "A";
+	[Enum.KeyCode.DPadUp] = "▲";
+	[Enum.KeyCode.DPadLeft] = "◀";
+	[Enum.KeyCode.DPadRight] = "►";
+	[Enum.KeyCode.DPadDown] = "▼";
 }
