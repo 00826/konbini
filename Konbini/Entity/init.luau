@@ -9,7 +9,7 @@ local IsServer = RunService:IsServer()
 local EntityRemote = script:WaitForChild("EntityRemote")
 
 local Bind = require(script.Parent.Bind)
-local KTable = require(script.Parent.Table)
+local TableK = require(script.Parent.Table)
 
 --- ### Entity.luau
 ---
@@ -41,7 +41,7 @@ function Entity.create(t: {[string]: any}?): ({[string]: any}, string)
 		end
 	end
 
-	local key = KTable.assign(Entity.Cache, e, 4)
+	local key = TableK.assign(Entity.Cache, e, 4)
 	Bind("k_Entity_added"):Fire(e, key)
 
 	return e, key
@@ -77,11 +77,11 @@ function Entity.queue(id: string, keys: {string}?)
 
 	if keys then
 		for _, key in keys do
-			KTable.queue_ifandonlyif(ref, key)
+			TableK.queue_ifandonlyif(ref, key)
 		end
 	else
 		for key in e do
-			KTable.queue_ifandonlyif(ref, key)
+			TableK.queue_ifandonlyif(ref, key)
 		end
 	end
 end

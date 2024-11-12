@@ -7,7 +7,7 @@ local types = require(script.Parent.types)
 --- ### Math.luau
 ---
 --- extension of math library
-local K_Math = {
+local MathK = {
 	pi4 = math.pi/4;
 	pi2 = math.pi/2;
 
@@ -16,11 +16,11 @@ local K_Math = {
 
 	NumberSequence = table.freeze{
 		zero = NumberSequence.new(0);
-		one = NumberSequence.new(0);
+		one = NumberSequence.new(1);
 	};
 	NumberRange = table.freeze{
 		zero = NumberRange.new(0);
-		one = NumberRange.new(0);
+		one = NumberRange.new(1);
 
 		zeroOne = NumberRange.new(0, 1);
 		zeroTen = NumberRange.new(0, 10);
@@ -32,40 +32,40 @@ local K_Math = {
 
 --- returns cooldown value of x with respect to deltatime \
 --- solves `"%x per second"`, where `x ∈ [0, 100]`
-function K_Math.cooldownrate(x: number, dt: number): number
+function MathK.cooldownrate(x: number, dt: number): number
 	return dt * (100 / x)
 end
 
 --- returns regen value of x with respect to deltatime \
 --- solves `"x per second"`, where `x ∈ ℝ`
-function K_Math.regenrate(x: number, dt: number): number
+function MathK.regenrate(x: number, dt: number): number
 	return dt * x
 end
 
 --- returns `x ^ y` \
 --- *in contexts where `y == 2`, returns `x * x`*
-function K_Math.pow(x: number, y: number): number
+function MathK.pow(x: number, y: number): number
 	return y == 2 and x * x or x ^ y
 end
 
 --- returns `x ^ 0.5`
-function K_Math.sqrt(x: number): number
+function MathK.sqrt(x: number): number
 	return x ^ 0.5
 end
 
 --- returns interpolant with respect to deltatime (`1 - (x ^ dt)`) \
 --- `x` is ideally passed in `e-` notation form (such as `10e-11`)
-function K_Math.interpolant(x: number, dt: number): number
+function MathK.interpolant(x: number, dt: number): number
 	return 1 - (x ^ dt)
 end
 
 --- linearly interpolates `x` towards `y` with respect to interpolant `a`
-function K_Math.lerp(x: number, y: number, a: number): number
+function MathK.lerp(x: number, y: number, a: number): number
 	return (1 - a) * x + a * y;
 end
 
 --- returns `b` as an interpolant between `x` and `y`, where `b ∈ [x, y]`
-function K_Math.alpha(x: number, y: number, b: number): number
+function MathK.alpha(x: number, y: number, b: number): number
 	if b >= y then
 		return 1
 	elseif b <= x then
@@ -76,14 +76,14 @@ function K_Math.alpha(x: number, y: number, b: number): number
 end
 
 --- maps `x` such that `x ∈ [a, b] ⟶ [c, d]`
-function K_Math.map(x: number, a: number, b: number, c: number, d: number): number
+function MathK.map(x: number, a: number, b: number, c: number, d: number): number
 	return (x - a) * (d - c) / (b - a) + c;
 end
 
 --- returns: \
 --- where `x ∈ [a, b]`: `true` \
 --- where `x ∉ [a, b]`: `false`
-function K_Math.inrange(x: number, a: number, b: number): boolean
+function MathK.inrange(x: number, a: number, b: number): boolean
 	if x >= a and x <= b then
 		return true
 	end
@@ -95,7 +95,7 @@ end
 --- `Shift(5, 1, 6) -> 6` \
 --- `Shift(5, 2, 6) -> 1` \
 --- `Shift(1, -3, 6) -> 4`
-function K_Math.shift(x: number, a: number, b: number): number
+function MathK.shift(x: number, a: number, b: number): number
 	x += a
 	local c = x % b
 	return c == 0 and b or c
@@ -105,7 +105,7 @@ end
 --- `RallyPoint(25, 24, 25) -> 0` \
 --- `RallyPoint(25, 25, 27) -> 2` \
 --- `RallyPoint(25, 25, 0) -> 1`
-function K_Math.rallypoint(score: number, h: number, k: number): number
+function MathK.rallypoint(score: number, h: number, k: number): number
 	if (h >= score) and (h - k >= 2) then
 		return 1
 	elseif (k >= score) and (k - h >= 2) then
@@ -119,7 +119,7 @@ end
 --- `BestOf(3, 1, 2) -> 2` \
 --- `BestOf(5, 2, 2) -> 0` \
 --- `BestOf(7, 4, 3) -> 1`
-function K_Math.bestof(series: number, h: number, k: number): number
+function MathK.bestof(series: number, h: number, k: number): number
 	local wins = 1 + (series // 2)
 
 	if h == wins then
@@ -133,13 +133,13 @@ end
 
 --- returns `x` scaled against limit where `a ∈ [0, ∞]` and slope scalar where `k ∈ [steep, flat]` \
 --- `y=\frac{ax}{k+x}`
-function K_Math.limit(x: number, a: number, k: number): number
+function MathK.limit(x: number, a: number, k: number): number
 	return (a * x) / (k + x)
 end
 
 --- returns cartesian coordinates of point `p` with respect to grid width `w` \
 --- assumes a zero-indexed cartesian plane, read from `left -> right`, `top -> bottom` \
-function K_Math.cartesian(p: number, w: number): (number, number)
+function MathK.cartesian(p: number, w: number): (number, number)
 	p -= 1
 	return p // w, p % w
 end
@@ -148,7 +148,7 @@ end
 --- `aligncenter(2)`: `[-0.5, 0.5]` \
 --- `aligncenter(3, true)`: `[1, 0, -1]` \
 --- `aligncenter(5)`: `[-2, -1, 0, 1, 2]`
-function K_Math.aligncenter(x: number, reverse: boolean?): {number}
+function MathK.aligncenter(x: number, reverse: boolean?): {number}
 	if x == 1 then
 		return table.create(1, 0)
 	else
@@ -175,7 +175,7 @@ end
 --- where `x in [a, b]`: `{1}` \
 --- where `x in (b, c]`: `(1, 0]` \
 --- where `x in (c, ∞]`: `{0}`
-function K_Math.falloff(x: number, a: number, b: number, c: number): number
+function MathK.falloff(x: number, a: number, b: number, c: number): number
 	if x < a then
 		return x / a
 	elseif x > c then
@@ -192,12 +192,12 @@ end
 --- `t`: time \
 --- `b`: frequency \
 --- `k`: offset of wave from 0
-function K_Math.sinewave(a: number, t: number, b: number, k: number): number
+function MathK.sinewave(a: number, t: number, b: number, k: number): number
 	return a * math.sin(t / b) + k
 end
 
 --- scales numbersequence by `x`
-function K_Math.scalenumbersequence(numbersequence: NumberSequence, x: number): NumberSequence
+function MathK.scalenumbersequence(numbersequence: NumberSequence, x: number): NumberSequence
 	local NewSequence = {}
 	for _, Keypoint in ipairs(numbersequence.Keypoints) do
 		local NewValue = Keypoint.Value * x
@@ -206,14 +206,19 @@ function K_Math.scalenumbersequence(numbersequence: NumberSequence, x: number): 
 	return NumberSequence.new(NewSequence)
 end
 
+--- returns `-1|1`, chosen randomly
+function MathK.rsign()
+	return (MathK.random:NextInteger(0, 255) / 255) > 0.5 and 1 or -1
+end
+
 --- converts `x`, where `x in [0, 1]`, to a numbersequence
-function K_Math.alphatonumbersequence(x: number): NumberSequence
+function MathK.alphatonumbersequence(x: number): NumberSequence
 	if x <= 0.01 then
-		return K_Math.NumberSequence.zero
+		return MathK.NumberSequence.zero
 	elseif x == 1 then
-		return K_Math.NumberSequence.one
+		return MathK.NumberSequence.one
 	elseif x >= 0.99 then
-		return K_Math.NumberSequence.one
+		return MathK.NumberSequence.one
 	end
 	x = math.clamp(x, 0, 1)
 	return NumberSequence.new({
@@ -227,14 +232,14 @@ end
 --- returns a unit circle \
 --- *in contexts where `vertices == 1`, the vertex is placed at `x = -r`* \
 --- *in contexts where `vertices == 2`, the vertices are placed at `x = ±r`*
-function K_Math.unitcircle(vertices: number, radius: number): { types.UnitCircleVertex }
+function MathK.unitcircle(vertices: number, radius: number): { types.UnitCircleVertex }
 	if vertices == 1 then
 		return { {X = -radius; Z = 0;} }
 	elseif vertices == 2 then
 		return { {X = -radius; Z = 0;}, {X = radius; Z = 0;} }
 	end
 
-	local Step = K_Math.tau / vertices
+	local Step = MathK.tau / vertices
 	local Tilt = math.pi / vertices
 	local V = table.create(vertices)
 	for i = 1, vertices do
@@ -245,4 +250,4 @@ function K_Math.unitcircle(vertices: number, radius: number): { types.UnitCircle
 	return V
 end
 
-return table.freeze(K_Math)
+return table.freeze(MathK)

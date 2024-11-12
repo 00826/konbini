@@ -16,17 +16,17 @@ local Weld = script:WaitForChild("Weld")
 --- ### Instance.luau
 ---
 --- extension of Instance library & instance-related functions
-local K_Instance = {
+local InstanceK = {
 	Movers = {};
 	emitContainer = workspace;
 }
 
 for _, BodyMover in script:WaitForChild("Movers"):GetChildren() do
-	K_Instance.Movers[BodyMover.ClassName] = BodyMover
+	InstanceK.Movers[BodyMover.ClassName] = BodyMover
 end
 
 --- recursive `Instance.new()` using instance tree
-function K_Instance.new(tree: types.Tree): Instance
+function InstanceK.new(tree: types.Tree): Instance
 	local NewInstance: any = Instance.new(tree.ClassName)
 
 	for Property, Value in pairs(tree) do
@@ -37,7 +37,7 @@ function K_Instance.new(tree: types.Tree): Instance
 		--- yes, these checks make the function very slow
 		--- but property write errors on yet-to-be-parented instances are silent and yield indefinitely
 		--- so its preferred to have something that works versus something thats fast
-		if not K_Instance.IsPropertyOf(NewInstance, Property) then
+		if not InstanceK.IsPropertyOf(NewInstance, Property) then
 			warn(`{debug.traceback()}{Property} is not a property of {tree.ClassName} "{tree.Name or tree.ClassName}"`)
 			continue
 		end
@@ -52,7 +52,7 @@ function K_Instance.new(tree: types.Tree): Instance
 	if tree.Children then
 		for _, v in pairs(tree.Children) do
 			v.Parent = NewInstance
-			K_Instance.new(v)
+			InstanceK.new(v)
 		end
 	end
 
@@ -62,7 +62,7 @@ function K_Instance.new(tree: types.Tree): Instance
 end
 
 --- returns instance at the end of path `"path/to/instance"`, beginning at root `inst`
-function K_Instance.Path(inst: Instance, Path: string, Yield: boolean?): Instance?
+function InstanceK.Path(inst: Instance, Path: string, Yield: boolean?): Instance?
 	for _, Ref in ipairs(string.split(Path, "/")) do
 		local New = Yield and inst:WaitForChild(Ref) or inst:FindFirstChild(Ref)
 
@@ -76,14 +76,14 @@ function K_Instance.Path(inst: Instance, Path: string, Yield: boolean?): Instanc
 end
 
 --- returns true if property is a property of instance
-function K_Instance.IsPropertyOf(inst: Instance, property: string): boolean
+function InstanceK.IsPropertyOf(inst: Instance, property: string): boolean
 	return pcall(function() return (inst :: any)[property] end)
 end
 
 --- welds b to a at offset \
 --- `a`: "root" part \
 --- `b`: "loose" part
-function K_Instance.Weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstraint
+function InstanceK.Weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstraint
 	local NewWeld = Weld:Clone()
 	b.CFrame = a.CFrame * (offset or CFrame.identity)
 	NewWeld.Part0 = b
@@ -93,7 +93,7 @@ function K_Instance.Weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstra
 end
 
 --- iterative `Property` setter
-function K_Instance.Properties(inst: Instance, properties: {[string]: any})
+function InstanceK.Properties(inst: Instance, properties: {[string]: any})
 	for k, v in properties do
 		if k == "Parent" then continue end
 		(inst :: any)[k] = v
@@ -104,14 +104,14 @@ function K_Instance.Properties(inst: Instance, properties: {[string]: any})
 end
 
 --- iterative `Attribute` setter
-function K_Instance.Attributes(inst: Instance, attributes: {[string]: any})
+function InstanceK.Attributes(inst: Instance, attributes: {[string]: any})
 	for k, v in attributes do
 		inst:SetAttribute(k, v)
 	end
 end
 
 --- yields until child of class is parented under instance
-function K_Instance.WaitForChildOfClass(inst: Instance, classname: string, timeout: number?): Instance?
+function InstanceK.WaitForChildOfClass(inst: Instance, classname: string, timeout: number?): Instance?
 	local Thing, T = inst:FindFirstChildOfClass(classname), timeout or 10
 	if not Thing then
 		repeat
@@ -123,7 +123,7 @@ function K_Instance.WaitForChildOfClass(inst: Instance, classname: string, timeo
 end
 
 --- returns all children of instance whose names match vararg
-function K_Instance.GetChildrenWithName(inst: Instance, ...: string): {Instance}
+function InstanceK.GetChildrenWithName(inst: Instance, ...: string): {Instance}
 	local Names = {...}
 	local Children = inst:GetChildren()
 	local Matches = table.create(#Children)
@@ -138,7 +138,7 @@ function K_Instance.GetChildrenWithName(inst: Instance, ...: string): {Instance}
 end
 
 --- returns all children of instance whose classnames match vararg
-function K_Instance.GetChildrenOfClass(inst: Instance, ...: string): {Instance}
+function InstanceK.GetChildrenOfClass(inst: Instance, ...: string): {Instance}
 	local Names = {...}
 	local Children = inst:GetChildren()
 	local Matches = table.create(#Children)
@@ -153,7 +153,7 @@ function K_Instance.GetChildrenOfClass(inst: Instance, ...: string): {Instance}
 end
 
 --- returns first child of instance where `f(Thing) -> true`
-function K_Instance.FindFirstChildWithCase(inst: Instance, f: (Thing: Instance) -> boolean): Instance?
+function InstanceK.FindFirstChildWithCase(inst: Instance, f: (Thing: Instance) -> boolean): Instance?
 	for _, Thing: Instance in inst:GetChildren() do
 		if string.sub(Thing.Name, 1, 1) == "_" then continue end
 		if f(Thing) then return Thing end
@@ -170,12 +170,12 @@ end
 --- ---  ┣━ RightFin: Part
 --- ---  ┗━ LeftFin: Part
 --- --- ┗━ Animator: Animator
---- K_Instance.FindHighestAncestorOfClass(RightFin, "Model") --> Fish
+--- InstanceK.FindHighestAncestorOfClass(RightFin, "Model") --> Fish
 --- ```
-function K_Instance.FindHighestAncestorOfClass(inst: Instance, classname: string): Instance?
+function InstanceK.FindHighestAncestorOfClass(inst: Instance, classname: string): Instance?
 	local Ancestor = inst:FindFirstAncestorOfClass(classname)
 	if Ancestor then
-		local ThisAncestor = K_Instance.FindHighestAncestorOfClass(Ancestor, classname)
+		local ThisAncestor = InstanceK.FindHighestAncestorOfClass(Ancestor, classname)
 		if not ThisAncestor then
 			return Ancestor
 		else
@@ -186,7 +186,7 @@ function K_Instance.FindHighestAncestorOfClass(inst: Instance, classname: string
 end
 
 --- returns desired parents of things
-function K_Instance.FindParentsOfClass(things: {Instance | RaycastResult}, classname: string, ignore: Instance?): {Instance}
+function InstanceK.FindParentsOfClass(things: {Instance | RaycastResult}, classname: string, ignore: Instance?): {Instance}
 	local Matches = table.create(#things)
 
 	for _, Thing in things do
@@ -209,7 +209,7 @@ function K_Instance.FindParentsOfClass(things: {Instance | RaycastResult}, class
 end
 
 --- Instance:IsDescendantOf() but it accepts varargs
-function K_Instance.IsDescendantOf(inst: Instance, ...: Instance): boolean
+function InstanceK.IsDescendantOf(inst: Instance, ...: Instance): boolean
 	for _, Thing in {...} do
 		if inst:IsDescendantOf(Thing) then
 			return true
@@ -219,18 +219,18 @@ function K_Instance.IsDescendantOf(inst: Instance, ...: Instance): boolean
 end
 
 --- ClearAllChildrenWithNames()
-function K_Instance.ClearChildrenWithName(inst: Instance, name: string)
+function InstanceK.ClearChildrenWithName(inst: Instance, name: string)
 	local ThingWithClassName = inst:FindFirstChild(name)
 	if ThingWithClassName then
 		ThingWithClassName:Destroy()
-		K_Instance.ClearChildrenWithName(inst, name)
+		InstanceK.ClearChildrenWithName(inst, name)
 	else
 		return
 	end
 end
 
 --- ClearAllChildrenWithoutNames()
-function K_Instance.ClearWithoutName(inst: Instance, ...: string)
+function InstanceK.ClearWithoutName(inst: Instance, ...: string)
 	local Names = {...}
 	for _, Thing: Instance in inst:GetChildren() do
 		if string.sub(Thing.Name, 1, 1) == "_" then continue end
@@ -240,18 +240,18 @@ function K_Instance.ClearWithoutName(inst: Instance, ...: string)
 end
 
 --- ClearChildrenWithClassName()
-function K_Instance.ClearChildrenWithClassName(inst: Instance, classname: string)
+function InstanceK.ClearChildrenWithClassName(inst: Instance, classname: string)
 	local ThingWithClassName = inst:FindFirstChildOfClass(classname)
 	if ThingWithClassName then
 		ThingWithClassName:Destroy()
-		K_Instance.ClearChildrenWithClassName(inst, classname)
+		InstanceK.ClearChildrenWithClassName(inst, classname)
 	else
 		return
 	end
 end
 
 --- ClearChildrenWithoutClassName()
-function K_Instance.ClearChildrenWithoutClassName(inst: Instance, classname: string)
+function InstanceK.ClearChildrenWithoutClassName(inst: Instance, classname: string)
 	for _, Thing: Instance in inst:GetChildren() do
 		if string.sub(Thing.Name, 1, 1) == "_" then continue end
 		if Thing.ClassName == classname then continue end
@@ -260,7 +260,7 @@ function K_Instance.ClearChildrenWithoutClassName(inst: Instance, classname: str
 end
 
 --- ClearChildrenWithCase()
-function K_Instance.ClearChildrenWithCase(inst: Instance, shoulddelete: (Thing: Instance) -> boolean)
+function InstanceK.ClearChildrenWithCase(inst: Instance, shoulddelete: (Thing: Instance) -> boolean)
 	for _, Thing: Instance in inst:GetChildren() do
 		if string.sub(Thing.Name, 1, 1) == "_" then continue end
 		if shoulddelete(Thing) == false then continue end
@@ -269,7 +269,7 @@ function K_Instance.ClearChildrenWithCase(inst: Instance, shoulddelete: (Thing: 
 end
 
 --- emits sound at optional position or instance
-function K_Instance.emitSound(sound: Sound, at: (Vector3|Instance)?)
+function InstanceK.emitSound(sound: Sound, at: (Vector3|Instance)?)
 	if typeof(at) == "Instance" then
 		local real: BasePart? = nil
 		if at:IsA("BasePart") then
@@ -314,18 +314,21 @@ end
 --- emits a clone of instance template `t` at vector3 or attached to basepart \
 --- `clone<t> -> parented -> deferred transform(?) -> delayed destruct(?) -> return clone<t>` \
 --- if both `at` and `template` are baseparts, then `t` will be unanchored and massless-ed *prior* to welding. weldconstraint is parented to emitted clone of `t`
-function K_Instance.emit<t>(template: t & Instance, at: Vector3|BasePart, transform: ((real: t) -> ())?, destruct: number?)
+function InstanceK.emit<t>(template: t & Instance, at: Vector3|BasePart, transform: ((real: t) -> ())?, destruct: number?)
 	local real = template:Clone()
 
 	if typeof(at) == "Vector3" then
-		real.Parent = K_Instance.emitContainer
+		real.Parent = InstanceK.emitContainer
+		if real:IsA("BasePart") then
+			real.Position = at
+		end
 	elseif at:IsA("BasePart") then
 		real.Parent = at
 		if real:IsA("BasePart") then
 			real.Anchored = false
 			real.Massless = true
 
-			K_Instance.Weld(at, real)
+			InstanceK.Weld(at, real)
 		end
 	else
 		real:Destroy()
@@ -344,7 +347,7 @@ function K_Instance.emit<t>(template: t & Instance, at: Vector3|BasePart, transf
 end
 
 --- memory-safe `Player:LoadCharacter()`
-function K_Instance.loadcharacter(player: Player, description: HumanoidDescription?)
+function InstanceK.loadcharacter(player: Player, description: HumanoidDescription?)
 	if player.Character then
 		player.Character:Destroy()
 		player.Character = nil
@@ -359,27 +362,27 @@ function K_Instance.loadcharacter(player: Player, description: HumanoidDescripti
 end
 
 --- disables humanoidstates
-function K_Instance.disablestates(humanoid: Humanoid, states: {Enum.HumanoidStateType})
+function InstanceK.disablestates(humanoid: Humanoid, states: {Enum.HumanoidStateType})
 	for _, State: Enum.HumanoidStateType in states do
 		humanoid:SetStateEnabled(State, false)
 	end
 end
 
 --- returns `target.PrimaryPart:GetNetworkOwner() == (owner or Players.LocalPlayer)`
-function K_Instance.isnetworkowner(target: Model, owner: Player?): boolean
+function InstanceK.isnetworkowner(target: Model, owner: Player?): boolean
 	assert(target.PrimaryPart, `{target} has no primarypart`)
 	return target.PrimaryPart:GetNetworkOwner() == (owner or Players.LocalPlayer)
 end
 
 --- sets network owner of target primarypart to owner
-function K_Instance.setnetworkowner(target: Model, owner: Player?)
+function InstanceK.setnetworkowner(target: Model, owner: Player?)
 	assert(target.PrimaryPart, `{target} has no primarypart`)
 	target.PrimaryPart:SetNetworkOwner(owner)
 end
 
 --- ragdolls motors contained in target \
 --- motors must be owned by the current calling environment
-function K_Instance.ragdoll(target: Model, state: boolean, motors: {string}?)
+function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?)
 	if state == true then
 		assert(motors, "expected motor target list")
 		for _, Motor6D in target:GetDescendants() do
@@ -432,7 +435,7 @@ function K_Instance.ragdoll(target: Model, state: boolean, motors: {string}?)
 end
 
 --- toggles cancollide on targeted limbs
-function K_Instance.setlimbcancollide(target: Model, cancollide: boolean, limbs: {string})
+function InstanceK.setlimbcancollide(target: Model, cancollide: boolean, limbs: {string})
 	for _, name in limbs do
 		local basepart = target:FindFirstChild(name)
 		if basepart and basepart:IsA("BasePart") then
@@ -443,7 +446,7 @@ end
 
 --- applies bodymover to primarypart of target \
 --- *in contexts where `time` is omitted, the bodymover will remain indefinitely*
-function K_Instance.applybodymover(target: Model|BasePart, class: types.MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
+function InstanceK.applybodymover(target: Model|BasePart, class: types.MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
 	local RootPart
 	if target:IsA("Model") then
 		RootPart = target.PrimaryPart
@@ -461,7 +464,7 @@ function K_Instance.applybodymover(target: Model|BasePart, class: types.MoverCla
 		end
 	end
 
-	local NewMover = K_Instance.Movers[class]:Clone()
+	local NewMover = InstanceK.Movers[class]:Clone()
 
 	if properties then
 		for k, v in properties do
@@ -481,7 +484,7 @@ end
 
 if IsServer then
 else
-	MoverRemote.OnClientEvent:Connect(K_Instance.applybodymover)
+	MoverRemote.OnClientEvent:Connect(InstanceK.applybodymover)
 end
 
-return K_Instance
+return InstanceK

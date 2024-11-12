@@ -17,6 +17,7 @@ local Tweenable = table.freeze{
 	"CFrame";
 	"Color3";
 	"ColorSequence";
+	"EnumItem";
 	"NumberRange";
 	"NumberSequence";
 	"UDim";
@@ -83,6 +84,8 @@ local function getvalue(initial: any, goal: any, a: number, style: Enum.EasingSt
 		end
 
 		return ColorSequence.new(sequencekeys)
+	elseif k == "EnumItem" then
+		return a < 1 and initial or goal
 	elseif k == "NumberRange" then
 		return NumberRange.new(lerp(initial.Min, goal.Min, a), lerp(initial.Max, goal.Max, a))
 	elseif k == "NumberSequence" then

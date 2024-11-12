@@ -198,6 +198,7 @@ export type KeyframeType =
 	| CFrame
 	| Color3
 	| ColorSequence
+	| EnumItem
 	| NumberRange
 	| NumberSequence
 	| UDim

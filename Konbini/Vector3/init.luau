@@ -7,7 +7,7 @@ local types = require(script.Parent.types)
 --- ### Vector3.luau
 ---
 --- extension of Vector3 library
-local K_Vector3 = {
+local Vector3K = {
 	yzAxis = Vector3.one - Vector3.xAxis;
 	xzAxis = Vector3.one - Vector3.yAxis;
 	xyAxis = Vector3.one - Vector3.zAxis;
@@ -41,27 +41,27 @@ local K_Vector3 = {
 }
 
 --- returns `b.Y - a.Y`
-function K_Vector3.height(a: Vector3, b: Vector3): number
+function Vector3K.height(a: Vector3, b: Vector3): number
 	return b.Y - a.Y
 end
 
 --- returns vector3 normalized along axis
-function K_Vector3.normalize(a: Vector3, Axis: Enum.Axis): Vector3
+function Vector3K.normalize(a: Vector3, Axis: Enum.Axis): Vector3
 	return (a * (
-		Axis == Enum.Axis.X and K_Vector3.yzAxis or
-		Axis == Enum.Axis.Y and K_Vector3.xzAxis or
-		Axis == Enum.Axis.Z and K_Vector3.xyAxis or
+		Axis == Enum.Axis.X and Vector3K.yzAxis or
+		Axis == Enum.Axis.Y and Vector3K.xzAxis or
+		Axis == Enum.Axis.Z and Vector3K.xyAxis or
 		Vector3.one
 	)).Unit
 end
 
 --- returns X, Y, Z of vector3 as a tuple
-function K_Vector3.components(a: Vector3): (number, number, number)
+function Vector3K.components(a: Vector3): (number, number, number)
 	return a.X, a.Y, a.Z
 end
 
 --- returns vector3 clamped between `[a, b]`
-function K_Vector3.clamp(x: Vector3, a: Vector3, b: Vector3): Vector3
+function Vector3K.clamp(x: Vector3, a: Vector3, b: Vector3): Vector3
 	return Vector3.new(
 		math.clamp(x.X, math.min(a.X, b.X), math.max(a.X, b.X)),
 		math.clamp(x.Y, math.min(a.Y, b.Y), math.max(a.Y, b.Y)),
@@ -70,25 +70,25 @@ function K_Vector3.clamp(x: Vector3, a: Vector3, b: Vector3): Vector3
 end
 
 --- returns point on bezier curve at interpolant `A`
-function K_Vector3.bezier(A: number, points: {Vector3}): Vector3
+function Vector3K.bezier(A: number, points: {Vector3}): Vector3
 	if #points > 1 then
 		local NewPoints = table.create(#points)
 		for i = 1, #points - 1 do
 			table.insert(NewPoints, points[i]:Lerp(points[i + 1], A))
 		end
-		return K_Vector3.bezier(A, NewPoints)
+		return Vector3K.bezier(A, NewPoints)
 	end
 	return points[1]
 end
 
 --- returns random unit vector
-function K_Vector3.randomdirection(R: Random?): Vector3
+function Vector3K.randomdirection(R: Random?): Vector3
 	return (R or types.R):NextUnitVector()
 end
 
 --- returns random unit vector within cone \
 --- `theta` is in degrees, dont @ me
-function K_Vector3.randomcone(normal: Vector3, theta: number, R: Random?): Vector3
+function Vector3K.randomcone(normal: Vector3, theta: number, R: Random?): Vector3
 	return (
 		CFrame.new(Vector3.zero, normal)
 		* CFrame.Angles(0, 0, (R or types.R):NextNumber(0, math.pi * 2))
@@ -97,7 +97,7 @@ function K_Vector3.randomcone(normal: Vector3, theta: number, R: Random?): Vecto
 end
 
 --- returns random point within `[a, b]`
-function K_Vector3.randompoint(a: Vector3, b: Vector3, R: Random?): Vector3
+function Vector3K.randompoint(a: Vector3, b: Vector3, R: Random?): Vector3
 	return Vector3.new(
 		(R or types.R):NextNumber(a.X, b.X),
 		(R or types.R):NextNumber(a.Y, b.Y),
@@ -106,7 +106,7 @@ function K_Vector3.randompoint(a: Vector3, b: Vector3, R: Random?): Vector3
 end
 
 --- returns value normalized as a vector3
-function K_Vector3.tovector(value: types.xyzType?): Vector3
+function Vector3K.tovector(value: types.xyzType?): Vector3
 	if typeof(value) == "Vector3" then
 		return value
 	elseif typeof(value) == "Vector3int16" then
@@ -120,51 +120,51 @@ function K_Vector3.tovector(value: types.xyzType?): Vector3
 end
 
 --- returns `(b - a).Magnitude`
-function K_Vector3.distance(a: Vector3, b: Vector3): number
+function Vector3K.distance(a: Vector3, b: Vector3): number
 	b -= a
 	local x, y, z = b.X, b.Y, b.Z
 	return ((x * x) + (y * y) + (z * z)) ^ 0.5
 end
 
 --- returns distance between two `XYZtype` values
-function K_Vector3.distanceXYZ(a: types.xyzType, b: types.xyzType): number
-	return K_Vector3.distance(K_Vector3.tovector(a), K_Vector3.tovector(b))
+function Vector3K.distanceXYZ(a: types.xyzType, b: types.xyzType): number
+	return Vector3K.distance(Vector3K.tovector(a), Vector3K.tovector(b))
 end
 
 --- returns `(b - a).Unit`
-function K_Vector3.direction(a: Vector3, b: Vector3)
+function Vector3K.direction(a: Vector3, b: Vector3)
 	return (b - a).Unit
 end
 
 --- returns direction from two `XYZtype` values
-function K_Vector3.directionXYZ(a: types.xyzType, b: types.xyzType): Vector3
-	return K_Vector3.direction(K_Vector3.tovector(a), K_Vector3.tovector(b))
+function Vector3K.directionXYZ(a: types.xyzType, b: types.xyzType): Vector3
+	return Vector3K.direction(Vector3K.tovector(a), Vector3K.tovector(b))
 end
 
 --- returns the midpoint of vararg `XYZtype`
-function K_Vector3.midpoint(...: types.xyzType): Vector3
+function Vector3K.midpoint(...: types.xyzType): Vector3
 	local Vectors = {...}
 	local Count = #Vectors
 
 	local T = Vector3.zero
 	for _, V in Vectors do
-		T += K_Vector3.tovector(V)
+		T += Vector3K.tovector(V)
 	end
 	return T / Count
 end
 
 --- returns true if `a` and `b` are coplanar along unit vector
-function K_Vector3.iscoplanar(a: Vector3, b: Vector3, unitvector: Vector3): boolean
+function Vector3K.iscoplanar(a: Vector3, b: Vector3, unitvector: Vector3): boolean
 	return math.round((a - b):Dot(unitvector)) == 0
 end
 
 --- returns unit vector `a` reflected against unit vector `b`
-function K_Vector3.reflect(a: Vector3, b: Vector3): Vector3
+function Vector3K.reflect(a: Vector3, b: Vector3): Vector3
 	return 2 * a:Dot(b) * b - a
 end
 
 --- returns rotation of unit vector `a` along `axis`
-function K_Vector3.angle(a: Vector3, Axis: Enum.Axis): number
+function Vector3K.angle(a: Vector3, Axis: Enum.Axis): number
 	local y, x = 0, 0
 
 	if Axis == Enum.Axis.X then
@@ -187,7 +187,7 @@ end
 
 --- interpolates between unit vector `a` and unit vector `b` with respect to interpolant `t` \
 --- axisangle is the goat
-function K_Vector3.slerp(a: Vector3, b: Vector3, t: number): Vector3
+function Vector3K.slerp(a: Vector3, b: Vector3, t: number): Vector3
 	local magA = a.Magnitude
 	local magB = b.Magnitude
 
@@ -238,16 +238,16 @@ function K_Vector3.slerp(a: Vector3, b: Vector3, t: number): Vector3
 end
 
 --- stretches `a` towards `b`, constrained around radius `r`
-function K_Vector3.stretch(a: Vector3, b: Vector3, r: number): Vector3
-	if K_Vector3.distance(a, b) <= r then
+function Vector3K.stretch(a: Vector3, b: Vector3, r: number): Vector3
+	if Vector3K.distance(a, b) <= r then
 		return b
 	end
-	return a + (K_Vector3.direction(a, b) * r)
+	return a + (Vector3K.direction(a, b) * r)
 end
 
 --- returns vector `a` as a string
-function K_Vector3.tostring(a: Vector3, precision: number?): string
+function Vector3K.tostring(a: Vector3, precision: number?): string
 	return string.sub(string.format(string.rep("%." .. (precision or 2) .. "f ", 3), a.X, a.Y, a.Z), 1, -2)
 end
 
-return table.freeze(K_Vector3)
+return table.freeze(Vector3K)

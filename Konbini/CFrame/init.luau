@@ -7,7 +7,7 @@ local types = require(script.Parent.types)
 --- ### CFrame.luau
 ---
 --- CFrame convenience module
-local K_CFrame = {
+local CFrameK = {
 	angles = table.freeze{
 		x = table.freeze{
 			pi = CFrame.Angles(math.pi, 0, 0);
@@ -46,7 +46,7 @@ local K_CFrame = {
 
 --- applies selected axis from copyfrom to target \
 --- if no axis is passed, then all rotational components will be applied
-function K_CFrame.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enum.Axis?): CFrame
+function CFrameK.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enum.Axis?): CFrame
 	if not axis then
 		return CFrame.new(target.X, target.Y, target.Z, select(4, copyfrom:GetComponents()))
 	end
@@ -61,7 +61,7 @@ function K_CFrame.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: En
 end
 
 --- returns true if point is within volume defined by cframe and size
-function K_CFrame.ispointinvolume(point: Vector3, volumecframe: CFrame, volumesize: Vector3): boolean
+function CFrameK.ispointinvolume(point: Vector3, volumecframe: CFrame, volumesize: Vector3): boolean
 	local ObjectSpace = volumecframe:PointToObjectSpace(point)
 	volumesize *= 0.5
 
@@ -72,7 +72,7 @@ function K_CFrame.ispointinvolume(point: Vector3, volumecframe: CFrame, volumesi
 end
 
 --- returns true if point is within volume defined by cframe and size
-function K_CFrame.ispointinvolumeXZ(point: Vector3, volumecframe: CFrame, volumesize: Vector3): boolean
+function CFrameK.ispointinvolumeXZ(point: Vector3, volumecframe: CFrame, volumesize: Vector3): boolean
 	local ObjectSpace = volumecframe:PointToObjectSpace(point)
 	volumesize *= 0.5
 
@@ -82,7 +82,7 @@ function K_CFrame.ispointinvolumeXZ(point: Vector3, volumecframe: CFrame, volume
 end
 
 --- returns nearest point, towards worldpoint, from cube defined by cframe and size
-function K_CFrame.nearestpoint(worldpoint: Vector3, cframe: CFrame, size: Vector3): Vector3
+function CFrameK.nearestpoint(worldpoint: Vector3, cframe: CFrame, size: Vector3): Vector3
 	local ObjectSpace = cframe:PointToObjectSpace(worldpoint)
 	size *= 0.5
 
@@ -95,7 +95,7 @@ function K_CFrame.nearestpoint(worldpoint: Vector3, cframe: CFrame, size: Vector
 end
 
 --- returns random pivot in volume
-function K_CFrame.randompivotinvolume(volumecframe: CFrame, volumesize: Vector3, R: Random?): CFrame
+function CFrameK.randompivotinvolume(volumecframe: CFrame, volumesize: Vector3, R: Random?): CFrame
 	if not R then R = types.R end
 	local SHalf = volumesize * 0.5
 	local X, Y, Z = SHalf.X, SHalf.Y, SHalf.Z
@@ -107,7 +107,7 @@ function K_CFrame.randompivotinvolume(volumecframe: CFrame, volumesize: Vector3,
 end
 
 --- returns cframe rotated towards lookvector at uniform rate within `[0, 1]`
-function K_CFrame.matchlookvector(cframe: CFrame, lookvector: Vector3, rate: number): CFrame
+function CFrameK.matchlookvector(cframe: CFrame, lookvector: Vector3, rate: number): CFrame
 	local angle = cframe.LookVector:Angle(lookvector)
 	
 	if angle < 5e-7 then
@@ -120,4 +120,4 @@ function K_CFrame.matchlookvector(cframe: CFrame, lookvector: Vector3, rate: num
 	end
 end
 
-return table.freeze(K_CFrame)
+return table.freeze(CFrameK)

@@ -8,30 +8,30 @@ local Encoder = require(script.Parent.Encoder)
 --- ### Table.luau
 ---
 --- extension of table library
-local K_Table = {}
+local TableK = {}
 
 --- removes and returns the first (oldest) element in queue
-function K_Table.queue_pop<T>(queue: {T}): T?
+function TableK.queue_pop<T>(queue: {T}): T?
 	return table.remove(queue, 1)
 end
 
 --- returns the first (oldest) element in queue
-function K_Table.queue_front<T>(queue: {T}): T?
+function TableK.queue_front<T>(queue: {T}): T?
 	return queue[1]
 end
 
 --- returns the last (newest) element in queue
-function K_Table.queue_back<T>(queue: {T}): T?
+function TableK.queue_back<T>(queue: {T}): T?
 	return queue[#queue]
 end
 
 --- adds a value to the back of queue
-function K_Table.queue_push<T>(queue: {T}, value: T)
+function TableK.queue_push<T>(queue: {T}, value: T)
 	table.insert(queue, value)
 end
 
 --- pushes a value to queue, if any only if it isn't already an element of the queue
-function K_Table.queue_ifandonlyif<T>(queue: {T}, value: T): boolean
+function TableK.queue_ifandonlyif<T>(queue: {T}, value: T): boolean
 	if not table.find(queue, value) then
 		table.insert(queue, value)
 		return true
@@ -40,18 +40,18 @@ function K_Table.queue_ifandonlyif<T>(queue: {T}, value: T): boolean
 end
 
 --- pushes all values of source into queue
-function K_Table.queue_fill<T>(queue: {T}, source: {T})
+function TableK.queue_fill<T>(queue: {T}, source: {T})
 	for _, v in source do
 		table.insert(queue, v)
 	end
 end
 
 --- pops all values in queue, calling `f(value)` as they are popped
-function K_Table.queue_flush<T>(queue: {T}, f: (value: T) -> ())
+function TableK.queue_flush<T>(queue: {T}, f: (value: T) -> ())
 	local value = table.remove(queue, 1)
 	if value then
 		f(value)
-		K_Table.queue_flush(queue, f)
+		TableK.queue_flush(queue, f)
 	else
 		return
 	end
@@ -61,7 +61,7 @@ end
 --- ```
 --- encode({str = -2, dex = 10, int = 7}) -> "str:-2/dex:10/int:7"
 --- ```
-function K_Table.encode(T: {[string]: number}): string
+function TableK.encode(T: {[string]: number}): string
 	local StatString = ""
 	for k, v in T do
 		StatString ..= k ..":".. v .. "/"
@@ -74,7 +74,7 @@ end
 --- ```
 --- decode("str:-2/dex:10/int:7") -> {str = -2, dex = 10, int = 7}
 --- ```
-function K_Table.decode(str: string): {[string] : number}
+function TableK.decode(str: string): {[string] : number}
 	local T = {}
 
 	for _, kv in string.split(str, "/") do
@@ -89,17 +89,17 @@ end
 --- ```
 --- read("str:-2/dex:10/int:7", "dex") -> 10
 --- ```
-function K_Table.read(str: string, key: string): number
+function TableK.read(str: string, key: string): number
 	return tonumber(string.match(str, "%f[A-Za-z]" .. key .. "%f[^A-Za-z]:(%d+)") or 0) or 0
 end
 
 --- returns a deep-copy of table
-function K_Table.deepcopy(T: {[any]: any}): {[any]: any}
+function TableK.deepcopy(T: {[any]: any}): {[any]: any}
 	local Copy = {}
 
 	for k, v in T do
 		if type(v) == "table" then
-			Copy[k] = K_Table.deepcopy(v)
+			Copy[k] = TableK.deepcopy(v)
 		else
 			Copy[k] = v
 		end
@@ -109,7 +109,7 @@ function K_Table.deepcopy(T: {[any]: any}): {[any]: any}
 end
 
 --- returns a copy of array with vargarg appended
-function K_Table.insertcopy(A: {any}, ...: any): {any}
+function TableK.insertcopy(A: {any}, ...: any): {any}
 	local B = {...}
 	local C = table.create(#A + #B)
 
@@ -120,14 +120,14 @@ function K_Table.insertcopy(A: {any}, ...: any): {any}
 end
 
 --- packs vararg into a space-allocated array
-function K_Table.pack(...: any): {any}
+function TableK.pack(...: any): {any}
 	local temp = {...}
 	return table.move(temp, 1, #temp, 1, table.create(#temp))
 end
 
 --- returns average or weighted average of elements in array \
 --- assumes a single-type array populated with types that support operators `+`, `*`, `/`
-function K_Table.average(A: {any}, weights: {number}?): any
+function TableK.average(A: {any}, weights: {number}?): any
 	local n = #A
 	local T = table.remove(A, 1)
 	for i, V in ipairs(A) do
@@ -138,7 +138,7 @@ function K_Table.average(A: {any}, weights: {number}?): any
 end
 
 --- returns a frozen, space-allocated, shallow-copy of array
-function K_Table.readonly<T>(A: {T}): {T}
+function TableK.readonly<T>(A: {T}): {T}
 	local t = table.create(#A)
 	for _, v in ipairs(A) do
 		table.insert(t, v)
@@ -148,7 +148,7 @@ end
 
 --- returns list of elements picked from drop table \
 --- assume sum of odds in drop table equate to 100
-function K_Table.pickfromdroptable(D: {[string]: number}, n: number, R: Random?): {string}
+function TableK.pickfromdroptable(D: {[string]: number}, n: number, R: Random?): {string}
 	if not R then R = types.R end
 	if not n then n = 1 end
 
@@ -171,7 +171,7 @@ function K_Table.pickfromdroptable(D: {[string]: number}, n: number, R: Random?)
 end
 
 --- returns non-repeating list of elements picked from array
-function K_Table.pickfromlist<T>(A: {T}, n: number?, R: Random?): {T}
+function TableK.pickfromlist<T>(A: {T}, n: number?, R: Random?): {T}
 	if #A == 0 then
 		warn(`empty array passed, returning new empty array`)
 		return table.create(0)
@@ -190,7 +190,7 @@ function K_Table.pickfromlist<T>(A: {T}, n: number?, R: Random?): {T}
 end
 
 --- returns true if table contains value and its associated key
-function K_Table.contains(A: {[any]: any}, value: any): (boolean, string?)
+function TableK.contains(A: {[any]: any}, value: any): (boolean, string?)
 	for k, v in A do
 		if value == v then
 			return true, k
@@ -200,7 +200,7 @@ function K_Table.contains(A: {[any]: any}, value: any): (boolean, string?)
 end
 
 --- returns shuffled copy of array
-function K_Table.shuffle(A: {any}, R: Random?): {any}
+function TableK.shuffle(A: {any}, R: Random?): {any}
 	R = R or types.R
 	assert(R)
 
@@ -213,7 +213,7 @@ end
 --- similar to `table.insert`, where `T[random alphanumeric key] = value` \
 --- returns `random alphanumeric key` for convenience \
 --- `len (?=4)`: key length
-function K_Table.assign(T: {[string]: any}, value: any, len: number?): string
+function TableK.assign(T: {[string]: any}, value: any, len: number?): string
 	local key = string.rep("0", len or 4)
 	repeat
 		key = Encoder.string(len or 4)
@@ -224,7 +224,7 @@ end
 
 --- reflects value such that `destination[i] = source[i]` \
 --- equivalent to `table.move(source, i, i, i, destination)`
-function K_Table.reflect(source: {any}, destination: {any}, i: number)
+function TableK.reflect(source: {any}, destination: {any}, i: number)
 	table.move(source, i, i, i, destination)
 end
 
@@ -244,7 +244,7 @@ end
 --- 	end
 --- end
 --- ```
-function K_Table.search<T>(A: {T}, comp: (value: T) -> number): T?
+function TableK.search<T>(A: {T}, comp: (value: T) -> number): T?
 	local L = 1
 	local R = #A
 
@@ -266,13 +266,13 @@ function K_Table.search<T>(A: {T}, comp: (value: T) -> number): T?
 			else
 				error(`comp {comp} did not return exactly 0, 1, or 2`)
 			end
-			return K_Table.search(table.move(A, L, R, 1, table.create(L + R)), comp)
+			return TableK.search(table.move(A, L, R, 1, table.create(L + R)), comp)
 		end
 	end
 end
 
 --- shallow-clones target *exclusively* with keys and/or indices
-function K_Table.only(target: {any}, keys: {any}?, indices: {number}?): {}
+function TableK.only(target: {any}, keys: {any}?, indices: {number}?): {}
 	local clone = {}
 
 	if keys then
@@ -290,7 +290,7 @@ function K_Table.only(target: {any}, keys: {any}?, indices: {number}?): {}
 end
 
 --- shallow-clones target with the *exception* of keys and/or indices
-function K_Table.except(target: {any}, keys: {any}?, indices: {number}?): {}
+function TableK.except(target: {any}, keys: {any}?, indices: {number}?): {}
 	local clone = {}
 
 	if keys then
@@ -316,21 +316,21 @@ function K_Table.except(target: {any}, keys: {any}?, indices: {number}?): {}
 end
 
 --- merges values from source into target, if they dont already exist
-function K_Table.merge<T>(target: {T}, source: {T})
+function TableK.merge<T>(target: {T}, source: {T})
 	for _, value in source do
-		K_Table.queue_ifandonlyif(target, value)
+		TableK.queue_ifandonlyif(target, value)
 	end
 end
 
 --- merges key-values from source into target
-function K_Table.mergekv(target: { }, source: { })
+function TableK.mergekv(target: { }, source: { })
 	for k, v in source do
 		target[k] = v
 	end
 end
 
 --- patches target table using source as a truth state
-function K_Table.patch<T>(target: {[T]: any}, source: {[T]: any})
+function TableK.patch<T>(target: {[T]: any}, source: {[T]: any})
 	for k in target do
 		if not source[k] then
 			target[k] = nil
@@ -344,7 +344,7 @@ function K_Table.patch<T>(target: {[T]: any}, source: {[T]: any})
 end
 
 --- returns length of key-value table
-function K_Table.len(T: {[any]: any}): number
+function TableK.len(T: {[any]: any}): number
 	local x = 0
 
 	for _ in T do
@@ -358,7 +358,7 @@ end
 --- `f(i, v) -> 0`: `v` is removed from `A` \
 --- `f(i, v) -> 1`: loop `continue` \
 --- `f(i, v) -> 2`: loop `break`
-function K_Table.ipairs_r<T>(A: {T}, f: (i: number, v: T) -> number?)
+function TableK.ipairs_r<T>(A: {T}, f: (i: number, v: T) -> number?)
 	for i = #A, 1, -1 do
 		local Result = f(i, A[i])
 		if Result == 0 then
@@ -372,10 +372,10 @@ function K_Table.ipairs_r<T>(A: {T}, f: (i: number, v: T) -> number?)
 end
 
 --- limits size of array
-function K_Table.limit(A: {any}, size: number)
+function TableK.limit(A: {any}, size: number)
 	if #A > size then
 		table.remove(A)
-		K_Table.limit(A, size)
+		TableK.limit(A, size)
 	else
 		return
 	end
@@ -386,7 +386,7 @@ end
 --- rotate([1, 2, 3, 4, 5], 1) -> [5, 1, 2, 3, 4]
 --- rotate([1, 2, 3, 4, 5], -1) -> [2, 3, 4, 5, 1]
 --- ```
-function K_Table.rotate(A: {any}, x: number?)
+function TableK.rotate(A: {any}, x: number?)
 	x = x or 1
 	assert(x)
 
@@ -398,7 +398,7 @@ function K_Table.rotate(A: {any}, x: number?)
 			local value = table.remove(A, 1)
 			table.insert(A, value)
 		end
-		K_Table.rotate(A, x - math.sign(x))
+		TableK.rotate(A, x - math.sign(x))
 	else
 		return
 	end
@@ -412,7 +412,7 @@ end
 --- page(t, 10, 3) -- [21, ..., 25]
 --- page(t, 10, 4) -- []
 --- ```
-function K_Table.page<T>(A: {T}, size: number, offset: number): {T}
+function TableK.page<T>(A: {T}, size: number, offset: number): {T}
 	local Max = #A
 	return table.move(
 		A,
@@ -423,4 +423,4 @@ function K_Table.page<T>(A: {T}, size: number, offset: number): {T}
 	)
 end
 
-return table.freeze(K_Table)
+return table.freeze(TableK)

@@ -87,16 +87,9 @@ end
 --- `radians`: angle between the cone cast with `at & look` against `target` \
 --- `position`: nearest point on target towards its position on cone
 function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart): (number, number, Vector3)
-	local distance = fastdistance(at, target:GetClosestPointOnSurface(at))
-	local pivot = at + (look * distance)
-	local point = target:GetClosestPointOnSurface(pivot)
+	local point = target:GetClosestPointOnSurface(at)
+	local distance = fastdistance(at, point)
 	return distance, look:Angle((point - at).Unit), point
-
-	--faster, but less accurate against larger target sizes.
-	--hard-coding to swap depending on target mass is out-of-scope (hypocritical)
-	--[[local distance = fastdistance(at, target.Position)
-	local pivot = at + (look * distance)
-	return distance, look:Angle((target:GetClosestPointOnSurface(pivot) - at).Unit)]]
 end
 
 --- `workspace:RaycastWhitelist()` \

@@ -201,12 +201,16 @@ function Interface.importsounds(sounds: {Sound})
 end
 
 --- scrolls textlabel text \
---- `speed (?=40)` scrolling speed
+--- `speed (?=40)` scrolling speed \
+--- returns scroll text time for convenience
 function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?)
 	textlabel.MaxVisibleGraphemes = 0
 	if text then textlabel.Text = text end
 	local n = utf8.len(textlabel.ContentText) or 0
-	tween(textlabel, {MaxVisibleGraphemes = n}, n / (speed or 40), Enum.EasingStyle.Sine)
+	local t = n / (speed or 40)
+	tween(textlabel, {MaxVisibleGraphemes = n}, t, Enum.EasingStyle.Sine)
+
+	return t
 end
 
 --- connects button events to guibutton
