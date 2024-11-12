@@ -548,10 +548,18 @@ function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayou
 	local function UpdateSize()
 		local Stretch = (gridorlist :: any).AbsoluteContentSize[Axis] :: number
 		local Real = Stretch > 1 and math.ceil(Stretch + Compound) or 0
+		local x, y = 0, 0
+		if gridorlist:IsA("UIGridLayout") then
+			x += gridorlist.CellPadding.X.Offset
+			y += gridorlist.CellPadding.Y.Offset
+		elseif gridorlist:IsA("UIListLayout") then
+			x += gridorlist.Padding.Offset
+			y += x -- gridorlist.Padding.Offset
+		end
 		if Axis == "X" then
-			target.Size = UDim2.new(0, Real, 1, 0)
+			target.Size = UDim2.new(0, Real + x, 1, 0)
 		elseif Axis == "Y" then
-			target.Size = UDim2.new(1, 0, 0, Real)
+			target.Size = UDim2.new(1, 0, 0, Real + y)
 		end
 	end
 

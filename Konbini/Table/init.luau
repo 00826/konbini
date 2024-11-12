@@ -322,6 +322,13 @@ function K_Table.merge<T>(target: {T}, source: {T})
 	end
 end
 
+--- merges key-values from source into target
+function K_Table.mergekv(target: { }, source: { })
+	for k, v in source do
+		target[k] = v
+	end
+end
+
 --- patches target table using source as a truth state
 function K_Table.patch<T>(target: {[T]: any}, source: {[T]: any})
 	for k in target do
