@@ -61,24 +61,24 @@ function CFrameK.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enu
 end
 
 --- returns true if point is within volume defined by cframe and size
-function CFrameK.ispointinvolume(point: Vector3, volumecframe: CFrame, volumesize: Vector3): boolean
-	local ObjectSpace = volumecframe:PointToObjectSpace(point)
-	volumesize *= 0.5
+function CFrameK.ispointinvolume(point: Vector3, cframe: CFrame, size: Vector3): boolean
+	local absoluteobjectspace = cframe:PointToObjectSpace(point):Abs()
+	size *= 0.5
 
 	return
-		(math.abs(ObjectSpace.X) <= volumesize.X) and
-		(math.abs(ObjectSpace.Y) <= volumesize.Y) and
-		(math.abs(ObjectSpace.Z) <= volumesize.Z)
+		(absoluteobjectspace.X <= size.X) and
+		(absoluteobjectspace.Y <= size.Y) and
+		(absoluteobjectspace.Z <= size.Z)
 end
 
 --- returns true if point is within volume defined by cframe and size
-function CFrameK.ispointinvolumeXZ(point: Vector3, volumecframe: CFrame, volumesize: Vector3): boolean
-	local ObjectSpace = volumecframe:PointToObjectSpace(point)
-	volumesize *= 0.5
+function CFrameK.ispointinvolumeXZ(point: Vector3, cframe: CFrame, size: Vector3): boolean
+	local absoluteobjectspace = cframe:PointToObjectSpace(point):Abs()
+	size *= 0.5
 
 	return
-		(math.abs(ObjectSpace.X) <= volumesize.X) and
-		(math.abs(ObjectSpace.Z) <= volumesize.Z)
+		(absoluteobjectspace.X <= size.X) and
+		(absoluteobjectspace.Z <= size.Z)
 end
 
 --- returns nearest point, towards worldpoint, from cube defined by cframe and size
