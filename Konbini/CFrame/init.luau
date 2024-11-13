@@ -2,8 +2,6 @@
 --!native
 --!optimize 2
 
-local types = require(script.Parent.types)
-
 --- ### CFrame.luau
 ---
 --- CFrame convenience module
@@ -58,52 +56,6 @@ function CFrameK.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enu
 		or axis == Enum.Axis.Y and C0 * CFrame.Angles(0, Y, 0)
 		or axis == Enum.Axis.Z and C0 * CFrame.Angles(0, 0, Z)
 		or CFrame.identity
-end
-
---- returns true if point is within volume defined by cframe and size
-function CFrameK.ispointinvolume(point: Vector3, cframe: CFrame, size: Vector3): boolean
-	local absoluteobjectspace = cframe:PointToObjectSpace(point):Abs()
-	size *= 0.5
-
-	return
-		(absoluteobjectspace.X <= size.X) and
-		(absoluteobjectspace.Y <= size.Y) and
-		(absoluteobjectspace.Z <= size.Z)
-end
-
---- returns true if point is within volume defined by cframe and size
-function CFrameK.ispointinvolumeXZ(point: Vector3, cframe: CFrame, size: Vector3): boolean
-	local absoluteobjectspace = cframe:PointToObjectSpace(point):Abs()
-	size *= 0.5
-
-	return
-		(absoluteobjectspace.X <= size.X) and
-		(absoluteobjectspace.Z <= size.Z)
-end
-
---- returns nearest point, towards worldpoint, from cube defined by cframe and size
-function CFrameK.nearestpoint(worldpoint: Vector3, cframe: CFrame, size: Vector3): Vector3
-	local ObjectSpace = cframe:PointToObjectSpace(worldpoint)
-	size *= 0.5
-
-	local X, Y, Z = size.X, size.Y, size.Z
-	return cframe * Vector3.new(
-		math.clamp(ObjectSpace.X, -X, X),
-		math.clamp(ObjectSpace.Y, -Y, Y),
-		math.clamp(ObjectSpace.Z, -Z, Z)
-	)
-end
-
---- returns random pivot in volume
-function CFrameK.randompivotinvolume(volumecframe: CFrame, volumesize: Vector3, R: Random?): CFrame
-	if not R then R = types.R end
-	local SHalf = volumesize * 0.5
-	local X, Y, Z = SHalf.X, SHalf.Y, SHalf.Z
-	return R and volumecframe * CFrame.new(
-		R:NextNumber(-X, X),
-		R:NextNumber(-Y, Y),
-		R:NextNumber(-Z, Z)
-	) or volumecframe
 end
 
 --- returns cframe rotated towards lookvector at uniform rate within `[0, 1]`

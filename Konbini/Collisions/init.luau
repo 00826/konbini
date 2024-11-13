@@ -144,4 +144,21 @@ function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Ve
 	return results
 end
 
+--- returns true if point is within bounds of box defined by cframe and size
+--- @native
+function Collisions.ispointinbox(point: Vector3, cframe: CFrame, size: Vector3)
+	local absoluteobjectspace = cframe:PointToObjectSpace(point):Abs()
+	size *= 0.5
+
+	return
+		(absoluteobjectspace.X <= size.X) and
+		(absoluteobjectspace.Y <= size.Y) and
+		(absoluteobjectspace.Z <= size.Z)
+end
+
+--- returns true if point is within bounds of radius defined by position and radius
+function Collisions.ispointinradius(point: Vector3, position: Vector3, radius: number)
+	return fastdistance(point, position) <= radius
+end
+
 return Collisions

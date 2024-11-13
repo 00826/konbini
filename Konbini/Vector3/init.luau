@@ -20,176 +20,177 @@ local Vector3K = {
 	fromConstant = function(w: number)
 		return Vector3.one * w
 	end;
-	--- returns vector composed of `"XYZ" (%u pattern)` axes \
-	--- characters can be repeated
-	isolateAxes = function(a: Vector3, axes: string)
-		local b = Vector3.zero
-
-		string.gsub(axes, "%u", function(sub: string)
-			if sub == "X" then
-				b += Vector3.xAxis * a.X
-			elseif sub == "Y" then
-				b += Vector3.yAxis * a.Y
-			elseif sub == "Z" then
-				b += Vector3.zAxis * a.Z
-			end
-			return sub
-		end)
-
-		return b
-	end;
 }
 
---- returns `b.Y - a.Y`
-function Vector3K.height(a: Vector3, b: Vector3): number
-	return b.Y - a.Y
+--- returns `w.Y - v.Y`
+function Vector3K.height(v: Vector3, w: Vector3)
+	return w.Y - v.Y
 end
 
---- returns vector3 normalized along axis
-function Vector3K.normalize(a: Vector3, Axis: Enum.Axis): Vector3
-	return (a * (
-		Axis == Enum.Axis.X and Vector3K.yzAxis or
-		Axis == Enum.Axis.Y and Vector3K.xzAxis or
-		Axis == Enum.Axis.Z and Vector3K.xyAxis or
-		Vector3.one
-	)).Unit
+--- returns `v.Unit`, or, if `NaN`, `Vector3.zero`
+function Vector3K.unit_or_zero(v: Vector3)
+    if v.Magnitude > 0 then
+        return v.Unit
+    else
+        return Vector3.zero
+    end
 end
 
---- returns X, Y, Z of vector3 as a tuple
-function Vector3K.components(a: Vector3): (number, number, number)
-	return a.X, a.Y, a.Z
+--- returns `v` projected onto `w`
+function Vector3K.project(v: Vector3, w: Vector3)
+    w = Vector3K.unit_or_zero(w)
+    return v:Dot(w) * w
 end
 
---- returns vector3 clamped between `[a, b]`
-function Vector3K.clamp(x: Vector3, a: Vector3, b: Vector3): Vector3
+--- returns `v` rejected from `w`
+function Vector3K.reject(v: Vector3, w: Vector3)
+    return v - Vector3K.project(v, w)
+end
+
+--- returns `v` as a tuple
+function Vector3K.unpack(v: Vector3)
+	return v.X, v.Y, v.Z
+end
+
+--- returns `a` clamped within bounds of `[v, w]`
+function Vector3K.clamp(a: Vector3, v: Vector3, w: Vector3)
 	return Vector3.new(
-		math.clamp(x.X, math.min(a.X, b.X), math.max(a.X, b.X)),
-		math.clamp(x.Y, math.min(a.Y, b.Y), math.max(a.Y, b.Y)),
-		math.clamp(x.Z, math.min(a.Z, b.Z), math.max(a.Z, b.Z))
+		math.clamp(a.X, math.min(v.X, w.X), math.max(v.X, w.X)),
+		math.clamp(a.Y, math.min(v.Y, w.Y), math.max(v.Y, w.Y)),
+		math.clamp(a.Z, math.min(v.Z, w.Z), math.max(v.Z, w.Z))
 	)
 end
 
---- returns point on bezier curve at interpolant `A`
-function Vector3K.bezier(A: number, points: {Vector3}): Vector3
-	if #points > 1 then
-		local NewPoints = table.create(#points)
-		for i = 1, #points - 1 do
-			table.insert(NewPoints, points[i]:Lerp(points[i + 1], A))
-		end
-		return Vector3K.bezier(A, NewPoints)
+--- stretches `v` towards `w`, within bounds of `radius`
+function Vector3K.stretch(v: Vector3, w: Vector3, radius: number)
+	if Vector3K.distance(v, w) <= radius then
+		return w
 	end
+
+	return v + ((w - v).Unit * radius)
+end
+
+--- returns point on bezier curve at interpolant `a`
+function Vector3K.bezier(points: {Vector3}, a: number)
+	if #points > 1 then
+		local newpoints = table.create(#points)
+		for i = 1, #points - 1 do
+			table.insert(newpoints, points[i]:Lerp(points[i + 1], a))
+		end
+		return Vector3K.bezier(newpoints, a)
+	end
+
 	return points[1]
 end
 
 --- returns random unit vector
-function Vector3K.randomdirection(R: Random?): Vector3
+function Vector3K.randomunit(R: Random?)
 	return (R or types.R):NextUnitVector()
 end
 
---- returns random unit vector within cone \
---- `theta` is in degrees, dont @ me
-function Vector3K.randomcone(normal: Vector3, theta: number, R: Random?): Vector3
+--- returns random unit vector within cone
+function Vector3K.randomspread(normal: Vector3, radians: number, R: Random?)
 	return (
 		CFrame.new(Vector3.zero, normal)
 		* CFrame.Angles(0, 0, (R or types.R):NextNumber(0, math.pi * 2))
-		* CFrame.Angles(math.acos((R or types.R):NextNumber(math.cos(math.rad(theta)), 1)), 0, 0)
+		* CFrame.Angles(math.acos((R or types.R):NextNumber(math.cos(radians), 1)), 0, 0)
 	).LookVector
 end
 
---- returns random point within `[a, b]`
-function Vector3K.randompoint(a: Vector3, b: Vector3, R: Random?): Vector3
-	return Vector3.new(
-		(R or types.R):NextNumber(a.X, b.X),
-		(R or types.R):NextNumber(a.Y, b.Y),
-		(R or types.R):NextNumber(a.Z, b.Z)
-	)
+--- returns random point within bounds of `[v, w]`
+function Vector3K.randompoint(v: Vector3, w: Vector3, R: Random?)
+	--[[return Vector3.new(
+		(R or types.R):NextNumber(v.X, w.X),
+		(R or types.R):NextNumber(v.Y, w.Y),
+		(R or types.R):NextNumber(v.Z, w.Z)
+	)]]
+	return
+		  (Vector3.xAxis * (R or types.R):NextNumber(v.X, w.X))
+		+ (Vector3.yAxis * (R or types.R):NextNumber(v.Y, w.Y))
+		+ (Vector3.zAxis * (R or types.R):NextNumber(v.Z, w.Z))
 end
 
---- returns value normalized as a vector3
-function Vector3K.tovector(value: types.xyzType?): Vector3
-	if typeof(value) == "Vector3" then
-		return value
-	elseif typeof(value) == "Vector3int16" then
-		return Vector3.new(value.X, value.Y, value.Z)
-	elseif typeof(value) == "CFrame" then
-		return Vector3.new(value.X, value.Y, value.Z)
-	elseif typeof(value) == "PVInstance" then
-		return value:GetPivot().Position
+--- returns vector3 representation of `variant`
+function Vector3K.tovector(variant: types.xyzType?): Vector3
+	if typeof(variant) == "Vector3" then
+		return variant
+	elseif typeof(variant) == "Vector3int16" then
+		return Vector3.new(variant.X, variant.Y, variant.Z)
+	elseif typeof(variant) == "CFrame" then
+		return Vector3.new(variant.X, variant.Y, variant.Z)
+	elseif typeof(variant) == "PVInstance" then
+		return variant:GetPivot().Position
 	end
+
 	return Vector3.zero
 end
 
---- returns `(b - a).Magnitude`
-function Vector3K.distance(a: Vector3, b: Vector3): number
-	b -= a
-	local x, y, z = b.X, b.Y, b.Z
+--- returns `(w - v).Magnitude`
+function Vector3K.distance(v: Vector3, w: Vector3): number
+	w -= v
+	local x, y, z = w.X, w.Y, w.Z
+
 	return ((x * x) + (y * y) + (z * z)) ^ 0.5
 end
 
---- returns distance between two `XYZtype` values
-function Vector3K.distanceXYZ(a: types.xyzType, b: types.xyzType): number
-	return Vector3K.distance(Vector3K.tovector(a), Vector3K.tovector(b))
+--- returns `(w - v).Unit`
+function Vector3K.unit(v: Vector3, w: Vector3)
+	return (w - v).Unit
 end
 
---- returns `(b - a).Unit`
-function Vector3K.direction(a: Vector3, b: Vector3)
-	return (b - a).Unit
-end
+--- returns the midpoint of `vectors`
+function Vector3K.midpoint(vectors: { Vector3 | types.xyzType }): Vector3
+	local length = #vectors
 
---- returns direction from two `XYZtype` values
-function Vector3K.directionXYZ(a: types.xyzType, b: types.xyzType): Vector3
-	return Vector3K.direction(Vector3K.tovector(a), Vector3K.tovector(b))
-end
-
---- returns the midpoint of vararg `XYZtype`
-function Vector3K.midpoint(...: types.xyzType): Vector3
-	local Vectors = {...}
-	local Count = #Vectors
-
-	local T = Vector3.zero
-	for _, V in Vectors do
-		T += Vector3K.tovector(V)
+	local sum = Vector3.zero
+	for _, v in vectors do
+		if typeof(v) == "Vector3" then
+			sum += v
+		else
+			sum += Vector3K.tovector(v)
+		end
 	end
-	return T / Count
+
+	return sum / length
 end
 
---- returns true if `a` and `b` are coplanar along unit vector
-function Vector3K.iscoplanar(a: Vector3, b: Vector3, unitvector: Vector3): boolean
-	return math.round((a - b):Dot(unitvector)) == 0
+--- returns true if `v` and `w` are coplanar along unit vector `u`
+function Vector3K.iscoplanar(v: Vector3, w: Vector3, u: Vector3): boolean
+	return math.round((v - w):Dot(u)) == 0
 end
 
---- returns unit vector `a` reflected against unit vector `b`
-function Vector3K.reflect(a: Vector3, b: Vector3): Vector3
-	return 2 * a:Dot(b) * b - a
+--- returns unit vector `v` reflected against unit vector `w`
+function Vector3K.reflect(v: Vector3, w: Vector3): Vector3
+	return 2 * v:Dot(w) * w - v
 end
 
---- returns rotation of unit vector `a` along `axis`
-function Vector3K.angle(a: Vector3, Axis: Enum.Axis): number
+--- returns rotation of unit vector `v` along `axis`
+function Vector3K.rotation(v: Vector3, axis: Enum.Axis): number
 	local y, x = 0, 0
 
-	if Axis == Enum.Axis.X then
-		y = a.Y
-		x = a.Z
-	elseif Axis == Enum.Axis.Y then
-		y = a.X
-		x = a.Z
-	elseif Axis == Enum.Axis.Z then
-		y = a.Y
-		x = a.X
+	if axis == Enum.Axis.X then
+		y = v.Y
+		x = v.Z
+	elseif axis == Enum.Axis.Y then
+		y = v.X
+		x = v.Z
+	elseif axis == Enum.Axis.Z then
+		y = v.Y
+		x = v.X
 	end
 
 	if y == 0 and x == 0 then
 		return 0
 	else
-		return math.atan2(y, x)
+		return -1 * math.atan2(y, x)
 	end
 end
 
---- interpolates between unit vector `a` and unit vector `b` with respect to interpolant `t` \
+--- interpolates between unit vector `v` and unit vector `w` with respect to interpolant `t` \
 --- axisangle is the goat
-function Vector3K.slerp(a: Vector3, b: Vector3, t: number): Vector3
-	local magA = a.Magnitude
-	local magB = b.Magnitude
+function Vector3K.slerp(v: Vector3, w: Vector3, t: number): Vector3
+	local magA = v.Magnitude
+	local magB = w.Magnitude
 
 	if magA == 0 and magB == 0 then
 		return Vector3.zero
@@ -197,15 +198,15 @@ function Vector3K.slerp(a: Vector3, b: Vector3, t: number): Vector3
 		if t < 1 then
 			return Vector3.zero
 		elseif t == 1 then
-			return b
+			return w
 		else
-			return math.huge*b
+			return math.huge*w
 		end
 	elseif magB == 0 then
 		if t < 0 then
-			return math.huge*a
+			return math.huge*v
 		elseif t == 0 then
-			return a
+			return v
 		else
 			return Vector3.zero
 		end
@@ -213,12 +214,12 @@ function Vector3K.slerp(a: Vector3, b: Vector3, t: number): Vector3
 
 	local magC = magA^(1 - t)*magB^t -- final magnitude
 
-	-- get k*cosine and k*sine components of the angle between a and b
-	local co = a:Dot(b)
-	local si = a:Cross(b).Magnitude
+	-- get k*cosine and k*sine components of the angle between v and w
+	local co = v:Dot(w)
+	local si = v:Cross(w).Magnitude
 
-	local unitA = a.Unit
-	local unitB = b.Unit
+	local unitA = v.Unit
+	local unitB = w.Unit
 
 	-- more degenerate cases
 	if co < 0 and si < -1e-16*co then -- this test sees, in a stable way, if they are opposite and abs(tan(angle)) < 1e-16
@@ -237,17 +238,9 @@ function Vector3K.slerp(a: Vector3, b: Vector3, t: number): Vector3
 	return magC*unitC
 end
 
---- stretches `a` towards `b`, constrained around radius `r`
-function Vector3K.stretch(a: Vector3, b: Vector3, r: number): Vector3
-	if Vector3K.distance(a, b) <= r then
-		return b
-	end
-	return a + (Vector3K.direction(a, b) * r)
-end
-
---- returns vector `a` as a string
-function Vector3K.tostring(a: Vector3, precision: number?): string
-	return string.sub(string.format(string.rep("%." .. (precision or 2) .. "f ", 3), a.X, a.Y, a.Z), 1, -2)
+--- returns `v` as a string
+function Vector3K.tostring(v: Vector3, precision: number?): string
+	return string.sub(string.format(string.rep("%." .. (precision or 2) .. "f ", 3), v.X, v.Y, v.Z), 1, -2)
 end
 
 return table.freeze(Vector3K)
