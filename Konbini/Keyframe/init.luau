@@ -24,7 +24,6 @@ local Tweenable = table.freeze{
 	"UDim2";
 }
 
----@native
 local function istweenable<T>(a: T): boolean
 	local h, k = type(a), typeof(a)
 	for _, t in Tweenable do
@@ -37,7 +36,7 @@ local function istweenable<T>(a: T): boolean
 	return false
 end
 
----@native
+@native
 local function lerp(initial: number, goal: number, a: number)
 	return (1 - a) * initial + a * goal
 end

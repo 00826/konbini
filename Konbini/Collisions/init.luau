@@ -18,7 +18,7 @@ local OverlapBlack = OverlapParams.new()
 OverlapBlack.FilterType = Enum.RaycastFilterType.Exclude
 OverlapBlack.RespectCanCollide = false
 
----@native
+@native
 local function fastdistance(a: Vector3, b: Vector3): number
 	b -= a
 	local x, y, z = b.X, b.Y, b.Z
@@ -132,8 +132,6 @@ function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Ve
 			result = Collisions.rayblacklist(at, real.LookVector * distance, search, collisiongroup)
 		end
 
-		--- Collisions.choreographRay(at, real.LookVector * distance, result)
-
 		if result then
 			if table.find(bucket, result.Instance) then continue end
 			table.insert(bucket, result.Instance)
@@ -145,7 +143,7 @@ function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Ve
 end
 
 --- returns true if point is within bounds of box defined by cframe and size
---- @native
+@native
 function Collisions.ispointinbox(point: Vector3, cframe: CFrame, size: Vector3)
 	local absoluteobjectspace = cframe:PointToObjectSpace(point):Abs()
 	size *= 0.5

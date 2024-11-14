@@ -315,10 +315,12 @@ function TableK.except(target: {any}, keys: {any}?, indices: {number}?): {}
 	return clone
 end
 
---- merges values from source into target, if they dont already exist
+--- merges values from source into target, avoiding repeating elements and preserving sort order of source
 function TableK.merge<T>(target: {T}, source: {T})
-	for _, value in source do
-		TableK.queue_ifandonlyif(target, value)
+	for _, value in ipairs(source) do
+		if not table.find(target, value) then
+			table.insert(target, value)
+		end
 	end
 end
 
@@ -327,6 +329,19 @@ function TableK.mergekv(target: { }, source: { })
 	for k, v in source do
 		target[k] = v
 	end
+end
+
+--- returns union of a and b, avoiding repeating elements and preserving sort order
+function TableK.union<T>(a: {T}, b: {T})
+	local u = table.clone(a)
+
+	for _, value in ipairs(b) do
+		if not table.find(u, value) then
+			table.insert(u, value)
+		end
+	end
+
+	return u
 end
 
 --- patches target table using source as a truth state

@@ -101,6 +101,23 @@ function Entity.fromstring(id: string): {}?
 	return Entity.Cache[id]
 end
 
+--- returns array of `e` from `4*n`-width string buffer of `id`'s \
+--- assumes that `len(b) % 4 == 0`
+@native
+function Entity.frombuffer(b: buffer): {}
+	local len = buffer.len(b)
+	local from = table.create(len // 4)
+
+	for i = 0, len - 4, 4 do
+		local e = Entity.Cache[buffer.readstring(b, i, 4)]
+		if e and not table.find(from, e) then
+			table.insert(from, e)
+		end
+	end
+
+	return from
+end
+
 --- returns first `e` that satisfies `e[scope] == value`
 function Entity.fromscope(scope: string, value: any): ({}?, string?)
 	assert(value ~= nil, "cannot scope a nil value")

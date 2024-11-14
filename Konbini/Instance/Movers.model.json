@@ -25,7 +25,7 @@
 			"Name": "BodyPosition",
 			"Properties": {
 				"D": 2000,
-				"P": 150000,
+				"P": 50000,
 				"MaxForce": [200000, 200000, 200000],
 				"Position": [0, 0, 0]
 			}

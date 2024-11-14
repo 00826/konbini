@@ -63,6 +63,8 @@ Misc.Preload = {
 						insert(value.Texture)
 					elseif value:IsA("Decal") then
 						insert(value.Texture)
+					elseif value:IsA("Animation") then
+						insert(value.AnimationId)
 					elseif value:IsA("ParticleEmitter") then
 						insert(value.Texture)
 					elseif value:IsA("Shirt") then

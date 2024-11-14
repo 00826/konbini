@@ -12,7 +12,7 @@ local ballisticwidth = emptywidth + 5
 local beamwidth = emptywidth + 2
 local bezierwidth = emptywidth + 14
 
----@native
+@native
 local function fastdistance(a: Vector3, b: Vector3): number
 	b -= a
 	local x, y, z = b.X, b.Y, b.Z
@@ -223,7 +223,7 @@ end
 --- returns, with respect to time elapsed: \
 --- `Vector3`: size of transform as `Vector3(diameter, diameter, length)` \
 --- `Vector3`: offset of transform as `Vector3(0, 0, length / 2)`
---- @native
+@native
 function Bullet.solvetransform(size: Vector3, velocity: number, time: number): (Vector3, Vector3)
 	local distance = velocity * time
 	return Vector3.new(size.X, size.Y, distance), Vector3.new(0, 0, -0.5 * distance)
@@ -232,7 +232,7 @@ end
 --- returns, with respect to time elapsed: \
 --- `Vector3`: offset of ballistic projectile \
 --- *in contexts where `gravity == 0`, ballistic projectile will behave like a linear projectile*
---- @native
+@native
 function Bullet.solveballistic(direction: Vector3, velocity: number, time: number, gravity: number?): Vector3
 	return (direction * (velocity * time)) - (Bullet.coefficient * (gravity or Bullet.gravity) * (time * time))
 end
@@ -243,7 +243,7 @@ end
 --- `Vector3`: position of bezier-curve projectile \
 --- `A`: interpolant used to solve the position \
 --- *distance is approximated by adding the distances from `a` to `b` and `b` to `c`*
---- @native
+@native
 function Bullet.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number): (Vector3, number)
 	local A = (time * velocity) / (fastdistance(a, b) + fastdistance(b, c))
 	local P0 = a:Lerp(b, A)
