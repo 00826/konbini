@@ -29,6 +29,7 @@
 |[Inputs.luau](./Konbini/Inputs/init.luau)|`UserInputService` wrapper, universal mouse position|`Konbini.Bind`|❌|
 |[Instance.luau](./Konbini/Instance/init.luau)|`Instance` library extension|-|❌|
 |[Interface.luau](./Konbini/Interface/init.luau)|user-interface helper functions|-|❌|
+|[Keyframe.luau](./Konbini/Keyframe/init.luau)|a more versatile tween function that supports more data types|-|❌|
 |[Math.luau](./Konbini/Math/init.luau)|`math` library extension|-|❌|
 |[Misc.luau](./Konbini/Misc/init.luau)|collection of miscellaneous functions|-|❌|
 |[Network.luau](./Konbini/Network/init.luau)|straightforward networking interface<br>tired of referencing remotes on every new script|`Konbini.async`|❌|
