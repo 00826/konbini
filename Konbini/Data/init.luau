@@ -48,14 +48,14 @@ end
 function Data.sync(player: Player, keys: {string}?)
 	assert(IsServer)
 
-	local SaveData = ServerCache[player].Data
-	local Packet = {}
+	local savedata = ServerCache[player].Data
+	local packet = {}
 
 	for _, Key in (keys or Data.Config.SyncKeys) do
-		Packet[Key] = SaveData[Key]
+		packet[Key] = savedata[Key]
 	end
 
-	DataRemote:FireClient(player, Packet)
+	DataRemote:FireClient(player, packet)
 end
 
 --- is called when a sync packet is received
@@ -101,21 +101,21 @@ end
 --- "24103210, 12345, 67890"
 --- ```
 function Data.wipe(gameid: number, lazystring: string)
-	local DataStore = DSS:GetDataStore(Data.Config.Name)
+	local datastore = DSS:GetDataStore(Data.Config.Name)
 	assert(game.GameId == gameid, "gameid mismatch")
-	assert(RunService:IsStudio() and RunService:IsEdit() and IsServer and DataStore)
+	assert(RunService:IsStudio() and RunService:IsEdit() and IsServer and datastore)
 
-	local SaveKey = Data.Config.SaveKey
-	local Failures = table.create(32)
+	local savekey = Data.Config.SaveKey
+	local failures = table.create(32)
 
 	local _, x = string.gsub(lazystring, "%d+", function(LazyId)
 		local s, e = pcall(function()
-			DataStore:RemoveAsync(LazyId .. SaveKey)
+			datastore:RemoveAsync(LazyId .. savekey)
 		end)
 
 		if not s then
 			print(string.format("unable to wipe data key %s:", LazyId), e)
-			table.insert(Failures, tonumber(LazyId))
+			table.insert(failures, tonumber(LazyId))
 			return ""
 		else
 			print(string.format("wiped data key %s:", LazyId))
@@ -125,8 +125,8 @@ function Data.wipe(gameid: number, lazystring: string)
 	end)
 
 	print(string.format("%d entries wiped", x))
-	if #Failures > 0 then
-		print(string.format("failed to wipe %d entries:", #Failures), Failures)
+	if #failures > 0 then
+		print(string.format("failed to wipe %d entries:", #failures), failures)
 	end
 end
 

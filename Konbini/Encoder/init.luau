@@ -437,7 +437,7 @@ function Encoder.hourminutesecond(time: number, notation: types.Notation?): stri
 			time -= H * 3600
 			local M = time // 60
 			time -= M * 60
-			return string.gsub(string.format(("%d:%d:%d:%d"), D, H, M, time), "%d+", subf)
+			return string.gsub(string.format("%d:%d:%d:%d", D, H, M, time), "%d+", subf)
 		else
 			return "00:" .. os.date("!%X", time)
 		end
@@ -447,7 +447,7 @@ function Encoder.hourminutesecond(time: number, notation: types.Notation?): stri
 			time -= H * 3600
 			local M = time // 60
 			time -= M * 60
-			return string.gsub(string.format(("%d:%d:%d"), H, M, time), "%d+", subf)
+			return string.gsub(string.format("%d:%d:%d", H, M, time), "%d+", subf)
 		else
 			return os.date("!%X", time)
 		end
@@ -455,7 +455,7 @@ function Encoder.hourminutesecond(time: number, notation: types.Notation?): stri
 		if time >= 3600 then
 			local M = time // 60
 			time -= M * 60
-			return string.gsub(string.format(("%d:%d"), M, time), "%d+", subf)
+			return string.gsub(string.format("%d:%d", M, time), "%d+", subf)
 		else
 			return string.sub(os.date("!%X", time), 4, 8)
 		end
@@ -470,7 +470,7 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 	local T0 = os.date("!*t")
 	local T1 = table.clone(T0)
 
-	local Timestamp = {
+	local timestamp = {
 		Id = "";
 		Seed = 0;
 		Until = 0;
@@ -485,9 +485,9 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 		T1.min = format * math.ceil((T1.min + 1) / format)
 		T1.sec = 0
 
-		local Year, YDay, Hour, QtrHour = T0.year, T0.yday, T0.hour, math.ceil((T0.min + 1) / format) - 1
-		Timestamp.Id = ("%d_%d_%d_%d"):format(Year, YDay, Hour, QtrHour)
-		Timestamp.Seed = tonumber(Year .. YDay .. Hour .. QtrHour) :: number
+		local year, yday, hour, qtrhour = T0.year, T0.yday, T0.hour, math.ceil((T0.min + 1) / format) - 1
+		timestamp.Id = string.format("%d_%d_%d_%d", year, yday, hour, qtrhour)
+		timestamp.Seed = tonumber(year .. yday .. hour .. qtrhour) :: number
 	else
 		if format == "Hour" then
 			--- `February 14, 2024, 06:44` --> `"2024_45_6"`
@@ -495,9 +495,9 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 			T1.min = 0
 			T1.sec = 0
 
-			local Year, YDay, Hour = T0.year, T0.yday, T0.hour
-			Timestamp.Id = ("%d_%d_%d"):format(Year, YDay, Hour)
-			Timestamp.Seed = tonumber(Year .. YDay .. Hour) :: number
+			local year, yday, hour = T0.year, T0.yday, T0.hour
+			timestamp.Id = string.format("%d_%d_%d", year, yday, hour)
+			timestamp.Seed = tonumber(year .. yday .. hour) :: number
 		elseif format == "Biphase" then
 			--- `February 14, 2024, 06:44` --> `"2024_45_AM"`
 			--- `February 14, 2024, 16:44` --> `"2024_45_PM"`
@@ -505,9 +505,9 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 			T1.min = 0
 			T1.sec = 0
 
-			local Year, YDay, Phase = T0.year, T0.yday, os.date("!%p")
-			Timestamp.Id = ("%d_%d_%s"):format(Year, YDay, Phase)
-			Timestamp.Seed = tonumber(Year .. YDay .. Phase:byte()) :: number
+			local year, yday, phase = T0.year, T0.yday, os.date("!%p")
+			timestamp.Id = string.format("%d_%d_%s", year, yday, phase)
+			timestamp.Seed = tonumber(year .. yday .. string.byte(phase)) :: number
 		elseif format == "Day" then
 			--- `February 14, 2024` --> `"2024_45"`
 			T1.day += 1
@@ -515,9 +515,9 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 			T1.min = 0
 			T1.sec = 0
 
-			local Year, YDay = T0.year, T0.yday
-			Timestamp.Id = ("%d_%d"):format(Year, YDay)
-			Timestamp.Seed = tonumber(Year .. YDay) :: number
+			local year, yday = T0.year, T0.yday
+			timestamp.Id = string.format("%d_%d", year, yday)
+			timestamp.Seed = tonumber(year .. yday) :: number
 		elseif format == "Week" then
 			--- `February 14, 2024` --> `"2024_7_06"` (06th week of 2024)
 			T1.day += 8 - T0.wday
@@ -525,9 +525,9 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 			T1.min = 0
 			T1.sec = 0
 
-			local Year, Week, YWeek = T0.year, T0.wday, os.date("!%U")
-			Timestamp.Id = ("%d_%d_%s"):format(Year, Week, YWeek)
-			Timestamp.Seed = tonumber(Year .. Week .. YWeek) :: number
+			local year, week, yweek = T0.year, T0.wday, os.date("!%U")
+			timestamp.Id = string.format("%d_%d_%s", year, week, yweek)
+			timestamp.Seed = tonumber(year .. week .. yweek) :: number
 		elseif format == "Season" then
 			--- `February 14, 2024` --> `"2024_1"`
 			--- Mar-May: `1` (spring)
@@ -540,9 +540,9 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 			T1.min = 0
 			T1.sec = 0
 
-			local Year, Month = T0.year, math.ceil((1 + ((T0.month - 3) % 12)) / 3)
-			Timestamp.Id = ("%d_%d"):format(Year, Month)
-			Timestamp.Seed = tonumber(Year .. Month) :: number
+			local year, month = T0.year, math.ceil((1 + ((T0.month - 3) % 12)) / 3)
+			timestamp.Id = string.format("%d_%d", year, month)
+			timestamp.Seed = tonumber(year .. month) :: number
 		elseif format == "Biseason" then
 			--- `February 14, 2024` --> `"2024_1"`
 			--- Jan-Jun: `1` (SS)
@@ -553,9 +553,9 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 			T1.min = 0
 			T1.sec = 0
 
-			local Year, Month = T0.year, math.ceil(T0.month / 6)
-			Timestamp.Id = ("%d_%d"):format(Year, Month)
-			Timestamp.Seed = tonumber(Year .. Month) :: number
+			local year, month = T0.year, math.ceil(T0.month / 6)
+			timestamp.Id = string.format("%d_%d", year, month)
+			timestamp.Seed = tonumber(year .. month) :: number
 		elseif format == "Year" then
 			--- `February 14, 2024` --> `"2024"`
 			T1.year += 1
@@ -565,14 +565,14 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 			T1.min = 0
 			T1.sec = 0
 
-			Timestamp.Id = tostring(T0.year)
-			Timestamp.Seed = tonumber(T0.year) :: number
+			timestamp.Id = tostring(T0.year)
+			timestamp.Seed = tonumber(T0.year) :: number
 		end
 	end
 
-	Timestamp.Until = os.time(T1) - os.time(T0)
+	timestamp.Until = os.time(T1) - os.time(T0)
 
-	return Timestamp
+	return timestamp
 end
 
 return Encoder

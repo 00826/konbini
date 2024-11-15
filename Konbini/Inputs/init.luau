@@ -137,8 +137,8 @@ end
 --- returns key-value pair bound to keycode with respect to internal platform id \
 --- `Enum.KeyCode.Unknown (value 0)` immediately returns nil
 function Inputs.keybind(keycode: Enum.KeyCode, k: {[string]: types.Keybind}): (string?, types.Keybind?)
-	local PlatformId = Inputs.PlatformId
-	if PlatformId == 0 then
+	local platformid = Inputs.PlatformId
+	if platformid == 0 then
 		return
 	elseif keycode == Enum.KeyCode.Unknown then
 		return nil, nil
@@ -150,7 +150,7 @@ function Inputs.keybind(keycode: Enum.KeyCode, k: {[string]: types.Keybind}): (s
 			assert(type(reals) == "table")
 			assert(type(defaults) == "table")
 
-			local boundkey = reals[PlatformId] or defaults[PlatformId]
+			local boundkey = reals[platformid] or defaults[platformid]
 			if boundkey == keycode.Value then
 				return keyid, keybind
 			end
@@ -253,12 +253,12 @@ end
 --- `1`: pc \
 --- `2`: mobile \
 --- `3`: gamepad
-function Inputs.platformchanged(f: (PlatformId: number) -> ()): types.Disconnect
+function Inputs.platformchanged(f: (platformid: number) -> ()): types.Disconnect
 	return Bind("k_Input_platformchanged"):Connect(f)
 end
 
 --- fires function when the gamepad cursor is toggled on/off
-function Inputs.gamepadcursorstatechanged(f: (GamepadCursorEnabled: boolean) -> ()): types.Disconnect
+function Inputs.gamepadcursorstatechanged(f: (gamepadcursorenabled: boolean) -> ()): types.Disconnect
 	return Bind("k_Input_gamepadcursorstatechanged"):Connect(f)
 end
 
@@ -281,12 +281,12 @@ end
 function Inputs.sinkthumbstickcheck(inputobject: InputObject): boolean
 	if not PlayerGui then return false end
 	if Inputs.PlatformId == 2 then
-		local P = inputobject.Position
-		local A: {GuiObject} = PlayerGui:GetGuiObjectsAtPosition(P.X, P.Y)
-		if #A == 0 then
+		local screenposition = inputobject.Position
+		local array = PlayerGui:GetGuiObjectsAtPosition(screenposition.X, screenposition.Y)
+		if #array == 0 then
 			return true
 		else
-			for _, GuiObject in A do
+			for _, GuiObject in array do
 				if GuiObject.Name ~= "DynamicThumbstickFrame" then continue end
 				return false
 			end
@@ -301,24 +301,24 @@ function Inputs.togglemobileinterface(thumbstickenabled: boolean?, jumpbuttonena
 	assert(PlayerGui)
 	local function t(TouchGui: Instance)
 		if TouchGui.Name ~= "TouchGui" then return end
-		local TouchControlFrame = TouchGui:WaitForChild("TouchControlFrame")
+		local touchcontrolframe = TouchGui:WaitForChild("TouchControlFrame")
 
-		local JumpButton = TouchControlFrame:WaitForChild("JumpButton") :: ImageButton
+		local jumpbutton = touchcontrolframe:WaitForChild("JumpButton") :: ImageButton
 		if not jumpbuttonenabled then
-			JumpButton.Position = UDim2.fromScale(2, 2)
+			jumpbutton.Position = UDim2.fromScale(2, 2)
 		end
 
-		local Thumbstick = TouchControlFrame:WaitForChild("DynamicThumbstickFrame") :: Frame
+		local thumbstick = touchcontrolframe:WaitForChild("DynamicThumbstickFrame") :: Frame
 		if not thumbstickenabled then
-			Thumbstick.Position = UDim2.fromScale(2, 2)
+			thumbstick.Position = UDim2.fromScale(2, 2)
 		end
 	end
 
-	for _, Thing in PlayerGui:GetChildren() do
-		t(Thing)
+	for _, thing in PlayerGui:GetChildren() do
+		t(thing)
 	end
-	return PlayerGui.ChildAdded:Connect(function(Thing)
-		t(Thing)
+	return PlayerGui.ChildAdded:Connect(function(thing)
+		t(thing)
 	end)
 end
 
@@ -331,24 +331,24 @@ end
 --- ---  ┗━ Button: TextButton
 --- ```
 function Inputs.connectGamepad2D(gamepad2d: typeof(Inputs.Gamepad2D), f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState, InputFrame: Frame) -> ())
-	for KeyId, KeyEnum in Inputs.Gamepad2DMap do
-		local ButtonFrame = gamepad2d:FindFirstChild(KeyId)
-		if not ButtonFrame then warn(gamepad2d, KeyId); continue end
+	for keyid, keyenum in Inputs.Gamepad2DMap do
+		local buttonframe = gamepad2d:FindFirstChild(keyid)
+		if not buttonframe then warn(gamepad2d, keyid); continue end
 
-		local UIStroke = ButtonFrame:FindFirstChildOfClass("UIStroke")
-		local TextButton = ButtonFrame:FindFirstChildOfClass("TextButton")
-		if not TextButton then continue end
+		local uistroke = buttonframe:FindFirstChildOfClass("UIStroke")
+		local textbutton = buttonframe:FindFirstChildOfClass("TextButton")
+		if not textbutton then continue end
 
-		TextButton:GetPropertyChangedSignal("GuiState"):Connect(function()
-			if TextButton.GuiState == Enum.GuiState.Press then
-				f(KeyEnum, Enum.UserInputState.Begin, ButtonFrame)
-				if UIStroke then
-					UIStroke.Color = Inputs.Select2DColor
+		textbutton:GetPropertyChangedSignal("GuiState"):Connect(function()
+			if textbutton.GuiState == Enum.GuiState.Press then
+				f(keyenum, Enum.UserInputState.Begin, buttonframe)
+				if uistroke then
+					uistroke.Color = Inputs.Select2DColor
 				end
-			elseif TextButton.GuiState == Enum.GuiState.Idle then
-				f(KeyEnum, Enum.UserInputState.End, ButtonFrame)
-				if UIStroke then
-					UIStroke.Color = Inputs.Deselect2DColor
+			elseif textbutton.GuiState == Enum.GuiState.Idle then
+				f(keyenum, Enum.UserInputState.End, buttonframe)
+				if uistroke then
+					uistroke.Color = Inputs.Deselect2DColor
 				end
 			end
 		end)
@@ -364,24 +364,24 @@ end
 --- ---  ┗━ Button: TextButton
 --- ```
 function Inputs.connectDPad2D(dpad2d: typeof(Inputs.DPad2D), f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState, InputFrame: Frame) -> ())
-	for KeyId, KeyEnum in Inputs.DPad2DMap do
-		local ButtonFrame = dpad2d:FindFirstChild(KeyId)
-		if not ButtonFrame then warn(dpad2d, KeyId); continue end
+	for keyid, keyenum in Inputs.DPad2DMap do
+		local buttonframe = dpad2d:FindFirstChild(keyid)
+		if not buttonframe then warn(dpad2d, keyid); continue end
 
-		local UIStroke = ButtonFrame:FindFirstChildOfClass("UIStroke")
-		local TextButton = ButtonFrame:FindFirstChildOfClass("TextButton")
-		if not TextButton then continue end
+		local uistroke = buttonframe:FindFirstChildOfClass("UIStroke")
+		local textbutton = buttonframe:FindFirstChildOfClass("TextButton")
+		if not textbutton then continue end
 
-		TextButton:GetPropertyChangedSignal("GuiState"):Connect(function()
-			if TextButton.GuiState == Enum.GuiState.Press then
-				f(KeyEnum, Enum.UserInputState.Begin, ButtonFrame)
-				if UIStroke then
-					UIStroke.Color = Inputs.Select2DColor
+		textbutton:GetPropertyChangedSignal("GuiState"):Connect(function()
+			if textbutton.GuiState == Enum.GuiState.Press then
+				f(keyenum, Enum.UserInputState.Begin, buttonframe)
+				if uistroke then
+					uistroke.Color = Inputs.Select2DColor
 				end
-			elseif TextButton.GuiState == Enum.GuiState.Idle then
-				f(KeyEnum, Enum.UserInputState.End, ButtonFrame)
-				if UIStroke then
-					UIStroke.Color = Inputs.Deselect2DColor
+			elseif textbutton.GuiState == Enum.GuiState.Idle then
+				f(keyenum, Enum.UserInputState.End, buttonframe)
+				if uistroke then
+					uistroke.Color = Inputs.Deselect2DColor
 				end
 			end
 		end)
@@ -404,30 +404,30 @@ else
 	end)
 
 	local function UpdateMouse(inputobject: InputObject)
-		local ScreenPosition = Vector2.zero
+		local screenposition = Vector2.zero
 		if Inputs.PlatformId == 2 then
-			local InputPosition: Vector2|Vector3 = inputobject.Position
+			local inputposition: Vector2|Vector3 = inputobject.Position
 			if Inputs.MobileScreenCenter then
-				InputPosition = Inputs.MobileScreenCenter() or InputPosition
+				inputposition = Inputs.MobileScreenCenter() or inputposition
 			end
-			ScreenPosition = Vector2.new(InputPosition.X, InputPosition.Y)
+			screenposition = Vector2.new(inputposition.X, inputposition.Y)
 		else
-			ScreenPosition = UIS:GetMouseLocation() - Inputs.GuiInset
+			screenposition = UIS:GetMouseLocation() - Inputs.GuiInset
 		end
 
 		if Inputs.AssistMousePosition then
-			ScreenPosition = Inputs.AssistMousePosition() or ScreenPosition
+			screenposition = Inputs.AssistMousePosition() or screenposition
 		end
 	
-		local UnitRay = Camera:ScreenPointToRay(ScreenPosition.X, ScreenPosition.Y)
-		local Result = rayblacklist(UnitRay.Origin, UnitRay.Direction * 10000)
+		local unitray = Camera:ScreenPointToRay(screenposition.X, screenposition.Y)
+		local result = rayblacklist(unitray.Origin, unitray.Direction * 10000)
 
-		if Result then
-			Cursor.Position = Result.Position
-			Cursor.Normal = Result.Normal
-			Cursor.Instance = Result.Instance
+		if result then
+			Cursor.Position = result.Position
+			Cursor.Normal = result.Normal
+			Cursor.Instance = result.Instance
 		else
-			Cursor.Position = UnitRay.Origin + (UnitRay.Direction * 10000)
+			Cursor.Position = unitray.Origin + (unitray.Direction * 10000)
 			Cursor.Normal = Vector3.yAxis
 			Cursor.Instance = nil
 		end
@@ -440,14 +440,14 @@ else
 		if Inputs.sinkthumbstickcheck(inputobject) then return end
 		Bind("k_Input_began"):Fire(inputobject, ...)
 
-		local Now, KeyCode = os.clock(), inputobject.KeyCode
-		local KeyCodeTimeTable = Inputs.InputTimes
+		local now, keycode = os.clock(), inputobject.KeyCode
+		local keycodetimetable = Inputs.InputTimes
 
 		do --- doubletap inputs
-			local Then = KeyCodeTimeTable[KeyCode] or 0
-			KeyCodeTimeTable[KeyCode] = Now
-			if Now - Then < Inputs.DoubleTapTime then
-				Bind("k_Input_doubletap"):Fire(KeyCode)
+			local later = keycodetimetable[keycode] or 0
+			keycodetimetable[keycode] = now
+			if now - later < Inputs.DoubleTapTime then
+				Bind("k_Input_doubletap"):Fire(keycode)
 			end
 		end
 
@@ -474,9 +474,9 @@ else
 	UIS.LastInputTypeChanged:Connect(function(InputType: Enum.UserInputType)
 		Inputs.TouchEnabled = UIS.TouchEnabled
 
-		local ThisPlatform = Inputs.Platforms[InputType] or Inputs.PlatformId
-		if Inputs.PlatformId ~= ThisPlatform then
-			Inputs.PlatformId = ThisPlatform
+		local platformid = Inputs.Platforms[InputType] or Inputs.PlatformId
+		if Inputs.PlatformId ~= platformid then
+			Inputs.PlatformId = platformid
 			Bind("k_Input_platformchanged"):Fire(Inputs.PlatformId)
 		end
 	end)

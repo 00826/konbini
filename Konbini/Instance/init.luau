@@ -27,7 +27,7 @@ end
 
 --- recursive `Instance.new()` using instance tree
 function InstanceK.new(tree: types.Tree): Instance
-	local NewInstance: any = Instance.new(tree.ClassName)
+	local newinstance: any = Instance.new(tree.ClassName)
 
 	for Property, Value in pairs(tree) do
 		if Property == "ClassName" then continue end
@@ -37,40 +37,40 @@ function InstanceK.new(tree: types.Tree): Instance
 		--- yes, these checks make the function very slow
 		--- but property write errors on yet-to-be-parented instances are silent and yield indefinitely
 		--- so its preferred to have something that works versus something thats fast
-		if not InstanceK.IsPropertyOf(NewInstance, Property) then
+		if not InstanceK.IsPropertyOf(newinstance, Property) then
 			warn(`{debug.traceback()}{Property} is not a property of {tree.ClassName} "{tree.Name or tree.ClassName}"`)
 			continue
 		end
-		if (NewInstance[Property] ~= nil) and (typeof(Value) ~= typeof(NewInstance[Property])) then
-			warn(`{debug.traceback()}Attempt to write {typeof(Value)} to {tree.ClassName} "{tree.Name or tree.ClassName}" property {Property} ({typeof(NewInstance[Property])})`)
+		if (newinstance[Property] ~= nil) and (typeof(Value) ~= typeof(newinstance[Property])) then
+			warn(`{debug.traceback()}Attempt to write {typeof(Value)} to {tree.ClassName} "{tree.Name or tree.ClassName}" property {Property} ({typeof(newinstance[Property])})`)
 			continue
 		end
 
-		NewInstance[Property] = Value
+		newinstance[Property] = Value
 	end
 
 	if tree.Children then
 		for _, v in pairs(tree.Children) do
-			v.Parent = NewInstance
+			v.Parent = newinstance
 			InstanceK.new(v)
 		end
 	end
 
-	NewInstance.Parent = tree.Parent
+	newinstance.Parent = tree.Parent
 
-	return NewInstance
+	return newinstance
 end
 
 --- returns instance at the end of path `"path/to/instance"`, beginning at root `inst`
 function InstanceK.Path(inst: Instance, Path: string, Yield: boolean?): Instance?
 	for _, Ref in ipairs(string.split(Path, "/")) do
-		local New = Yield and inst:WaitForChild(Ref) or inst:FindFirstChild(Ref)
+		local new = Yield and inst:WaitForChild(Ref) or inst:FindFirstChild(Ref)
 
-		if not New then
+		if not new then
 			warn(`Ref "{Ref}" is not a member of {inst.ClassName} "{inst}"`)
 			return nil
 		end
-		inst = New
+		inst = new
 	end
 	return inst
 end
@@ -84,12 +84,12 @@ end
 --- `a`: "root" part \
 --- `b`: "loose" part
 function InstanceK.Weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstraint
-	local NewWeld = Weld:Clone()
+	local newweld = Weld:Clone()
 	b.CFrame = a.CFrame * (offset or CFrame.identity)
-	NewWeld.Part0 = b
-	NewWeld.Part1 = a
-	NewWeld.Parent = b
-	return NewWeld
+	newweld.Part0 = b
+	newweld.Part1 = a
+	newweld.Parent = b
+	return newweld
 end
 
 --- iterative `Property` setter
@@ -112,56 +112,56 @@ end
 
 --- yields until child of class is parented under instance
 function InstanceK.WaitForChildOfClass(inst: Instance, classname: string, timeout: number?): Instance?
-	local Thing, T = inst:FindFirstChildOfClass(classname), timeout or 10
-	if not Thing then
+	local thing, time = inst:FindFirstChildOfClass(classname), timeout or 10
+	if not thing then
 		repeat
-			T -= task.wait()
-			Thing = inst:FindFirstChildOfClass(classname)
-		until (Thing ~= nil) or (T < 0)
+			time -= task.wait()
+			thing = inst:FindFirstChildOfClass(classname)
+		until (thing ~= nil) or (time < 0)
 	end
-	return Thing
+	return thing
 end
 
 --- returns all children of instance whose names match vararg
 function InstanceK.GetChildrenWithName(inst: Instance, ...: string): {Instance}
-	local Names = {...}
-	local Children = inst:GetChildren()
-	local Matches = table.create(#Children)
+	local names = {...}
+	local children = inst:GetChildren()
+	local matches = table.create(#children)
 
-	for _, Thing in Children do
-		if not table.find(Names, Thing.Name) then continue end
+	for _, thing in children do
+		if not table.find(names, thing.Name) then continue end
 
-		table.insert(Matches, Thing)
+		table.insert(matches, thing)
 	end
 
-	return Matches
+	return matches
 end
 
 --- returns all children of instance whose classnames match vararg
 function InstanceK.GetChildrenOfClass(inst: Instance, ...: string): {Instance}
-	local Names = {...}
-	local Children = inst:GetChildren()
-	local Matches = table.create(#Children)
+	local names = {...}
+	local children = inst:GetChildren()
+	local matches = table.create(#children)
 
-	for _, Thing in Children do
-		if not table.find(Names, Thing.ClassName) then continue end
+	for _, thing in children do
+		if not table.find(names, thing.ClassName) then continue end
 
-		table.insert(Matches, Thing)
+		table.insert(matches, thing)
 	end
 
-	return Matches
+	return matches
 end
 
---- returns first child of instance where `f(Thing) -> true`
-function InstanceK.FindFirstChildWithCase(inst: Instance, f: (Thing: Instance) -> boolean): Instance?
-	for _, Thing: Instance in inst:GetChildren() do
-		if string.sub(Thing.Name, 1, 1) == "_" then continue end
-		if f(Thing) then return Thing end
+--- returns first child of instance where `f(thing) -> true`
+function InstanceK.FindFirstChildWithCase(inst: Instance, f: (thing: Instance) -> boolean): Instance?
+	for _, thing: Instance in inst:GetChildren() do
+		if string.sub(thing.Name, 1, 1) == "_" then continue end
+		if f(thing) then return thing end
 	end
 	return
 end
 
---- recursively searches for the highest ancestor `Ancestor` of Instance `inst` whose ClassName property matches string `ClassName`
+--- recursively searches for the highest ancestor `ancestor` of Instance `inst` whose ClassName property matches string `ClassName`
 --- ```
 --- --- Fish: Model
 --- --- ┣━ Scales: Part
@@ -173,45 +173,45 @@ end
 --- InstanceK.FindHighestAncestorOfClass(RightFin, "Model") --> Fish
 --- ```
 function InstanceK.FindHighestAncestorOfClass(inst: Instance, classname: string): Instance?
-	local Ancestor = inst:FindFirstAncestorOfClass(classname)
-	if Ancestor then
-		local ThisAncestor = InstanceK.FindHighestAncestorOfClass(Ancestor, classname)
-		if not ThisAncestor then
-			return Ancestor
+	local ancestor = inst:FindFirstAncestorOfClass(classname)
+	if ancestor then
+		local thisancestor = InstanceK.FindHighestAncestorOfClass(ancestor, classname)
+		if not thisancestor then
+			return ancestor
 		else
-			Ancestor = ThisAncestor
+			ancestor = thisancestor
 		end
 	end
-	return Ancestor
+	return ancestor
 end
 
 --- returns desired parents of things
 function InstanceK.FindParentsOfClass(things: {Instance | RaycastResult}, classname: string, ignore: Instance?): {Instance}
-	local Matches = table.create(#things)
+	local matches = table.create(#things)
 
-	for _, Thing in things do
-		local Parent = nil
-		if typeof(Thing) == "RaycastResult" then
-			Parent = Thing.Instance.Parent
+	for _, thing in things do
+		local parent = nil
+		if typeof(thing) == "RaycastResult" then
+			parent = thing.Instance.Parent
 		else
-			Parent = Thing.Parent
+			parent = thing.Parent
 		end
 
-		if not Parent then continue end
-		if not Parent:IsA(classname) then continue end
-		if table.find(Matches, Parent) then continue end
-		if Parent == ignore then continue end
+		if not parent then continue end
+		if not parent:IsA(classname) then continue end
+		if table.find(matches, parent) then continue end
+		if parent == ignore then continue end
 
-		table.insert(Matches, Parent)
+		table.insert(matches, parent)
 	end
 
-	return Matches
+	return matches
 end
 
 --- Instance:IsDescendantOf() but it accepts varargs
 function InstanceK.IsDescendantOf(inst: Instance, ...: Instance): boolean
-	for _, Thing in {...} do
-		if inst:IsDescendantOf(Thing) then
+	for _, thing in {...} do
+		if inst:IsDescendantOf(thing) then
 			return true
 		end
 	end
@@ -220,9 +220,9 @@ end
 
 --- ClearAllChildrenWithNames()
 function InstanceK.ClearChildrenWithName(inst: Instance, name: string)
-	local ThingWithClassName = inst:FindFirstChild(name)
-	if ThingWithClassName then
-		ThingWithClassName:Destroy()
+	local thingwithclassname = inst:FindFirstChild(name)
+	if thingwithclassname then
+		thingwithclassname:Destroy()
 		InstanceK.ClearChildrenWithName(inst, name)
 	else
 		return
@@ -231,19 +231,19 @@ end
 
 --- ClearAllChildrenWithoutNames()
 function InstanceK.ClearWithoutName(inst: Instance, ...: string)
-	local Names = {...}
-	for _, Thing: Instance in inst:GetChildren() do
-		if string.sub(Thing.Name, 1, 1) == "_" then continue end
-		if table.find(Names, Thing.Name) then continue end
-		Thing:Destroy()
+	local names = {...}
+	for _, thing: Instance in inst:GetChildren() do
+		if string.sub(thing.Name, 1, 1) == "_" then continue end
+		if table.find(names, thing.Name) then continue end
+		thing:Destroy()
 	end
 end
 
 --- ClearChildrenWithClassName()
 function InstanceK.ClearChildrenWithClassName(inst: Instance, classname: string)
-	local ThingWithClassName = inst:FindFirstChildOfClass(classname)
-	if ThingWithClassName then
-		ThingWithClassName:Destroy()
+	local thingwithclassname = inst:FindFirstChildOfClass(classname)
+	if thingwithclassname then
+		thingwithclassname:Destroy()
 		InstanceK.ClearChildrenWithClassName(inst, classname)
 	else
 		return
@@ -252,19 +252,19 @@ end
 
 --- ClearChildrenWithoutClassName()
 function InstanceK.ClearChildrenWithoutClassName(inst: Instance, classname: string)
-	for _, Thing: Instance in inst:GetChildren() do
-		if string.sub(Thing.Name, 1, 1) == "_" then continue end
-		if Thing.ClassName == classname then continue end
-		Thing:Destroy()
+	for _, thing: Instance in inst:GetChildren() do
+		if string.sub(thing.Name, 1, 1) == "_" then continue end
+		if thing.ClassName == classname then continue end
+		thing:Destroy()
 	end
 end
 
 --- ClearChildrenWithCase()
-function InstanceK.ClearChildrenWithCase(inst: Instance, shoulddelete: (Thing: Instance) -> boolean)
-	for _, Thing: Instance in inst:GetChildren() do
-		if string.sub(Thing.Name, 1, 1) == "_" then continue end
-		if shoulddelete(Thing) == false then continue end
-		Thing:Destroy()
+function InstanceK.ClearChildrenWithCase(inst: Instance, shoulddelete: (thing: Instance) -> boolean)
+	for _, thing: Instance in inst:GetChildren() do
+		if string.sub(thing.Name, 1, 1) == "_" then continue end
+		if shoulddelete(thing) == false then continue end
+		thing:Destroy()
 	end
 end
 
@@ -385,50 +385,50 @@ end
 function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?)
 	if state == true then
 		assert(motors, "expected motor target list")
-		for _, Motor6D in target:GetDescendants() do
-			if Motor6D:IsA("Motor6D") and table.find(motors, Motor6D.Name) then
-				if not Motor6D.Part1 then warn(`motor6d {Motor6D} no part0`); continue end
+		for _, motor6d in target:GetDescendants() do
+			if motor6d:IsA("Motor6D") and table.find(motors, motor6d.Name) then
+				if not motor6d.Part1 then warn(`motor6d {motor6d} no part0`); continue end
 
-				Motor6D.Part1:SetAttribute("MotorName", Motor6D.Name)
-				Motor6D.Part1:SetAttribute("MotorVelocity", Motor6D.MaxVelocity)
-				local Socket: BallSocketConstraint = Ball:Clone()
+				motor6d.Part1:SetAttribute("MotorName", motor6d.Name)
+				motor6d.Part1:SetAttribute("MotorVelocity", motor6d.MaxVelocity)
+				local socket: BallSocketConstraint = Ball:Clone()
 				local A0, A1 = Instance.new("Attachment"), Instance.new("Attachment")
-				A0.Parent = Motor6D.Part0
-				A1.Parent = Motor6D.Part1
+				A0.Parent = motor6d.Part0
+				A1.Parent = motor6d.Part1
 
-				Socket.Attachment0 = A0
-				Socket.Attachment1 = A1
+				socket.Attachment0 = A0
+				socket.Attachment1 = A1
 
-				A0.CFrame = Motor6D.C0
-				A1.CFrame = Motor6D.C1
+				A0.CFrame = motor6d.C0
+				A1.CFrame = motor6d.C1
 
-				Socket.Parent = Motor6D.Parent
+				socket.Parent = motor6d.Parent
 
-				Motor6D:Destroy()
+				motor6d:Destroy()
 			end
 		end
 	elseif state == false then
-		for _, BallSocket in target:GetDescendants() do
-			if BallSocket:IsA("BallSocketConstraint") then
-				if not BallSocket.Attachment0 then warn(`ballsocket {BallSocket} no attachment0`); continue end
-				if not BallSocket.Attachment1 then warn(`ballsocket {BallSocket} no attachment1`); continue end
+		for _, ballsocket in target:GetDescendants() do
+			if ballsocket:IsA("BallSocketConstraint") then
+				if not ballsocket.Attachment0 then warn(`ballsocket {ballsocket} no attachment0`); continue end
+				if not ballsocket.Attachment1 then warn(`ballsocket {ballsocket} no attachment1`); continue end
 
-				BallSocket.UpperAngle = 0
-				BallSocket.TwistUpperAngle = 0
-				BallSocket.TwistLowerAngle = 0
+				ballsocket.UpperAngle = 0
+				ballsocket.TwistUpperAngle = 0
+				ballsocket.TwistLowerAngle = 0
 
-				local Motor6D = Motor:Clone()
-				Motor6D.Part0 = BallSocket.Attachment0.Parent
-				Motor6D.Part1 = BallSocket.Attachment1.Parent
-				Motor6D.C0 = BallSocket.Attachment0.CFrame
-				Motor6D.C1 = BallSocket.Attachment1.CFrame
-				Motor6D.Name = Motor6D.Part1:GetAttribute("MotorName")
-				Motor6D.MaxVelocity = Motor6D.Part1:GetAttribute("MotorVelocity")
-				Motor6D.Parent = BallSocket.Parent
+				local motor6d = Motor:Clone()
+				motor6d.Part0 = ballsocket.Attachment0.Parent
+				motor6d.Part1 = ballsocket.Attachment1.Parent
+				motor6d.C0 = ballsocket.Attachment0.CFrame
+				motor6d.C1 = ballsocket.Attachment1.CFrame
+				motor6d.Name = motor6d.Part1:GetAttribute("MotorName")
+				motor6d.MaxVelocity = motor6d.Part1:GetAttribute("MotorVelocity")
+				motor6d.Parent = ballsocket.Parent
 
-				BallSocket.Attachment0:Destroy()
-				BallSocket.Attachment1:Destroy()
-				BallSocket:Destroy()
+				ballsocket.Attachment0:Destroy()
+				ballsocket.Attachment1:Destroy()
+				ballsocket:Destroy()
 			end
 		end
 	end
@@ -447,39 +447,39 @@ end
 --- applies bodymover to primarypart of target \
 --- *in contexts where `time` is omitted, the bodymover will remain indefinitely*
 function InstanceK.applybodymover(target: Model|BasePart, class: types.MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
-	local RootPart
+	local rootpart
 	if target:IsA("Model") then
-		RootPart = target.PrimaryPart
+		rootpart = target.PrimaryPart
 	else
-		RootPart = target
+		rootpart = target
 	end
-	assert(RootPart, `{target} has no PrimaryPart`)
+	assert(rootpart, `{target} has no PrimaryPart`)
 
 	if IsServer then
-		local Player = Players:GetPlayerFromCharacter(target) or RootPart:GetNetworkOwner()
+		local player = Players:GetPlayerFromCharacter(target) or rootpart:GetNetworkOwner()
 
-		if Player then
-			MoverRemote:FireClient(Player, target, class, time, properties)
+		if player then
+			MoverRemote:FireClient(player, target, class, time, properties)
 			return
 		end
 	end
 
-	local NewMover = InstanceK.Movers[class]:Clone()
+	local newmover = InstanceK.Movers[class]:Clone()
 
 	if properties then
 		for k, v in properties do
-			NewMover[k] = v
+			newmover[k] = v
 		end
 	end
 
 	if time then
 		task.delay(time, function()
-			NewMover:Destroy()
+			newmover:Destroy()
 		end)
 	end
 
-	NewMover.Parent = RootPart
-	return NewMover
+	newmover.Parent = rootpart
+	return newmover
 end
 
 if IsServer then

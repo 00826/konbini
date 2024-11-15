@@ -45,10 +45,10 @@ end
 function Collisions.quickcast(at: Vector3, distance: number, search: {Model}): {Model}
 	local found = table.create(#search)
 	for _, Model in search do
-		local C0, Size = Model:GetBoundingBox()
-		Size *= 0.5
+		local cframe, size = Model:GetBoundingBox()
+		size *= 0.5
 
-		if fastdistance(at, C0.Position) <= (math.max(Size.X, Size.Y, Size.Z) + distance) then
+		if fastdistance(at, cframe.Position) <= (math.max(size.X, size.Y, size.Z) + distance) then
 			table.insert(found, Model)
 		end
 	end
@@ -58,28 +58,28 @@ end
 
 --- non-cancollide-safe BasePart:GetTouchingParts()
 function Collisions.collide(part: BasePart): {BasePart}
-	local C = part.Touched:Connect(function() end)
-	local T = part:GetTouchingParts()
-	C:Disconnect()
-	return T
+	local c = part.Touched:Connect(function() end)
+	local t = part:GetTouchingParts()
+	c:Disconnect()
+	return t
 end
 
 --- `workspace:GetPartBoundsInBox()`
 function Collisions.box(listtype: types.CastList, search: {Instance}, at: CFrame, size: Vector3): {BasePart}
-	local Overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
-	assert(typeof(Overlap) == "OverlapParams")
-	Overlap.FilterDescendantsInstances = search
+	local overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
+	assert(typeof(overlap) == "OverlapParams")
+	overlap.FilterDescendantsInstances = search
 
-	return workspace:GetPartBoundsInBox(at, size, Overlap)
+	return workspace:GetPartBoundsInBox(at, size, overlap)
 end
 
 --- `workspace:GetPartBoundsInRadius()`
 function Collisions.ball(listtype: types.CastList, search: {Instance}, at: Vector3, radius: number): {BasePart}
-	local Overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
-	assert(typeof(Overlap) == "OverlapParams")
-	Overlap.FilterDescendantsInstances = search
+	local overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
+	assert(typeof(overlap) == "OverlapParams")
+	overlap.FilterDescendantsInstances = search
 
-	return workspace:GetPartBoundsInRadius(at, radius, Overlap)
+	return workspace:GetPartBoundsInRadius(at, radius, overlap)
 end
 
 --- returns: \

@@ -31,10 +31,10 @@ end
 --- applies debounce against instance `i` \
 --- returns true if debounce passed, returns false if not passed
 function Time.debounce(i: Instance, name: string, time: number): boolean
-	local Now, Until = Time.now(), i:GetAttribute("K_Time_debounce_" .. name) or 0
-	if Until > Now then return false end
+	local now, later = Time.now(), i:GetAttribute("K_Time_debounce_" .. name) or 0
+	if later > now then return false end
 
-	i:SetAttribute("K_Time_debounce_" .. name, Now + time)
+	i:SetAttribute("K_Time_debounce_" .. name, now + time)
 	return true
 end
 
@@ -43,25 +43,25 @@ function Time.run(x: number, f: (elapsed: number, dt: number) -> boolean?): RBXS
 	local elapsed = 0
 	local C; C = RunService.Heartbeat:Connect(function(dt: number)
 		elapsed += dt
-		local Result = f(elapsed, dt)
-		if (elapsed > x) or (Result == true) then
+		local result = f(elapsed, dt)
+		if (elapsed > x) or (result == true) then
 			C:Disconnect()
 		end
 	end)
 	return C
 end
 
---- runs function in second intervals `x`
+--- runs function at every second interval `x`
 function Time.framerule(x: number, f: (...any) -> ()): RBXScriptConnection
-	local T = 0
-	local function Frame(dt)
-		T += dt
-		if T < x then return end
-		T -= x
+	local elapsed = 0
+	local function frame(dt)
+		elapsed += dt
+		if elapsed < x then return end
+		elapsed -= x
 		f()
 	end
 	f()
-	return RunService.Heartbeat:Connect(Frame)
+	return RunService.Heartbeat:Connect(frame)
 end
 
 --- returns latency, in milliseconds: \

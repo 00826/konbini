@@ -138,16 +138,16 @@ local Interface = {
 		end;
 		--- returns color3 in colorsequence at interpolant `a`
 		colorAt = function(sequence: ColorSequence, a: number): Color3
-			local LastKeypoint = nil
+			local lastkeypoint = nil
 			for _, Keypoint in ipairs(sequence.Keypoints) do
 				if a < Keypoint.Time then
-					local T0 = LastKeypoint.Time
+					local time = lastkeypoint.Time
 		
-					return LastKeypoint.Value:Lerp(Keypoint.Value, (a - T0) / (Keypoint.Time - T0))
+					return lastkeypoint.Value:Lerp(Keypoint.Value, (a - time) / (Keypoint.Time - time))
 				end
-				LastKeypoint = Keypoint
+				lastkeypoint = Keypoint
 			end
-			return LastKeypoint and LastKeypoint.Value or Color3.fromRGB(255, 255, 255)
+			return lastkeypoint and lastkeypoint.Value or Color3.fromRGB(255, 255, 255)
 		end;
 	};
 	AspectRatios = table.freeze{
@@ -173,24 +173,24 @@ local Interface = {
 --- returns point on bezier curve at interpolant `A`
 function Interface.bezier(A: number, points: {UDim2}): UDim2
 	if #points > 1 then
-		local NewPoints = {}
+		local newpoints = {}
 		for i = 1, #points - 1 do
-			table.insert(NewPoints, points[i]:Lerp(points[i + 1], A))
+			table.insert(newpoints, points[i]:Lerp(points[i + 1], A))
 		end
-		return Interface.bezier(A, NewPoints)
+		return Interface.bezier(A, newpoints)
 	end
 	return points[1]
 end
 
 --- plays imported sound
 function Interface.playsound(ref: string)
-	local Sound = Interface.ButtonSounds[ref]
-	assert(Sound, `{ref} not an imported sound`)
+	local soundobject = Interface.ButtonSounds[ref]
+	assert(soundobject, `{ref} not an imported sound`)
 
-	local S = Sound:Clone()
-	S.PlayOnRemove = true
-	S.Parent = script
-	S:Destroy()
+	local newsound = soundobject:Clone()
+	newsound.PlayOnRemove = true
+	newsound.Parent = script
+	newsound:Destroy()
 end
 
 --- imports sounds
@@ -268,15 +268,15 @@ end
 
 --- applies sprite to imagelabel
 function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite)
-	local Layout = sprite.Layout
+	local layout = sprite.Layout
 
-	if Layout then
-		imagelabel.Image = Layout.Id
-		local X, Y = cartesian(sprite.Position, Layout.Width)
-		local Padding = Layout.Padding or 0
-		local Size = Layout.Size
-		imagelabel.ImageRectSize = Size
-		imagelabel.ImageRectOffset = Vector2.new((Y * Size.X) + (Y * Padding), (X * Size.Y) + (X * Padding))
+	if layout then
+		imagelabel.Image = layout.Id
+		local x, y = cartesian(sprite.Position, layout.Width)
+		local padding = layout.Padding or 0
+		local size = layout.Size
+		imagelabel.ImageRectSize = size
+		imagelabel.ImageRectOffset = Vector2.new((y * size.X) + (y * padding), (x * size.Y) + (x * padding))
 	else
 		imagelabel.Image = ""
 		imagelabel.ImageRectSize = Vector2.zero
@@ -304,25 +304,25 @@ end
 
 --- attaches target to textlabel
 function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alignment: types.LeftOrRight, padding: number?)
-	local TextX = textlabel.TextBounds.X
+	local textboundsx = textlabel.TextBounds.X
 
 	if textlabel.TextXAlignment == Enum.TextXAlignment.Left then
 		if alignment == "Left" then
 			target.Position = Interface.UDim2.left
 		elseif alignment == "Right" then
-			target.Position = UDim2.new(0, TextX, 0.5, 0)
+			target.Position = UDim2.new(0, textboundsx, 0.5, 0)
 		end
 	elseif textlabel.TextXAlignment == Enum.TextXAlignment.Right then
 		if alignment == "Left" then
-			target.Position = UDim2.new(1, -TextX, 0.5, 0)
+			target.Position = UDim2.new(1, -textboundsx, 0.5, 0)
 		elseif alignment == "Right" then
 			target.Position = Interface.UDim2.right
 		end
 	elseif textlabel.TextXAlignment == Enum.TextXAlignment.Center then
 		if alignment == "Left" then
-			target.Position = UDim2.new(0.5, -TextX * 0.5, 0.5, 0)
+			target.Position = UDim2.new(0.5, -textboundsx * 0.5, 0.5, 0)
 		elseif alignment == "Right" then
-			target.Position = UDim2.new(0.5, TextX * 0.5, 0.5, 0)
+			target.Position = UDim2.new(0.5, textboundsx * 0.5, 0.5, 0)
 		end
 	end
 	
@@ -345,35 +345,35 @@ end
 
 --- creates a quick clone of template
 function Interface.quickclone<T>(template: T & GuiObject, name: string?, layoutorder: number?): T
-	local Clone = template:Clone()
-	Clone.Name = name or "quickclone"
-	Clone.Parent = template.Parent
-	Clone.LayoutOrder = layoutorder or 0
-	Clone.Visible = true
-	return Clone
+	local clone = template:Clone()
+	clone.Name = name or "quickclone"
+	clone.Parent = template.Parent
+	clone.LayoutOrder = layoutorder or 0
+	clone.Visible = true
+	return clone
 end
 
 --- sets visibility of all guiobject descendants of target
 function Interface.toggledescendants(target: GuiObject, state: boolean, ...: string)
-	local Names = {...}
+	local names = {...}
 
-	for _, Thing in target:GetDescendants() do
-		if not Thing:IsA("GuiObject") then continue end
-		if not table.find(Names, Thing.Name) then continue end
+	for _, thing in target:GetDescendants() do
+		if not thing:IsA("GuiObject") then continue end
+		if not table.find(names, thing.Name) then continue end
 		
-		Thing.Visible = state
+		thing.Visible = state
 	end
 end
 
 --- sets visibility of all guiobject children of target
 function Interface.togglecontents(target: GuiObject, state: boolean, ...: string)
-	local Names = {...}
+	local names = {...}
 
-	for _, Thing in target:GetChildren() do
-		if not Thing:IsA("GuiObject") then continue end
-		if not table.find(Names, Thing.Name) then continue end
+	for _, thing in target:GetChildren() do
+		if not thing:IsA("GuiObject") then continue end
+		if not table.find(names, thing.Name) then continue end
 		
-		Thing.Visible = state
+		thing.Visible = state
 	end
 end
 
@@ -542,16 +542,16 @@ end
 function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayout, Axis: "X" | "Y"): RBXScriptConnection
 	assert(gridorlist.Parent)
 
-	local Compound = 0
+	local sum = 0
 	if Axis == "X" then
-		Compound += Interface.padwidth(target:FindFirstChildOfClass("UIPadding")).Offset
+		sum += Interface.padwidth(target:FindFirstChildOfClass("UIPadding")).Offset
 	elseif Axis == "Y" then
-		Compound += Interface.padheight(target:FindFirstChildOfClass("UIPadding")).Offset
+		sum += Interface.padheight(target:FindFirstChildOfClass("UIPadding")).Offset
 	end
 
 	local function UpdateSize()
-		local Stretch = (gridorlist :: any).AbsoluteContentSize[Axis] :: number
-		local Real = Stretch > 1 and math.ceil(Stretch + Compound) or 0
+		local stretch = (gridorlist :: any).AbsoluteContentSize[Axis] :: number
+		local real = stretch > 1 and math.ceil(stretch + sum) or 0
 		local x, y = 0, 0
 		if gridorlist:IsA("UIGridLayout") then
 			x += gridorlist.CellPadding.X.Offset
@@ -561,9 +561,9 @@ function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayou
 			y += x -- gridorlist.Padding.Offset
 		end
 		if Axis == "X" then
-			target.Size = UDim2.new(0, Real + x, 1, 0)
+			target.Size = UDim2.new(0, real + x, 1, 0)
 		elseif Axis == "Y" then
-			target.Size = UDim2.new(1, 0, 0, Real + y)
+			target.Size = UDim2.new(1, 0, 0, real + y)
 		end
 	end
 
@@ -599,19 +599,19 @@ end
 --- creates a unit circle \
 --- optional initial offset theta
 function Interface.unitcircle(vertices: number, radius: number, theta: number?): {UDim2}
-	local Results = table.create(vertices)
+	local results = table.create(vertices)
 
-	local Start = math.rad(theta or 0)
-	local Step = (2 * math.pi) / vertices
+	local start = math.rad(theta or 0)
+	local step = (2 * math.pi) / vertices
 
 	for i = 1, vertices do
 		i -= 1
-		local a = (i * Step) + Start
-		local U = UDim2.fromScale(radius * math.cos(a), radius * math.sin(a)) + Interface.UDim2.half
-		table.insert(Results, U)
+		local a = (i * step) + start
+		local udim = UDim2.fromScale(radius * math.cos(a), radius * math.sin(a)) + Interface.UDim2.half
+		table.insert(results, udim)
 	end
 
-	return Results
+	return results
 end
 
 --- formats number with: \

@@ -62,12 +62,12 @@ end
 --- encode({str = -2, dex = 10, int = 7}) -> "str:-2/dex:10/int:7"
 --- ```
 function TableK.encode(T: {[string]: number}): string
-	local StatString = ""
+	local encoded = ""
 	for k, v in T do
-		StatString ..= k ..":".. v .. "/"
+		encoded ..= k ..":".. v .. "/"
 	end
 
-	return string.sub(StatString, 1, -2)
+	return string.sub(encoded, 1, -2)
 end
 
 --- decodes string as a string-number table
@@ -75,14 +75,14 @@ end
 --- decode("str:-2/dex:10/int:7") -> {str = -2, dex = 10, int = 7}
 --- ```
 function TableK.decode(str: string): {[string] : number}
-	local T = {}
+	local decoded = {}
 
 	for _, kv in string.split(str, "/") do
-		local Split = string.split(kv, ":")
-		T[Split[1]] = tonumber(Split[2]) or 0
+		local split = string.split(kv, ":")
+		decoded[split[1]] = tonumber(split[2]) or 0
 	end
 
-	return T
+	return decoded
 end
 
 --- reads single value stored in encoded string
@@ -95,33 +95,23 @@ end
 
 --- returns a deep-copy of table
 function TableK.deepcopy(T: {[any]: any}): {[any]: any}
-	local Copy = {}
+	local copy = {}
 
 	for k, v in T do
 		if type(v) == "table" then
-			Copy[k] = TableK.deepcopy(v)
+			copy[k] = TableK.deepcopy(v)
 		else
-			Copy[k] = v
+			copy[k] = v
 		end
 	end
 
-	return Copy
-end
-
---- returns a copy of array with vargarg appended
-function TableK.insertcopy(A: {any}, ...: any): {any}
-	local B = {...}
-	local C = table.create(#A + #B)
-
-	table.move(A, 1, #A, #C + 1, C)
-	table.move(B, 1, #B, #C + 1, C)
-
-	return C
+	return copy
 end
 
 --- packs vararg into a space-allocated array
 function TableK.pack(...: any): {any}
 	local temp = {...}
+
 	return table.move(temp, 1, #temp, 1, table.create(#temp))
 end
 
@@ -129,12 +119,12 @@ end
 --- assumes a single-type array populated with types that support operators `+`, `*`, `/`
 function TableK.average(A: {any}, weights: {number}?): any
 	local n = #A
-	local T = table.remove(A, 1)
+	local sum = table.remove(A, 1)
 	for i, V in ipairs(A) do
-		local Weight = (weights and weights[i] or 1)
-		T += V * Weight
+		sum += V * (weights and weights[i] or 1)
 	end
-	return T and T / n
+
+	return sum and sum / n
 end
 
 --- returns a frozen, space-allocated, shallow-copy of array
@@ -143,6 +133,7 @@ function TableK.readonly<T>(A: {T}): {T}
 	for _, v in ipairs(A) do
 		table.insert(t, v)
 	end
+
 	return t
 end
 
@@ -155,19 +146,19 @@ function TableK.pickfromdroptable(D: {[string]: number}, n: number, R: Random?):
 	assert(R)
 	assert(n)
 
-	local Items = table.create(n)
+	local items = table.create(n)
 
 	for _ = 1, n do
-		local Roll, Passed = 100 * (R:NextNumber()), 0
+		local roll, passed = 100 * (R:NextNumber()), 0
 		for Key, Value in D do
-			Passed += Value
-			if Roll > Passed then continue end
-			table.insert(Items, Key)
+			passed += Value
+			if roll > passed then continue end
+			table.insert(items, Key)
 			break
 		end
 	end
 
-	return Items
+	return items
 end
 
 --- returns non-repeating list of elements picked from array
@@ -375,12 +366,12 @@ end
 --- `f(i, v) -> 2`: loop `break`
 function TableK.ipairs_r<T>(A: {T}, f: (i: number, v: T) -> number?)
 	for i = #A, 1, -1 do
-		local Result = f(i, A[i])
-		if Result == 0 then
+		local result = f(i, A[i])
+		if result == 0 then
 			table.remove(A, i)
-		elseif Result == 1 then
+		elseif result == 1 then
 			continue
-		elseif Result == 2 then
+		elseif result == 2 then
 			break
 		end
 	end
@@ -428,13 +419,13 @@ end
 --- page(t, 10, 4) -- []
 --- ```
 function TableK.page<T>(A: {T}, size: number, offset: number): {T}
-	local Max = #A
+	local max = #A
 	return table.move(
 		A,
-		1 + math.clamp((offset - 1) * size, 0, Max),
-		math.clamp(offset * size, 0, Max),
+		1 + math.clamp((offset - 1) * size, 0, max),
+		math.clamp(offset * size, 0, max),
 		1,
-		table.create(Max)
+		table.create(max)
 	)
 end
 

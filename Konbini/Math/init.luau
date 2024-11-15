@@ -198,12 +198,11 @@ end
 
 --- scales numbersequence by `x`
 function MathK.scalenumbersequence(numbersequence: NumberSequence, x: number): NumberSequence
-	local NewSequence = {}
-	for _, Keypoint in ipairs(numbersequence.Keypoints) do
-		local NewValue = Keypoint.Value * x
-		table.insert(NewSequence,NumberSequenceKeypoint.new(Keypoint.Time,NewValue))
+	local newsequence = {}
+	for _, keypoint in ipairs(numbersequence.Keypoints) do
+		table.insert(newsequence,NumberSequenceKeypoint.new(keypoint.Time, keypoint.Value * x))
 	end
-	return NumberSequence.new(NewSequence)
+	return NumberSequence.new(newsequence)
 end
 
 --- returns `-1|1`, chosen randomly
@@ -239,11 +238,12 @@ function MathK.unitcircle(vertices: number, radius: number): { types.UnitCircleV
 		return { {X = -radius; Z = 0;}, {X = radius; Z = 0;} }
 	end
 
-	local Step = MathK.tau / vertices
-	local Tilt = math.pi / vertices
+	local step = MathK.tau / vertices
+	local tilt = math.pi / vertices
 	local V = table.create(vertices)
+
 	for i = 1, vertices do
-		local a = (i * Step) - Tilt
+		local a = (i * step) - tilt
 		table.insert(V, { X = radius * math.cos(a); Z = radius * math.sin(a); })
 	end
 

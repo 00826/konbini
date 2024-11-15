@@ -56,8 +56,8 @@ function Couture.readclothing(player: Player): {[string]: string}
 		return {}
 	else
 		local clothingids = {}
-		for _, DescProperty in Couture.ClothingProperties do
-			clothingids[DescProperty] = couturefolder:GetAttribute(DescProperty) :: string
+		for _, descproperty in Couture.ClothingProperties do
+			clothingids[descproperty] = couturefolder:GetAttribute(descproperty) :: string
 		end
 		return clothingids
 	end
@@ -70,8 +70,8 @@ function Couture.readbodyparts(player: Player): {[string]: number}
 		return {}
 	else
 		local bodypartids = {}
-		for _, DescProperty in Couture.BodyPartProperties do
-			bodypartids[DescProperty] = couturefolder:GetAttribute(DescProperty) :: number
+		for _, descproperty in Couture.BodyPartProperties do
+			bodypartids[descproperty] = couturefolder:GetAttribute(descproperty) :: number
 		end
 		return bodypartids
 	end
@@ -84,8 +84,8 @@ function Couture.readbodycolors(player: Player): {[string]: Color3}
 		return {}
 	else
 		local colors = {}
-		for _, DescProperty in Couture.BodyColorProperties do
-			colors[DescProperty] = couturefolder:GetAttribute(DescProperty) :: Color3
+		for _, descproperty in Couture.BodyColorProperties do
+			colors[descproperty] = couturefolder:GetAttribute(descproperty) :: Color3
 		end
 		return colors
 	end
@@ -113,99 +113,99 @@ end
 
 --- clears accessories stored in character
 function Couture.clearaccessories(character: Instance)
-	for _, Thing in character:GetChildren() do
-		if Thing:GetAttribute("IsAccessory") then
-			Thing:Destroy()
+	for _, thing in character:GetChildren() do
+		if thing:GetAttribute("IsAccessory") then
+			thing:Destroy()
 		end
 	end
 end
 
 --- creates accessorypart from accessory instance
 function Couture.frominstance(accessory: Accessory, name: string?): BasePart
-	local Handle = accessory:FindFirstChild("Handle")
-	assert(Handle, `{accessory} missing Handle`)
+	local handle = accessory:FindFirstChild("Handle")
+	assert(handle, `{accessory} missing Handle`)
 
-	local AccessoryAttachment = Handle:FindFirstChildOfClass("Attachment")
-	local AccessoryMesh = Handle:IsA("MeshPart") and Handle or Handle:FindFirstChildOfClass("SpecialMesh") 
+	local accessoryattachment = handle:FindFirstChildOfClass("Attachment")
+	local accessorymesh = handle:IsA("MeshPart") and handle or handle:FindFirstChildOfClass("SpecialMesh") 
 
-	assert(AccessoryAttachment, `{accessory} missing attachment`)
-	assert(AccessoryMesh, `{accessory} handle not a meshpart or missing specialmesh`)
+	assert(accessoryattachment, `{accessory} missing attachment`)
+	assert(accessorymesh, `{accessory} handle not a meshpart or missing specialmesh`)
 
-	local MeshProperties = {
+	local meshproperties = {
 		Offset = Vector3.zero;
 		Scale = Vector3.one;
 		VertexColor = Vector3.one;
 	}
 
-	if AccessoryMesh:IsA("SpecialMesh") then
-		MeshProperties.MeshId = AccessoryMesh.MeshId
-		MeshProperties.TextureId = AccessoryMesh.TextureId
-		MeshProperties.Offset = AccessoryMesh.Offset
-		MeshProperties.Scale = AccessoryMesh.Scale
-		MeshProperties.VertexColor = AccessoryMesh.VertexColor
-	elseif AccessoryMesh:IsA("MeshPart") then
-		MeshProperties.MeshId = AccessoryMesh.MeshId
-		MeshProperties.TextureId = AccessoryMesh.TextureID
-		MeshProperties.Scale = AccessoryMesh.Size / AccessoryMesh.MeshSize
+	if accessorymesh:IsA("SpecialMesh") then
+		meshproperties.MeshId = accessorymesh.MeshId
+		meshproperties.TextureId = accessorymesh.TextureId
+		meshproperties.Offset = accessorymesh.Offset
+		meshproperties.Scale = accessorymesh.Scale
+		meshproperties.VertexColor = accessorymesh.VertexColor
+	elseif accessorymesh:IsA("MeshPart") then
+		meshproperties.MeshId = accessorymesh.MeshId
+		meshproperties.TextureId = accessorymesh.TextureID
+		meshproperties.Scale = accessorymesh.Size / accessorymesh.MeshSize
 	end
 
 	return Couture.createaccessory(name or accessory.Name,
 		{
-			Name = AccessoryAttachment.Name;
-			CFrame = AccessoryAttachment.CFrame;
+			Name = accessoryattachment.Name;
+			CFrame = accessoryattachment.CFrame;
 		},
-		MeshProperties
+		meshproperties
 	)
 end
 
 --- creates accessorypart
 function Couture.createaccessory(name: string, attachment: {}, specialmesh: {}): BasePart
-	local NewPart = AccessoryPart:Clone()
-	NewPart.Name = "Couture__" .. name
+	local newpart = AccessoryPart:Clone()
+	newpart.Name = "Couture__" .. name
 
-	local AccessoryAttachment = NewPart:FindFirstChildOfClass("Attachment")
-	if AccessoryAttachment then
+	local accessoryattachment = newpart:FindFirstChildOfClass("Attachment")
+	if accessoryattachment then
 		for Property, Value in attachment do
-			AccessoryAttachment[Property] = Value
+			accessoryattachment[Property] = Value
 		end
 	end
 
-	local AccessoryMesh = NewPart:FindFirstChildOfClass("SpecialMesh")
-	if AccessoryMesh then
+	local accessorymesh = newpart:FindFirstChildOfClass("SpecialMesh")
+	if accessorymesh then
 		for Property, Value in specialmesh do
-			AccessoryMesh[Property] = Value
+			accessorymesh[Property] = Value
 		end
 	end
 
-	return NewPart
+	return newpart
 end
 
 --- attaches accessorypart to character
 function Couture.attachaccessory(character: Instance, accessorypart: BasePart, parent: Instance?): boolean
-	local AccessoryAttachment = accessorypart:FindFirstChildOfClass("Attachment")
-	if not AccessoryAttachment then return false end
+	local accessoryattachment = accessorypart:FindFirstChildOfClass("Attachment")
+	if not accessoryattachment then return false end
 
-	local RigAttachment = Couture.findattachment(character, AccessoryAttachment.Name)
-	if not RigAttachment then return false end
+	local rigattachment = Couture.findattachment(character, accessoryattachment.Name)
+	if not rigattachment then return false end
 
 	accessorypart.Parent = parent or character
-	accessorypart.CFrame = RigAttachment.WorldCFrame * AccessoryAttachment.CFrame:Inverse()
+	accessorypart.CFrame = rigattachment.WorldCFrame * accessoryattachment.CFrame:Inverse()
 
-	local W = Weld:Clone()
-	W.Part0 = accessorypart
-	W.Part1 = RigAttachment.Parent
-	W.Parent = accessorypart
+	local weld = Weld:Clone()
+	weld.Part0 = accessorypart
+	weld.Part1 = rigattachment.Parent
+	weld.Parent = accessorypart
 
 	return true
 end
 
 --- returns attachment on character
 function Couture.findattachment(character: Instance, attachmentref: string): Attachment?
-	for _, Thing in character:GetChildren() do
-		if Thing:GetAttribute("IsAccessory") then continue end
+	for _, thing in character:GetChildren() do
+		if thing:GetAttribute("IsAccessory") then continue end
 
-		if Thing:IsA("BasePart") or Thing:IsA("MeshPart") then
-			for _, MaybeAttachment in Thing:GetChildren() do
+		if thing:IsA("BasePart") or thing:IsA("MeshPart") then
+			for _, MaybeAttachment in thing:GetChildren() do
 				if MaybeAttachment:IsA("Attachment") and MaybeAttachment.Name == attachmentref then
 					return MaybeAttachment
 				end
@@ -264,66 +264,66 @@ function Couture.refresh(player: Player): HumanoidDescription
 	table.move(Couture.ClothingProperties, 1, #Couture.ClothingProperties, #remaining + 1, remaining)
 	
 	task.defer(function()
-		for _, DescProperty in Couture.AccessoryProperties do
+		for _, descproperty in Couture.AccessoryProperties do
 			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
-				local Value = (humanoiddescription :: any)[DescProperty]
-				if Value == "" then return false end
+				local value = (humanoiddescription :: any)[descproperty]
+				if value == "" then return false end
 	
-				for _, Id in Value:split(",") do
+				for _, Id in value:split(",") do
 					Id = tonumber(Id)
 					if not Id then continue end
 	
 					local s, e = pcall(function(assetid: number)
-						local InsertModel = InsertService:LoadAsset(assetid)
-						local RealAccessory = Couture.frominstance(InsertModel:FindFirstChildOfClass("Accessory"))
-						InsertModel:Destroy()
-						RealAccessory:SetAttribute("Type", DescProperty)
-						RealAccessory.Parent = container
+						local insertmodel = InsertService:LoadAsset(assetid)
+						local realaccessory = Couture.frominstance(insertmodel:FindFirstChildOfClass("Accessory"))
+						insertmodel:Destroy()
+						realaccessory:SetAttribute("Type", descproperty)
+						realaccessory.Parent = container
 					end, Id)
 					if not s then warn(Id, e) end
 				end
 				return true
 			end, newdescription, couturefolder)
 
-			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+			table.remove(remaining, table.find(remaining, descproperty) or 0)
 		end
 	end)
 	task.defer(function()
-		for _, DescProperty in Couture.BodyColorProperties do
+		for _, descproperty in Couture.BodyColorProperties do
 			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
 	
-				container:SetAttribute(DescProperty, (humanoiddescription :: any)[DescProperty])
+				container:SetAttribute(descproperty, (humanoiddescription :: any)[descproperty])
 	
 				return true
 			end, newdescription, couturefolder)
 
-			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+			table.remove(remaining, table.find(remaining, descproperty) or 0)
 		end
 	end)
 	task.defer(function()
-		for _, DescProperty in Couture.BodyPartProperties do
+		for _, descproperty in Couture.BodyPartProperties do
 			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
 	
-				container:SetAttribute(DescProperty, Couture.AssetPrefix .. (humanoiddescription :: any)[DescProperty])
+				container:SetAttribute(descproperty, Couture.AssetPrefix .. (humanoiddescription :: any)[descproperty])
 				
 				return true
 			end, newdescription, couturefolder)
 
-			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+			table.remove(remaining, table.find(remaining, descproperty) or 0)
 		end
 	end)
 	task.defer(function()
-		for _, DescProperty in Couture.ClothingProperties do
+		for _, descproperty in Couture.ClothingProperties do
 			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
-				local InsertModel = InsertService:LoadAsset((humanoiddescription :: any)[DescProperty])
-				local ShirtOrPants = InsertModel:FindFirstChildOfClass("Shirt") or InsertModel:FindFirstChildOfClass("Pants")
-				if ShirtOrPants then
-					if ShirtOrPants:IsA("Shirt") then
-						container:SetAttribute(DescProperty, Couture.AssetPrefix .. (string.match(ShirtOrPants.ShirtTemplate, "%d+") or "0"))
-					elseif ShirtOrPants:IsA("Pants") then
-						container:SetAttribute(DescProperty, Couture.AssetPrefix .. (string.match(ShirtOrPants.PantsTemplate, "%d+") or "0"))
+				local insertmodel = InsertService:LoadAsset((humanoiddescription :: any)[descproperty])
+				local shirtorpants = insertmodel:FindFirstChildOfClass("Shirt") or insertmodel:FindFirstChildOfClass("Pants")
+				if shirtorpants then
+					if shirtorpants:IsA("Shirt") then
+						container:SetAttribute(descproperty, Couture.AssetPrefix .. (string.match(shirtorpants.ShirtTemplate, "%d+") or "0"))
+					elseif shirtorpants:IsA("Pants") then
+						container:SetAttribute(descproperty, Couture.AssetPrefix .. (string.match(shirtorpants.PantsTemplate, "%d+") or "0"))
 					end
-					InsertModel:Destroy()
+					insertmodel:Destroy()
 				else
 					warn("shirt or pants not found")
 				end
@@ -331,7 +331,7 @@ function Couture.refresh(player: Player): HumanoidDescription
 				return true
 			end, newdescription, couturefolder)
 
-			table.remove(remaining, table.find(remaining, DescProperty) or 0)
+			table.remove(remaining, table.find(remaining, descproperty) or 0)
 		end
 	end)
 	task.defer(function()

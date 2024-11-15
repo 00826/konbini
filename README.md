@@ -42,8 +42,8 @@
 ## design language
 
 ```lua
---- UpperVariable
---- lowervariable
+--- UppermostScopeVariable
+--- scopedvariable
 --- PropertyOf, keyof, anotherKeyOf -- camel rare
 --- libraryConstructor
 --- isafunction

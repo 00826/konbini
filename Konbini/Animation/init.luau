@@ -37,7 +37,7 @@ end
 --- `speed (?=1)` animationtrack speed \
 --- `fadetime (?=0.1)` animationtrack fadetime \
 --- `weight (?=1)` animationtrack weight
-function Animation.play(a: Animator|Model, library: string, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?): AnimationTrack
+function Animation.play(a: Animator|Model, library: string, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
 	local lib = Animation.libraries[library]
 	assert(lib, `library "{library}" not defined`)
 
@@ -59,31 +59,31 @@ end
 
 --- returns `AnimationController|Humanoid` and environment-owned Animator of rig, instantiating the Animator if it doesn't already exist
 function Animation.components(rig: Model): (AnimationController|Humanoid, Animator)
-	local ACorH = rig:FindFirstChildOfClass("AnimationController") or rig:FindFirstChildOfClass("Humanoid")
-	assert(ACorH, `rig "{rig.Name}" no AnimationController or Humanoid`)
+	local controller = rig:FindFirstChildOfClass("AnimationController") or rig:FindFirstChildOfClass("Humanoid")
+	assert(controller, `rig "{rig.Name}" no AnimationController or Humanoid`)
 	
-	local Animator = ACorH:FindFirstChildOfClass("Animator")
-	if Animator then
-		if Animator:GetAttribute("k_OwnsFlag") then
-			return ACorH, Animator
+	local animator = controller:FindFirstChildOfClass("Animator")
+	if animator then
+		if animator:GetAttribute("k_OwnsFlag") then
+			return controller, animator
 		else
-			Animator:Destroy()
-			Animator = Instance.new("Animator")
+			animator:Destroy()
+			animator = Instance.new("Animator")
 
-			Animator.Parent = ACorH
-			Animator:SetAttribute("k_OwnsFlag", true)
+			animator.Parent = controller
+			animator:SetAttribute("k_OwnsFlag", true)
 
-			return ACorH, Animator
+			return controller, animator
 		end
 	else
-		Animator = Instance.new("Animator")
-		assert(Animator)
+		animator = Instance.new("Animator")
+		assert(animator)
 
-		Animator.Parent = ACorH
-		Animator:SetAttribute("k_OwnsFlag", true)
+		animator.Parent = controller
+		animator:SetAttribute("k_OwnsFlag", true)
 	end
 
-	return ACorH, Animator::Animator
+	return controller, animator::Animator
 end
 
 --- adjusts animationtrack speed to fit *played* time \
@@ -99,7 +99,7 @@ function Animation.fitremaining(animtrack: AnimationTrack, time: number)
 end
 
 --- returns an empty animation instance, parented to this script
-function Animation.create(id: string?): Animation
+function Animation.create(id: string?)
 	local a = Instance.fromExisting(Empty)
 	a.Name = id or ""
 	a.AnimationId = id or ""
@@ -127,7 +127,7 @@ function Animation.locomotionstate(rig: Model, walkspeed: number): (types.Locomo
 end
 
 --- returns true if animtrack can be overwritten/played-over by a mismatching animation reference
-function Animation.evaluate(animtrack: AnimationTrack?, library: string, name: string?): boolean
+function Animation.evaluate(animtrack: AnimationTrack?, library: string, name: string?)
 	if (animtrack == nil) and (name == nil) then return false end
 	if (animtrack == nil) then return true end
 	return animtrack.Name ~= library .. "/" .. name
@@ -143,6 +143,19 @@ function Animation.convert(container: Instance, swaptable: {[string]: string})
 
 		thing.Name = swap
 	end
+end
+
+--- returns animation instances for preloading
+function Animation.compile()
+	local anims = {}
+	for _, animation in script:GetChildren() do
+		if not animation:IsA("Animation") then return end
+		if animation.AnimationId == "" then return end
+
+		table.insert(anims, animation)
+	end
+
+	return anims
 end
 
 return Animation

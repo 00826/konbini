@@ -49,12 +49,12 @@ function CFrameK.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enu
 		return CFrame.new(target.X, target.Y, target.Z, select(4, copyfrom:GetComponents()))
 	end
 
-	local X, Y, Z = copyfrom:ToOrientation()
-	local C0 = CFrame.new(target.X, target.Y, target.Z)
+	local x, y, z = copyfrom:ToOrientation()
+	local cframe = CFrame.new(target.X, target.Y, target.Z)
 
-	return axis == Enum.Axis.X and C0 * CFrame.Angles(X, 0, 0)
-		or axis == Enum.Axis.Y and C0 * CFrame.Angles(0, Y, 0)
-		or axis == Enum.Axis.Z and C0 * CFrame.Angles(0, 0, Z)
+	return axis == Enum.Axis.X and cframe * CFrame.Angles(x, 0, 0)
+		or axis == Enum.Axis.Y and cframe * CFrame.Angles(0, y, 0)
+		or axis == Enum.Axis.Z and cframe * CFrame.Angles(0, 0, z)
 		or CFrame.identity
 end
 

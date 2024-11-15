@@ -39,7 +39,7 @@ function Zone.create(zoneid: string, size: number?): types.Zone
 	assert(size, "lf new type solver")
 	assert(Zone.Cache[zoneid] == nil, `attempt to overwrite zone "{zoneid}"`)
 
-	local NewZone: types.Zone = {
+	local newzone: types.Zone = {
 		Container = nil;
 		Position = nil;
 		Radius = nil;
@@ -49,9 +49,9 @@ function Zone.create(zoneid: string, size: number?): types.Zone
 		Never = table.create(size);
 	}
 
-	Zone.Cache[zoneid] = NewZone
+	Zone.Cache[zoneid] = newzone
 
-	return NewZone
+	return newzone
 end
 
 --- writes settings to target zone
@@ -105,17 +105,17 @@ function Zone.reparent(z: types.Zone, isinfocus: boolean): number
 	assert(z.Placements, z, "zone no placement array")
 	assert(z.Emplacements, "zone no emplacement array")
 
-	local LoadContainer = z.Container or Zone.DefaultLoadContainer
-	assert(LoadContainer, "zone no load container")
+	local loadcontainer = z.Container or Zone.DefaultLoadContainer
+	assert(loadcontainer, "zone no load container")
 
 	if isinfocus then
 		--- load 1 placement
 		--- offload 1 emplacement
 		for _, thing in z.Placements do
-			if thing:IsDescendantOf(LoadContainer) then
+			if thing:IsDescendantOf(loadcontainer) then
 				continue
 			else
-				task.defer(send, thing, LoadContainer)
+				task.defer(send, thing, loadcontainer)
 				total += 1
 				break
 			end
@@ -142,10 +142,10 @@ function Zone.reparent(z: types.Zone, isinfocus: boolean): number
 			end
 		end
 		for _, thing in z.Emplacements do
-			if thing:IsDescendantOf(LoadContainer) then
+			if thing:IsDescendantOf(loadcontainer) then
 				continue
 			else
-				task.defer(send, thing, LoadContainer)
+				task.defer(send, thing, loadcontainer)
 				total += 1
 				break
 			end
@@ -246,11 +246,11 @@ function Zone.spawnpoint(z: types.Zone): Vector3
 	local spawnbox = z.SpawnBox
 	if spawnbox then
 		local halfsize = spawnbox.Size * 0.5
-		local X, Z = halfsize.X, halfsize.Z
+		local sizex, sizez = halfsize.X, halfsize.Z
 		return (spawnbox.CFrame * CFrame.new(
-			types.R:NextNumber(-X, X),
+			types.R:NextNumber(-sizex, sizex),
 			0,
-			types.R:NextNumber(-Z, Z)
+			types.R:NextNumber(-sizez, sizez)
 		)).Position
 	else
 		return z.Position or Vector3.zero
@@ -265,11 +265,11 @@ function Zone.forceload(z: types.Zone)
 	assert(z.Emplacements)
 	assert(z.Never)
 
-	local LoadContainer = z.Container or Zone.DefaultLoadContainer
-	assert(LoadContainer, "zone no load container")
+	local loadcontainer = z.Container or Zone.DefaultLoadContainer
+	assert(loadcontainer, "zone no load container")
 
 	for _, thing in z.Placements do
-		task.defer(send, thing, LoadContainer)
+		task.defer(send, thing, loadcontainer)
 	end
 	for _, thing in z.Emplacements do
 		task.defer(send, thing, Zone.DefaultOffloadContainer)
@@ -287,14 +287,14 @@ function Zone.forceoffload(z: types.Zone)
 	assert(z.Emplacements)
 	assert(z.Never)
 
-	local LoadContainer = z.Container or Zone.DefaultLoadContainer
-	assert(LoadContainer, "zone no load container")
+	local loadcontainer = z.Container or Zone.DefaultLoadContainer
+	assert(loadcontainer, "zone no load container")
 
 	for _, thing in z.Placements do
 		task.defer(send, thing, Zone.DefaultOffloadContainer)
 	end
 	for _, thing in z.Emplacements do
-		task.defer(send, thing, LoadContainer)
+		task.defer(send, thing, loadcontainer)
 	end
 	for _, thing in z.Never do
 		task.defer(send, thing, Zone.DefaultOffloadContainer)

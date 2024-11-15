@@ -26,32 +26,32 @@ end
 
 --- sends `...` via remote to client(s) of clientarg
 function Network.toclient(remote: string, clientarg: types.ClientArg?, ...: any?)
-	local Remote = Network.Cache[remote]
+	local remoteevent = Network.Cache[remote]
 	if typeof(clientarg) == "nil" then
-		Remote:FireAllClients(...)
+		remoteevent:FireAllClients(...)
 	elseif typeof(clientarg) == "number" then
 		local P = Players:GetPlayerByUserId(clientarg)
 		if P then
-			Remote:FireClient(P, ...)
+			remoteevent:FireClient(P, ...)
 		end
 	elseif typeof(clientarg) == "Instance" then
 		assert(clientarg:IsA("Player"))
-		Remote:FireClient(clientarg, ...)
+		remoteevent:FireClient(clientarg, ...)
 	elseif typeof(clientarg) == "table" then
 		for _, Client in clientarg do
 			if typeof(Client) == "number" then
 				local P = Players:GetPlayerByUserId(Client)
 				if P then
-					Remote:FireClient(P, ...)
+					remoteevent:FireClient(P, ...)
 				end
 			else
-				Remote:FireClient(Client, ...)
+				remoteevent:FireClient(Client, ...)
 			end
 		end
 	elseif typeof(clientarg) == "function" then
 		for _, Client in Players:GetPlayers() do
 			if clientarg(Client) == true then
-				Remote:FireClient(clientarg, ...)
+				remoteevent:FireClient(clientarg, ...)
 			end
 		end
 	end
@@ -59,34 +59,34 @@ end
 
 --- sends `...` via remote to server
 function Network.toserver(remote: string, ...: any?)
-	local Remote = Network.Cache[remote]
+	local remoteevent = Network.Cache[remote]
 
-	Remote:FireServer(...)
+	remoteevent:FireServer(...)
 end
 
 --- `server`: creates and/or connects remote to `f` with option to make the remote unreliable \
 --- `client`: connects remote to `f` with option to yield until the remote is created (recommended)
 function Network.recv(remote: string, f: ((...any) -> ())?, yield: boolean?, unreliable: boolean?): RBXScriptConnection?
-	local Remote = Network.Cache[remote]
+	local remoteevent = Network.Cache[remote]
 
 	if IsServer then
-		if not Remote then
-			local NewRemote = Instance.new(unreliable and "UnreliableRemoteEvent" or "RemoteEvent")
-			NewRemote.Name = remote
-			NewRemote.Parent = script
+		if not remoteevent then
+			local newremote = Instance.new(unreliable and "UnreliableRemoteEvent" or "RemoteEvent")
+			newremote.Name = remote
+			newremote.Parent = script
 
-			Remote = NewRemote
+			remoteevent = newremote
 		end
 		if f then
-			return Remote.OnServerEvent:Connect(f)
+			return remoteevent.OnServerEvent:Connect(f)
 		end
 	else
-		if yield and not Remote then
-			Remote = script:WaitForChild(Remote)
-			Network.Cache[remote] = Remote
+		if yield and not remoteevent then
+			remoteevent = script:WaitForChild(remote)
+			Network.Cache[remote] = remoteevent
 		end
 		if f then
-			return Remote.OnClientEvent:Connect(f)
+			return remoteevent.OnClientEvent:Connect(f)
 		end
 	end
 	return
@@ -94,17 +94,17 @@ end
 
 --- `client`: sends `...` via remote to server, yielding the calling thread until a response is received, returning the values, if any, contained in the response
 function Network.poll(remote: string, ...: any?): {any}
-	local Remote = Network.Cache[remote]
-	local Packet = nil
+	local remoteevent = Network.Cache[remote]
+	local packet = nil
 
-	local C = Remote.OnClientEvent:Once(function(...) Packet = {...} end)
-	Remote:FireServer(...)
+	local C = remoteevent.OnClientEvent:Once(function(...) packet = {...} end)
+	remoteevent:FireServer(...)
 
-	async(function() return Packet ~= nil end):await(nil, nil, Network.PollTimeout)
+	async(function() return packet ~= nil end):await(nil, nil, Network.PollTimeout)
 
 	if C then C:Disconnect() end
 
-	return Packet and unpack(Packet) or {}
+	return packet and unpack(packet) or {}
 end
 
 return Network

@@ -245,10 +245,10 @@ end
 --- *distance is approximated by adding the distances from `a` to `b` and `b` to `c`*
 @native
 function Bullet.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number): (Vector3, number)
-	local A = (time * velocity) / (fastdistance(a, b) + fastdistance(b, c))
-	local P0 = a:Lerp(b, A)
-	local P1 = b:Lerp(c, A)
-	return P0:Lerp(P1, A), A
+	local i = (time * velocity) / (fastdistance(a, b) + fastdistance(b, c))
+	local P0 = a:Lerp(b, i)
+	local P1 = b:Lerp(c, i)
+	return P0:Lerp(P1, i), i
 end
 
 return Bullet
