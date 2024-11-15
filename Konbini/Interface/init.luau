@@ -4,6 +4,18 @@ local types = require(script.Parent.types)
 
 local TweenService = game:GetService("TweenService")
 
+local ColorArray = table.freeze{
+	[1] = Color3.fromRGB(253, 41, 67); --- Color3.new(253/255, 41/255, 67/255);
+	[2] = Color3.fromRGB(1, 162, 255); --- Color3.new(1/255, 162/255, 255/255);
+	[3] = Color3.fromRGB(2, 184, 87); --- Color3.new(2/255, 184/255, 87/255);
+	[4] = Color3.fromRGB(107, 50, 124); --- BrickColor.new("Bright violet").Color;
+	[5] = Color3.fromRGB(218, 133, 65); --- BrickColor.new("Bright orange").Color;
+	[6] = Color3.fromRGB(245, 205, 48); --- BrickColor.new("Bright yellow").Color;
+	[7] = Color3.fromRGB(232, 186, 200); --- BrickColor.new("Light reddish violet").Color;
+	[8] = Color3.fromRGB(215, 197, 154); --- BrickColor.new("Brick yellow").Color;
+}
+local ColorArrayLength = #ColorArray
+
 local function tween(object: Instance, properties: {[string]: any}, time: number, ...)
 	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
 end
@@ -94,6 +106,7 @@ local Interface = {
 		--- adjusts color3 saturation
 		adjustSaturation = function(c: Color3, value: number)
 			local H, S, V = c:ToHSV()
+
 			return Color3.fromHSV(H, math.clamp(S + (value / 100), 0, 1), V)
 		end;
 		--- returns approximate sort value of color3
@@ -111,7 +124,34 @@ local Interface = {
 		--- returns a color3 from vertexcolor
 		fromVertexColor = function(v: Vector3)
 			v *= 255
+
 			return Color3.new(v.X, v.Y, v.Z)
+		end;
+		--- returns `color3 * x`
+		mul = function(c: Color3, x: number)
+			return Color3.new(
+				c.R * x,
+				c.G * x,
+				c.B * x
+			)
+		end;
+		--- returns a color3 with respect to player name
+		fromPlayerName = function(name: string)
+			local value = 0
+			local len = #name
+			for i = 1, len do
+				local byte = string.byte(string.sub(name, i, i))
+				local reverseidx = len - i + 1
+				if len % 2 == 1 then
+					reverseidx -= 1
+				end
+				if reverseidx % 4 >= 2 then
+					byte = -byte
+				end
+				value += byte
+			end
+
+			return ColorArray[1 + (value % ColorArrayLength)]
 		end;
 	};
 	ColorSequence = table.freeze{
