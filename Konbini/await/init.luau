@@ -1,3 +1,5 @@
+--!strict
+
 --- ### await.luau
 ---
 --- `task.await()` \
@@ -6,7 +8,7 @@
 --- ... boolean describing success or failure state of `f()` \
 --- \
 --- *function `f` must always return a boolean to demonstrate function completion*
-local function await(timeout: number, f: () -> boolean, catch: ((traceback: string) -> ())?)
+local function await(timeout: number, f: () -> boolean, catch: ((traceback: string, message: string) -> ())?)
 	local t = {
 		_timeout = timeout;
 		_function = f;
@@ -25,15 +27,13 @@ local function await(timeout: number, f: () -> boolean, catch: ((traceback: stri
 			return t, result
 		elseif not success then
 			if catch then
-				catch(debug.traceback())
-			else
-				warn(debug.traceback())
+				catch(debug.traceback(), tostring(result)) --- questionable
 			end
 
 			return t, false
 		elseif t._timeout < 0 then
 			if catch then
-				catch("await timeout exhausted")
+				catch(debug.traceback(), "await timeout exhausted")
 			else
 				warn("await timeout exhausted")
 			end

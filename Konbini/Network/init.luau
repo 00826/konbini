@@ -100,7 +100,7 @@ function Network.poll(remote: string, ...: any?): {any}
 	local C = remoteevent.OnClientEvent:Once(function(...) packet = {...} end)
 	remoteevent:FireServer(...)
 
-	await(Network.PollTimeout, function() return packet ~= nil end, function(traceback: string) warn(`Network.poll({remote}, ...) error: {traceback}`) end)
+	await(Network.PollTimeout, function() return packet ~= nil end, function(traceback: string) warn(`{traceback}: Network.poll({remote}, ...) did not receive packet after {Network.PollTimeout}s`) end)
 
 	if C then C:Disconnect() end
 
