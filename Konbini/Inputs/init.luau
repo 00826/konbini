@@ -2,8 +2,8 @@
 
 local types = require(script.Parent.types)
 
-local Bind = require(script.Parent.Bind)
 local Encoder = require(script.Parent.Encoder)
+local Hook = require(script.Parent.Hook)
 
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
@@ -229,23 +229,23 @@ function Inputs.platform(inputobject: InputObject): number
 end
 
 --- binds function to `UserInputService.InputBegan`
-function Inputs.began(f: (inputobject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
-	return Bind("k_Input_began"):Connect(f)
+function Inputs.began(f: (inputobject: InputObject, SunkInput: boolean) -> ())
+	return Hook("k_InputBegan").Connect(f)
 end
 
 --- binds function to `UserInputService.InputEnded`
-function Inputs.ended(f: (inputobject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
-	return Bind("k_Input_ended"):Connect(f)
+function Inputs.ended(f: (inputobject: InputObject, SunkInput: boolean) -> ())
+	return Hook("k_InputEnded").Connect(f)
 end
 
 --- binds function to `UserInputService.InputChanged`
-function Inputs.changed(f: (inputobject: InputObject, SunkInput: boolean) -> ()): types.Disconnect
-	return Bind("k_Input_changed"):Connect(f)
+function Inputs.changed(f: (inputobject: InputObject, SunkInput: boolean) -> ())
+	return Hook("k_InputChanged").Connect(f)
 end
 
 --- fires function when a key is double-tapped
-function Inputs.doubletap(f: (KeyCode: Enum.KeyCode) -> ()): types.Disconnect
-	return Bind("k_Input_doubletap"):Connect(f)
+function Inputs.doubletap(f: (KeyCode: Enum.KeyCode) -> ())
+	return Hook("k_DoubleTap").Connect(f)
 end
 
 --- fires function when the input platform is changed \
@@ -253,13 +253,13 @@ end
 --- `1`: pc \
 --- `2`: mobile \
 --- `3`: gamepad
-function Inputs.platformchanged(f: (platformid: number) -> ()): types.Disconnect
-	return Bind("k_Input_platformchanged"):Connect(f)
+function Inputs.platformchanged(f: (platformid: number) -> ())
+	return Hook("k_PlatformChanged").Connect(f)
 end
 
 --- fires function when the gamepad cursor is toggled on/off
-function Inputs.gamepadcursorstatechanged(f: (gamepadcursorenabled: boolean) -> ()): types.Disconnect
-	return Bind("k_Input_gamepadcursorstatechanged"):Connect(f)
+function Inputs.gamepadcursorstatechanged(f: (gamepadcursorenabled: boolean) -> ())
+	return Hook("k_GamepadCursorStateChanged").Connect(f)
 end
 
 --- sets visibility of mouse icon
@@ -438,7 +438,7 @@ else
 
 	UIS.InputBegan:Connect(function(inputobject: InputObject, ...)
 		if Inputs.sinkthumbstickcheck(inputobject) then return end
-		Bind("k_Input_began"):Fire(inputobject, ...)
+		Hook("k_InputBegan").Fire(inputobject, ...)
 
 		local now, keycode = os.clock(), inputobject.KeyCode
 		local keycodetimetable = Inputs.InputTimes
@@ -447,29 +447,29 @@ else
 			local later = keycodetimetable[keycode] or 0
 			keycodetimetable[keycode] = now
 			if now - later < Inputs.DoubleTapTime then
-				Bind("k_Input_doubletap"):Fire(keycode)
+				Hook("k_DoubleTap").Fire(keycode)
 			end
 		end
 
 		UpdateMouse(inputobject)
 	end)
 	UIS.InputEnded:Connect(function(...)
-		Bind("k_Input_ended"):Fire(...)
+		Hook("k_InputEnded").Fire(...)
 		UpdateMouse(...)
 	end)
 	UIS.InputChanged:Connect(function(...)
-		Bind("k_Input_changed"):Fire(...)
+		Hook("k_InputChanged").Fire(...)
 		UpdateMouse(...)
 	end)
 	UIS.TouchStarted:Connect(function(...)
 		if not Inputs.sinkthumbstickcheck(...) then return end
-		Bind("k_Input_began"):Fire(...)
+		Hook("k_InputBegan").Fire(...)
 	end)
 	UIS.TouchEnded:Connect(function(...)
-		Bind("k_Input_ended"):Fire(...)
+		Hook("k_InputEnded").Fire(...)
 	end)
 	UIS.TouchMoved:Connect(function(...)
-		Bind("k_Input_changed"):Fire(...)
+		Hook("k_InputChanged").Fire(...)
 	end)
 	UIS.LastInputTypeChanged:Connect(function(InputType: Enum.UserInputType)
 		Inputs.TouchEnabled = UIS.TouchEnabled
@@ -477,12 +477,12 @@ else
 		local platformid = Inputs.Platforms[InputType] or Inputs.PlatformId
 		if Inputs.PlatformId ~= platformid then
 			Inputs.PlatformId = platformid
-			Bind("k_Input_platformchanged"):Fire(Inputs.PlatformId)
+			Hook("k_PlatformChanged").Fire(Inputs.PlatformId)
 		end
 	end)
 	GamepadService:GetPropertyChangedSignal("GamepadCursorEnabled"):Connect(function()
 		Inputs.GamepadCursorEnabled = GamepadService.GamepadCursorEnabled
-		Bind("k_Input_gamepadcursorstatechanged"):Fire(GamepadService.GamepadCursorEnabled)
+		Hook("k_GamepadCursorStateChanged").Fire(GamepadService.GamepadCursorEnabled)
 	end)
 end
 

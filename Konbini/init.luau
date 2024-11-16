@@ -8,8 +8,7 @@ export type types = typeof(require(script.types))
 --- [*view konbini on github*](https://github.com/00826/konbini)
 return table.freeze{
 	Animation = require(script:WaitForChild("Animation"));
-	async = require(script:WaitForChild("async"));
-	Bind = require(script:WaitForChild("Bind"));
+	await = require(script:WaitForChild("await"));
 	Bullet = require(script:WaitForChild("Bullet"));
 	CFrame = require(script:WaitForChild("CFrame"));
 	Collisions = require(script:WaitForChild("Collisions"));
@@ -17,6 +16,7 @@ return table.freeze{
 	Data = require(script:WaitForChild("Data"));
 	Encoder = require(script:WaitForChild("Encoder"));
 	Entity = require(script:WaitForChild("Entity"));
+	Hook = require(script:WaitForChild("Hook"));
 	Inputs = require(script:WaitForChild("Inputs"));
 	Instance = require(script:WaitForChild("Instance"));
 	Interface = require(script:WaitForChild("Interface"));

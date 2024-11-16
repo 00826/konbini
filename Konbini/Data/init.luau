@@ -12,7 +12,7 @@ local DataRemote = script:WaitForChild("DataRemote") :: RemoteEvent
 local ServerCache = {} :: {[Player]: {Data: types.SaveTemplate}}
 local ClientCache = {} :: types.SaveTemplate
 
-local Bind = require(script.Parent.Bind)
+local Hook = require(script.Parent.Hook)
 
 --- ### Data.luau
 ---
@@ -64,13 +64,13 @@ function Data.recv(packet: types.SaveTemplate)
 
 	for k, v in packet do
 		ClientCache[k] = v
-		Bind("k_Data_" .. (k :: any)):Fire(v)
+		Hook("k_DataChanged_" .. (k :: any)).Fire(v)
 	end
 end
 
 --- fires function when value is written to key
-function Data.listento(key: string, f: (value: any) -> ()): types.Disconnect
-	return Bind("k_Data_" .. key):Connect(f)
+function Data.changed(key: string, f: (value: any) -> ())
+	return Hook("k_DataChanged_" .. key).Connect(f)
 end
 
 --- adds player saveprofile to cache

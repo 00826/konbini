@@ -1,14 +1,12 @@
 --!strict
 
-local types = require(script.Parent.types)
-
 local RunService = game:GetService("RunService")
 
 local IsServer = RunService:IsServer()
 
 local EntityRemote = script:WaitForChild("EntityRemote")
 
-local Bind = require(script.Parent.Bind)
+local Hook = require(script.Parent.Hook)
 local TableK = require(script.Parent.Table)
 
 --- ### Entity.luau
@@ -42,16 +40,16 @@ function Entity.create(t: {[string]: any}?): ({[string]: any}, string)
 	end
 
 	local key = TableK.assign(Entity.Cache, e, 4)
-	Bind("k_Entity_added"):Fire(e, key)
+	Hook("k_EntityAdded").Fire(e, key)
 
 	return e, key
 end
 
 --- removes entity `e` stored at `Cache[id]` \
---- fires bind `k_Entity_removed` *prior* to removal \
+--- fires bind `k_EntityRemoved` *prior* to removal \
 --- does not automatically queue after removal
 function Entity.remove(id: string)
-	Bind("k_Entity_removed"):Fire(Entity.Cache[id], id)
+	Hook("k_EntityRemoved").Fire(Entity.Cache[id], id)
 
 	--[[if Entity.Cache[id] then
 		table.clear(Entity.Cache[id])
@@ -143,13 +141,13 @@ function Entity.subset(scope: string, comp: (e: {}) -> boolean): {[string]: {}}
 end
 
 --- fires function when an entity is added
-function Entity.added(f: (e: any, id: string) -> ()): types.Disconnect
-	return Bind("k_Entity_added"):Connect(f)
+function Entity.added(f: (e: any, id: string) -> ())
+	return Hook("k_EntityAdded").Connect(f)
 end
 
 --- fires function when an entity is removed
-function Entity.removed(f: (e: any, id: string) -> ()): types.Disconnect
-	return Bind("k_Entity_removed"):Connect(f)
+function Entity.removed(f: (e: any, id: string) -> ())
+	return Hook("k_EntityRemoved").Connect(f)
 end
 
 --- sends full entity cache to player(kbps disaster)
@@ -248,11 +246,11 @@ else
 		end
 
 		for k, v in added do
-			Bind("k_Entity_added"):Fire(v, k)
+			Hook("k_EntityAdded").Fire(v, k)
 		end
 
 		for k, v in removed do
-			Bind("k_Entity_removed"):Fire(v, k)
+			Hook("k_EntityRemoved").Fire(v, k)
 		end
 	end)
 end

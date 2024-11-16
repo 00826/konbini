@@ -6,10 +6,6 @@ export type LocomotionState =
 	| "Walk"
 	| "Run"
 
---- Bind.luau types
-
-export type Disconnect = () -> ()
-
 --- Bullet.luau types
 
 export type WriteOptions = {

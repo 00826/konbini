@@ -7,7 +7,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
-local async = require(script.Parent.async)
+local await = require(script.Parent.await)
 
 --- ### Network.luau
 ---
@@ -100,7 +100,7 @@ function Network.poll(remote: string, ...: any?): {any}
 	local C = remoteevent.OnClientEvent:Once(function(...) packet = {...} end)
 	remoteevent:FireServer(...)
 
-	async(function() return packet ~= nil end):await(nil, nil, Network.PollTimeout)
+	await(Network.PollTimeout, function() return packet ~= nil end, function(traceback: string) warn(`Network.poll({remote}, ...) error: {traceback}`) end)
 
 	if C then C:Disconnect() end
 
