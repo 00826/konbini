@@ -119,12 +119,10 @@ local Interface = {
 		end;
 		--- returns a vertexcolor from color3
 		toVertexColor = function(c: Color3)
-			return Vector3.new(c.R, c.G, c.B) / 255
+			return Vector3.new(c.R, c.G, c.B)
 		end;
 		--- returns a color3 from vertexcolor
 		fromVertexColor = function(v: Vector3)
-			v *= 255
-
 			return Color3.new(v.X, v.Y, v.Z)
 		end;
 		--- returns `color3 * x`
@@ -669,7 +667,7 @@ end
 
 --- formats number separated by commas
 function Interface.commanumber(x: number): string
-	if math.abs(x) < 1000 then return tostring(x) end
+	if math.abs(x) < 1000 then return tostring(math.floor(x)) end
 	local a = string.gsub(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)","%1,"), ",(%-?)$","%1")
 	return string.reverse(a)
 end

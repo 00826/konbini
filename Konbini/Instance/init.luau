@@ -314,13 +314,18 @@ end
 --- emits a clone of instance template `t` at vector3 or attached to basepart \
 --- `clone<t> -> parented -> deferred transform(?) -> delayed destruct(?) -> return clone<t>` \
 --- if both `at` and `template` are baseparts, then `t` will be unanchored and massless-ed *prior* to welding. weldconstraint is parented to emitted clone of `t`
-function InstanceK.emit<t>(template: t & Instance, at: Vector3|BasePart, transform: ((real: t) -> ())?, destruct: number?)
+function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart, transform: ((real: t) -> ())?, destruct: number?)
 	local real = template:Clone()
 
 	if typeof(at) == "Vector3" then
 		real.Parent = InstanceK.emitContainer
 		if real:IsA("BasePart") then
 			real.Position = at
+		end
+	elseif typeof(at) == "CFrame" then
+		real.Parent = InstanceK.emitContainer
+		if real:IsA("BasePart") then
+			real.CFrame = at
 		end
 	elseif at:IsA("BasePart") then
 		real.Parent = at

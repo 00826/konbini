@@ -64,6 +64,9 @@ local Inputs = {
 	MobileScreenCenter = nil :: (() -> Vector2)?;
 	AssistMousePosition = nil :: (() -> Vector2)?;
 
+	--- write externally
+	MoveVector = Vector3.zero;
+
 	CursorBlacklist = table.create(8);
 	GuiInset = Vector2.zero;
 
