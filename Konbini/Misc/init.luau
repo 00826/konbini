@@ -10,7 +10,7 @@ local Misc = {
 		local t = type(value)
 		return
 			(t == "boolean" and value) or
-			(t == "number" and value > 0) or
+			(t == "number" and value == value) or
 			(t == "string" and value ~= "") or
 			(t == "vector" and value.Magnitude > 0) or
 			(t == "table" and next(value) ~= nil) or
@@ -87,10 +87,8 @@ Misc.Preload = {
 	end;
 
 	--- `ContentProvider:PreloadAsync(assets, f)`
-	async = function(assets: {any}, f: ((contentstring: string, assetfetchstatus: Enum.AssetFetchStatus) -> ())?): number
-		local s = os.clock()
-		game:GetService("ContentProvider"):PreloadAsync(assets, f) --- contentprovider service should only ideally be called once so its never stored as a variable on the uppermost scope
-		return (os.clock() - s) * 1000
+	async = function(assets: {any}, f: ((contentstring: string, assetfetchstatus: Enum.AssetFetchStatus) -> ())?)
+		game:GetService("ContentProvider"):PreloadAsync(assets, f)
 	end;
 }
 

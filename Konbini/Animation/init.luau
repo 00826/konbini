@@ -149,8 +149,8 @@ end
 function Animation.compile()
 	local anims = {}
 	for _, animation in script:GetChildren() do
-		if not animation:IsA("Animation") then return end
-		if animation.AnimationId == "" then return end
+		if not animation:IsA("Animation") then continue end
+		if animation.AnimationId == "" then continue end
 
 		table.insert(anims, animation)
 	end

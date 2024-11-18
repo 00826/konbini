@@ -204,6 +204,24 @@ function Vector3K.rotation(v: Vector3, axis: Enum.Axis): number
 	end
 end
 
+--- returns unit vector from input vector `i`, relative to (camera) `cframe`
+function Vector3K.movevector(i: Vector3, cframe: CFrame)
+	local cos, sin
+	local _, _, _, R00, R01, R02, _, _, R12, _, _, R22 = cframe:GetComponents()
+	if R12 < 1 and R12 > -1 then
+		--- cos, sin = lookvector.x, lookvector.z
+		cos = R22
+		sin = R02
+	else
+		--- cos, sin = rightvector.x, upvector.x
+		cos = R00
+		sin = -R01*math.sign(R12)
+	end
+
+	local length = (cos*cos + sin*sin)^0.5
+	return Vector3.new(cos*i.X + sin*i.Z, 0, cos*i.Z - sin*i.X) / length
+end
+
 --- interpolates between unit vector `v` and unit vector `w` with respect to interpolant `t` \
 --- axisangle is the goat
 function Vector3K.slerp(v: Vector3, w: Vector3, t: number): Vector3
