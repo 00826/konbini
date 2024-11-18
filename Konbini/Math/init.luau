@@ -196,6 +196,11 @@ function MathK.sinewave(a: number, t: number, b: number, k: number): number
 	return a * math.sin(t / b) + k
 end
 
+--- returns the radius (base) of a cone given height `h` and vertex angle `r`
+function MathK.coneradius(h: number, r: number)
+	return h * math.tan(r)
+end
+
 --- scales numbersequence by `x`
 function MathK.scalenumbersequence(numbersequence: NumberSequence, x: number): NumberSequence
 	local newsequence = {}

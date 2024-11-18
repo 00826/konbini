@@ -2,6 +2,7 @@
 
 local types = require(script.Parent.types)
 
+local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
 
 local ColorArray = table.freeze{
@@ -679,6 +680,16 @@ function Interface.abbreviatenumber(n: number, decimalplaces: number?): string
 	local norm = math.floor(n * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))
 
 	return string.format("%." .. (decimalplaces or 1) .. "f%s", norm, suffix)
+end
+
+--- pcall-wrapped `StarterGui:SetCoreGuiEnabled(...)`
+function Interface.setcoreguienabled(coreguis: {[Enum.CoreGuiType]: boolean})
+	return pcall(function()
+		for coregui, enabled in coreguis do
+			StarterGui:SetCoreGuiEnabled(coregui, enabled)
+		end
+		return true
+	end)
 end
 
 return Interface

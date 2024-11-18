@@ -56,6 +56,25 @@ function Encoder.writevector3(b: buffer, offset: number, value: Vector3)
 	buffer.writef32(b, offset + 8, value.Z)
 end
 
+--- reads int16 Vector3 from buffer \
+--- each axis is within bounds of `[-3276.8, 3276.7]` and has 1 decimal point of precision
+function Encoder.readvector3i16(b: buffer, offset: number): Vector3
+	return Vector3.new(
+		buffer.readi16(b, offset),
+		buffer.readi16(b, offset + 2),
+		buffer.readi16(b, offset + 4)
+	) * 1e-1
+end
+
+--- writes int16 Vector3 to buffer \
+--- each axis should be within bounds of `[-3276.8, 3276.7]` and has 1 decimal point of precision
+function Encoder.writevector3i16(b: buffer, offset: number, value: Vector3)
+	value *= 10
+	buffer.writei16(b, offset, value.X)
+	buffer.writei16(b, offset + 2, value.Y)
+	buffer.writei16(b, offset + 4, value.Z)
+end
+
 --- writes unit vector from buffer
 function Encoder.readunitvector(b: buffer, offset: number): Vector3
 	return Vector3.new(

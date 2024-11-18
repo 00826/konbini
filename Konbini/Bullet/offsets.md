@@ -2,6 +2,7 @@
 |offset/total|type|alias|desc|
 |-|-|-|-|
 |0|string4|id|4-character id of this bullet|
+|4|u8|cycle|frame cycle, for cases where this bullet should only be updated every `n`th frame|
 |5|u8|type|bullet type|
 |6|f32|time|bullet spawn time|
 |[10, 14, 18]|f32|pX, pY, pZ|bullet position|
@@ -45,3 +46,13 @@
 |46|u16|speed|speed of this bezier bullet|
 |-|-|-|-|
 |48|-|-|buffer describing a bezier bullet|
+
+### track
+|offset/total|type|alias|desc|
+|-|-|-|-|
+|34|-|-|*bytes carried from empty bullet*|
+|-|-|-|-|
+|34|string4|target|4-character id of target|
+|[38, 40, 42]|i16|tX, tY, tZ|vector3i16 (*see Konbini.Encoder*) describing the tracking position of this bullet relative to its target|
+|-|-|-|-|
+|44|-|-|buffer describing a hitscan bullet|

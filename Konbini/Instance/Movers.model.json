@@ -17,7 +17,7 @@
 			"Properties": {
 				"Velocity": [0, 0, 0],
 				"P": 7500,
-				"MaxForce": [1e8, 1e8, 1e8]
+				"MaxForce": [200000, 200000, 200000]
 			}
 		},
 		{

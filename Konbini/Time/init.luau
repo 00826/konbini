@@ -70,7 +70,7 @@ end
 --- `client`: `localplayer:GetNetworkPing()`
 function Time.latency(client: Player?): number
 	if RunService:IsStudio() then
-		return Time.incomingreplicationlag
+		return Time.incomingreplicationlag / 1000
 	else
 		if IsServer then
 			return client and client:GetNetworkPing() * 1000 or 0

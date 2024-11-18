@@ -11,6 +11,8 @@ export type LocomotionState =
 export type WriteOptions = {
 	--- string id
 	id: string?;
+	--- frame cycle
+	cycle: number?;
 	--- initial time
 	time: number?;
 	--- initial position

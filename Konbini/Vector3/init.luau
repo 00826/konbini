@@ -154,6 +154,24 @@ function Vector3K.midpoint(vectors: { Vector3 | types.xyzType }): Vector3
 	return sum / length
 end
 
+--- returns points along line drawn from `v` towards `w`
+function Vector3K.segment(v: Vector3, w: Vector3, segments: number)
+	local partition = table.create(segments)
+	partition[1] = v
+	partition[segments] = w
+
+	if segments <= 2 then
+		return partition
+	else
+		local step = segments - 1
+		for i = 1, segments - 2, 1 do
+			partition[i + 1] = v:Lerp(w, i / step)
+		end
+
+		return partition
+	end
+end
+
 --- returns true if `v` and `w` are coplanar along unit vector `u`
 function Vector3K.iscoplanar(v: Vector3, w: Vector3, u: Vector3): boolean
 	return math.round((v - w):Dot(u)) == 0

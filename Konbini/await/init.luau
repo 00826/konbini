@@ -27,7 +27,7 @@ local function await(timeout: number, f: () -> boolean, catch: ((traceback: stri
 			return t, result
 		elseif not success then
 			if catch then
-				catch(debug.traceback(), tostring(result)) --- questionable
+				catch(debug.traceback(), tostring(result))
 			end
 
 			return t, false

@@ -1,4 +1,5 @@
 --!strict
+--!native
 
 local types = require(script.Parent.types)
 
@@ -11,9 +12,9 @@ local hitscanwidth = emptywidth + 0
 local ballisticwidth = emptywidth + 5
 local beamwidth = emptywidth + 2
 local bezierwidth = emptywidth + 14
+local trackwidth = emptywidth + 10
 
-@native
-local function fastdistance(a: Vector3, b: Vector3): number
+local function fastdistance(a: Vector3, b: Vector3)
 	b -= a
 	local x, y, z = b.X, b.Y, b.Z
 	return ((x * x) + (y * y) + (z * z)) ^ 0.5
@@ -22,12 +23,13 @@ end
 --- ### Bullet.luau
 ---
 --- projectile-type solver \
---- -- \
+--- \
 --- `0`: (dead) \
 --- `1`: hitscan \
 --- `2`: ballistic \
 --- `3`: beam \
---- `4`: bezier
+--- `4`: bezier \
+--- `5`: track
 local Bullet = {
 	gravity = 196;
 	frame = 1/60;
@@ -39,6 +41,9 @@ local Bullet = {
 function Bullet.write(b: buffer, options: types.WriteOptions)
 	if options.id then
 		buffer.writestring(b, 0, string.sub(options.id, 1, 4))
+	end
+	if options.cycle then
+		buffer.writeu8(b, 4, options.cycle)
 	end
 	if options.time then
 		buffer.writef32(b, 6, options.time)
@@ -52,9 +57,10 @@ function Bullet.write(b: buffer, options: types.WriteOptions)
 end
 
 --- returns base components of bullet
-function Bullet.components(b: buffer)
+function Bullet.unpack(b: buffer)
 	return {
 		id = buffer.readstring(b, 0, 4);
+		cycle = buffer.readu8(b, 4);
 		type = buffer.readu8(b, 5);
 		time = buffer.readf32(b, 6);
 		position = Encoder.readvector3(b, 10);
@@ -64,11 +70,13 @@ end
 
 --- returns an empty hitscan bullet \
 --- type `1`
-function Bullet.hitscan(): buffer
+function Bullet.hitscan(time: number?)
 	local b = buffer.create(hitscanwidth)
 	buffer.writestring(b, 0, Encoder.string(4))
+	buffer.writeu8(b, 4, 1)
 	buffer.writeu8(b, 5, 1)
-	buffer.writef32(b, 6, Time.now())
+	buffer.writef32(b, 6, time or Time.now())
+
 	return b
 end
 
@@ -87,10 +95,13 @@ end
 
 --- returns an empty ballistic bullet \
 --- type `2`
-function Bullet.ballistic(): buffer
+function Bullet.ballistic(time: number?)
 	local b = buffer.create(ballisticwidth)
 	buffer.writestring(b, 0, Encoder.string(4))
+	buffer.writeu8(b, 4, 1)
 	buffer.writeu8(b, 5, 2)
+	buffer.writef32(b, 6, time or Time.now())
+
 	return b
 end
 
@@ -132,10 +143,13 @@ end
 
 --- returns an empty beam bullet \
 --- type `3`
-function Bullet.beam(): buffer
+function Bullet.beam(time: number?)
 	local b = buffer.create(beamwidth)
 	buffer.writestring(b, 0, Encoder.string(4))
+	buffer.writeu8(b, 4, 1)
 	buffer.writeu8(b, 5, 3)
+	buffer.writef32(b, 6, time or Time.now())
+
 	return b
 end
 
@@ -168,11 +182,15 @@ function Bullet.beamsolve(b: buffer)
 end
 
 --- returns an empty bezier bullet \
+--- bullet byte range for direction `[22, 26, 30]` is used to hold the bezier endpoint \
 --- type `4`
-function Bullet.bezier(): buffer
+function Bullet.bezier(time: number?)
 	local b = buffer.create(bezierwidth)
 	buffer.writestring(b, 0, Encoder.string(4))
+	buffer.writeu8(b, 4, 1)
 	buffer.writeu8(b, 5, 4)
+	buffer.writef32(b, 6, time or Time.now())
+
 	return b
 end
 
@@ -220,11 +238,59 @@ function Bullet.beziersolve(b: buffer, dt: number?)
 	}
 end
 
+--- returns an empty track bullet \
+--- bullet byte range for direction `[22, 26, 30]` is used to hold the bullet speed (`(Vector3.zAxis * speed).Magnitude`) \
+--- type `5`
+function Bullet.track(time: number?): buffer
+	local b = buffer.create(trackwidth)
+	buffer.writestring(b, 0, Encoder.string(4))
+	buffer.writeu8(b, 4, 1)
+	buffer.writeu8(b, 5, 5)
+	buffer.writef32(b, 6, time or Time.now())
+
+	return b
+end
+
+--- writes properties to track bullet
+function Bullet.trackwrite(b: buffer, target: string?, relativeposition: Vector3?)
+	if target then
+		buffer.writestring(b, 34, target, 4)
+	end
+	if relativeposition then
+		Encoder.writevector3i16(b, 38, relativeposition)
+	end
+end
+
+--- solves track bullet \
+--- interpolant is clamped within bounds of `[0, 1]` such that this bullet will never overshoot its target
+function Bullet.tracksolve(b: buffer, solve: (target: string, relativeposition: Vector3) -> Vector3, dt: number?)
+	local position = Encoder.readvector3(b, 10)
+	local targetposition = solve(buffer.readstring(b, 34, 4), Encoder.readvector3i16(b, 38))
+	local speed = Encoder.readvector3(b, 22).Magnitude
+
+	local start = buffer.readf32(b, 6)
+	local now = Time.now()
+	local elapsed = now - start
+
+	local delta = targetposition - position
+	local distance = speed * elapsed
+	local stepdistance = speed * (elapsed + (dt or Bullet.frame))
+
+	local a = math.clamp(distance / delta.Magnitude, 0, 1)
+	local thisframe = position:Lerp(targetposition, a)
+
+	return {
+		position = thisframe;
+		stepposition = position:Lerp(targetposition, math.clamp(stepdistance / delta.Magnitude, 0, 1));
+		deltavector = thisframe - targetposition;
+		interpolant = a;
+	}
+end
+
 --- returns, with respect to time elapsed: \
 --- `Vector3`: size of transform as `Vector3(diameter, diameter, length)` \
 --- `Vector3`: offset of transform as `Vector3(0, 0, length / 2)`
-@native
-function Bullet.solvetransform(size: Vector3, velocity: number, time: number): (Vector3, Vector3)
+function Bullet.solvetransform(size: Vector3, velocity: number, time: number)
 	local distance = velocity * time
 	return Vector3.new(size.X, size.Y, distance), Vector3.new(0, 0, -0.5 * distance)
 end
@@ -232,8 +298,7 @@ end
 --- returns, with respect to time elapsed: \
 --- `Vector3`: offset of ballistic projectile \
 --- *in contexts where `gravity == 0`, ballistic projectile will behave like a linear projectile*
-@native
-function Bullet.solveballistic(direction: Vector3, velocity: number, time: number, gravity: number?): Vector3
+function Bullet.solveballistic(direction: Vector3, velocity: number, time: number, gravity: number?)
 	return (direction * (velocity * time)) - (Bullet.coefficient * (gravity or Bullet.gravity) * (time * time))
 end
 
@@ -243,8 +308,7 @@ end
 --- `Vector3`: position of bezier-curve projectile \
 --- `A`: interpolant used to solve the position \
 --- *distance is approximated by adding the distances from `a` to `b` and `b` to `c`*
-@native
-function Bullet.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number): (Vector3, number)
+function Bullet.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number)
 	local i = (time * velocity) / (fastdistance(a, b) + fastdistance(b, c))
 	local P0 = a:Lerp(b, i)
 	local P1 = b:Lerp(c, i)
