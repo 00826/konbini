@@ -23,9 +23,9 @@ function Time.now(latency: number?): number
 	return buffer.readf32(Time.buffer, 0) + (latency or 0)
 end
 
---- returns furthest-ahead time between `x` and konbini time
-function Time.furthest(x: number?): number
-	return math.max(x or 0, buffer.readf32(Time.buffer, 0))
+--- extends expiry `x` by `time` seconds, where `x`, if behind konbini time, is set to current konbini time
+function Time.extend(x: number, time: number)
+	return math.max(x or 0, buffer.readf32(Time.buffer, 0)) + time
 end
 
 --- applies debounce against instance `i` \

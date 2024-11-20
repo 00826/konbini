@@ -12,7 +12,7 @@ local hitscanwidth = emptywidth + 0
 local ballisticwidth = emptywidth + 5
 local beamwidth = emptywidth + 2
 local bezierwidth = emptywidth + 14
-local trackwidth = emptywidth + 10
+local trackwidth = emptywidth + 16
 
 local function fastdistance(a: Vector3, b: Vector3)
 	b -= a
@@ -32,7 +32,7 @@ end
 --- `5`: track
 local Bullet = {
 	gravity = 196;
-	frame = 1/60;
+	frame = 1/30;
 
 	coefficient = 0.5 * Vector3.yAxis; -- the 0.5 of 0.5*g*t*t
 }
@@ -138,6 +138,7 @@ function Bullet.ballisticsolve(b: buffer, dt: number?)
 		position = thisframe;
 		stepposition = stepframe;
 		deltavector = stepframe - thisframe;
+		elapsed = elapsed;
 	}
 end
 
@@ -178,6 +179,7 @@ function Bullet.beamsolve(b: buffer)
 		position = position;
 		lookvector = unitvector;
 		length = math.clamp(velocity * elapsed, 0, distance);
+		elapsed = elapsed;
 	}
 end
 
@@ -235,6 +237,7 @@ function Bullet.beziersolve(b: buffer, dt: number?)
 		stepposition = stepframe;
 		deltavector = stepframe - thisframe;
 		interpolant = a;
+		elapsed = elapsed;
 	}
 end
 
@@ -257,7 +260,7 @@ function Bullet.trackwrite(b: buffer, target: string?, relativeposition: Vector3
 		buffer.writestring(b, 34, target, 4)
 	end
 	if relativeposition then
-		Encoder.writevector3i16(b, 38, relativeposition)
+		Encoder.writevector3(b, 38, relativeposition)
 	end
 end
 
@@ -265,7 +268,7 @@ end
 --- interpolant is clamped within bounds of `[0, 1]` such that this bullet will never overshoot its target
 function Bullet.tracksolve(b: buffer, solve: (target: string, relativeposition: Vector3) -> Vector3, dt: number?)
 	local position = Encoder.readvector3(b, 10)
-	local targetposition = solve(buffer.readstring(b, 34, 4), Encoder.readvector3i16(b, 38))
+	local targetposition = solve(buffer.readstring(b, 34, 4), Encoder.readvector3(b, 38))
 	local speed = Encoder.readvector3(b, 22).Magnitude
 
 	local start = buffer.readf32(b, 6)
@@ -284,6 +287,7 @@ function Bullet.tracksolve(b: buffer, solve: (target: string, relativeposition: 
 		stepposition = position:Lerp(targetposition, math.clamp(stepdistance / delta.Magnitude, 0, 1));
 		deltavector = thisframe - targetposition;
 		interpolant = a;
+		elapsed = elapsed;
 	}
 end
 

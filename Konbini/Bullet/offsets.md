@@ -53,6 +53,6 @@
 |34|-|-|*bytes carried from empty bullet*|
 |-|-|-|-|
 |34|string4|target|4-character id of target|
-|[38, 40, 42]|i16|tX, tY, tZ|vector3i16 (*see Konbini.Encoder*) describing the tracking position of this bullet relative to its target|
+|[38, 42, 46]|f32|tX, tY, tZ|tracking position of this bullet relative to its target|
 |-|-|-|-|
-|44|-|-|buffer describing a hitscan bullet|
+|50|-|-|buffer describing a tracking bullet|
