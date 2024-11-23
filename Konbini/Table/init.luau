@@ -412,11 +412,11 @@ end
 
 --- returns elements of array as a page
 --- ```
---- t = {} -- [1, ..., 25]
---- page(t, 10, 1) -- [1, ..., 10]
---- page(t, 10, 2) -- [11, ..., 20]
---- page(t, 10, 3) -- [21, ..., 25]
---- page(t, 10, 4) -- []
+--- t = {} --- [1, ..., 25]
+--- page(t, 10, 1) --- [1, ..., 10]
+--- page(t, 10, 2) --- [11, ..., 20]
+--- page(t, 10, 3) --- [21, ..., 25]
+--- page(t, 10, 4) --- []
 --- ```
 function TableK.page<T>(A: {T}, size: number, offset: number): {T}
 	local max = #A

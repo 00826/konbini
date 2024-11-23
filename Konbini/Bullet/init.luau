@@ -34,25 +34,25 @@ local Bullet = {
 	gravity = 196;
 	frame = 1/30;
 
-	coefficient = 0.5 * Vector3.yAxis; -- the 0.5 of 0.5*g*t*t
+	coefficient = 0.5 * Vector3.yAxis; --- the 0.5 of 0.5*g*t*t
 }
 
 --- writes properties to base bullet range
 function Bullet.write(b: buffer, options: types.WriteOptions)
-	if options.id then
-		buffer.writestring(b, 0, string.sub(options.id, 1, 4))
+	if options.Id then
+		buffer.writestring(b, 0, string.sub(options.Id, 1, 4))
 	end
-	if options.cycle then
-		buffer.writeu8(b, 4, options.cycle)
+	if options.Cycle then
+		buffer.writeu8(b, 4, options.Cycle)
 	end
-	if options.time then
-		buffer.writef32(b, 6, options.time)
+	if options.Time then
+		buffer.writef32(b, 6, options.Time)
 	end
-	if options.position then
-		Encoder.writevector3(b, 10, options.position)
+	if options.Position then
+		Encoder.writevector3(b, 10, options.Position)
 	end
-	if options.direction then
-		Encoder.writevector3(b, 22, options.direction)
+	if options.Direction then
+		Encoder.writevector3(b, 22, options.Direction)
 	end
 end
 

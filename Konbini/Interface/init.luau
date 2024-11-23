@@ -588,7 +588,7 @@ function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayou
 		sum += Interface.padheight(target:FindFirstChildOfClass("UIPadding")).Offset
 	end
 
-	local function UpdateSize()
+	local function updatesize()
 		local stretch = (gridorlist :: any).AbsoluteContentSize[Axis] :: number
 		local real = stretch > 1 and math.ceil(stretch + sum) or 0
 		local x, y = 0, 0
@@ -606,15 +606,15 @@ function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayou
 		end
 	end
 
-	UpdateSize()
-	return gridorlist:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateSize)
+	updatesize()
+	return gridorlist:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatesize)
 end
 
 --- applies `UIPadding` instance with padding values to guiobject, instantiating one if it has not been created already
 function Interface.pad(guiobject: GuiObject, value: UDim)
 	local uipadding = guiobject:FindFirstChildOfClass("UIPadding")
 	if not uipadding then
-		uipadding = Instance.new("UIPadding") ; -- this semicolon is INSANE
+		uipadding = Instance.new("UIPadding") ; --- this semicolon is INSANE
 		(uipadding::any).Parent = Interface.pad
 	end
 	assert(uipadding)

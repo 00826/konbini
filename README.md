@@ -6,7 +6,7 @@
 |-|-|
 |<img src="./konbini-ico.svg" width="96"/>|a shelf of roblox-luau convenience modules<br><br>started as a util module, ended as a library<br>*"the best thing since catalog price floors"*<br><br>while "stocking the shelves" i wanted to keep everything:<br>- simple & straightforward<br>- concise & to-the-point<br>- portable & copy-pastable|
 
-## items
+## aisles
 
 > [!NOTE]
 > because exported types can't be accessed more than a file deep, types are housed in `types.luau`, and are exported directly from `require(path.to.Konbini)`
@@ -40,11 +40,21 @@
 ## design language
 
 ```lua
---- UppermostScopeVariable
---- scopedvariable
---- PropertyOf, keyof, anotherKeyOf -- camel rare
---- libraryConstructor
---- isafunction
+--- GlobalScope
+--- FieldOfTable
+--- localscope
+--- --- side commentary
+
+--- directives
+--- types
+
+--- services
+--- variables
+--- private functions
+
+--- header
+local module = {}
+--- functions
 
 --- ...
 --- <line break> -- "block opener"
@@ -54,17 +64,8 @@
 --- <line break> -- "block closer"
 --- ... | return definition -- "scope closer"
 
---- types
-
---- services
---- variables
---- private functions
-
---- description
-local konbini_module = {}
---- public functions
---- runtime-specific operations
-return konbini_module
+--- runtime-sensitive work
+return module
 ```
 
 **コ** Konbini by 00826 / overflowed

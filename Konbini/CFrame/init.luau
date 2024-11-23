@@ -32,13 +32,13 @@ local CFrameK = {
 			_pi4 = CFrame.Angles(0, 0, -math.pi/4);
 		};
 	};
-	--- returns `CFrame.fromEulerAngles(v.X, v.Y, v.Z, Enum.RotationOrder.XYZ)`
+	--- returns `CFrame.fromOrientation(v.X, v.Y, v.Z)`
 	anglesFromVector = function(v: Vector3)
-		return CFrame.fromEulerAngles(v.X, v.Y, v.Z, Enum.RotationOrder.XYZ)
+		return CFrame.fromOrientation(v.X, v.Y, v.Z)
 	end;
-	--- returns `Vector3.new(c:ToEulerAngles(Enum.RotationOrder.XYZ))`
+	--- returns `Vector3.new(c:ToOrientation())`
 	vectorFromAngles = function(c: CFrame)
-		return Vector3.new(c:ToEulerAngles(Enum.RotationOrder.XYZ))
+		return Vector3.new(c:ToOrientation())
 	end;
 }
 

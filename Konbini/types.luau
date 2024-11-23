@@ -10,15 +10,15 @@ export type LocomotionState =
 
 export type WriteOptions = {
 	--- string id
-	id: string?;
+	Id: string?;
 	--- frame cycle
-	cycle: number?;
+	Cycle: number?;
 	--- initial time
-	time: number?;
+	Time: number?;
 	--- initial position
-	position: Vector3?;
+	Position: Vector3?;
 	--- initial direction
-	direction: Vector3?;
+	Direction: Vector3?;
 }
 
 --- Collisions.luau

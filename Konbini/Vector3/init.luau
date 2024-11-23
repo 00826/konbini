@@ -248,7 +248,7 @@ function Vector3K.slerp(v: Vector3, w: Vector3, t: number): Vector3
 		end
 	end
 
-	local magC = magA^(1 - t)*magB^t -- final magnitude
+	local magC = magA^(1 - t)*magB^t --- final magnitude
 
 	-- get k*cosine and k*sine components of the angle between v and w
 	local co = v:Dot(w)
@@ -258,13 +258,13 @@ function Vector3K.slerp(v: Vector3, w: Vector3, t: number): Vector3
 	local unitB = w.Unit
 
 	-- more degenerate cases
-	if co < 0 and si < -1e-16*co then -- this test sees, in a stable way, if they are opposite and abs(tan(angle)) < 1e-16
+	if co < 0 and si < -1e-16*co then --- this test sees, in a stable way, if they are opposite and abs(tan(angle)) < 1e-16
 		if t%2 < 1/2 or t%2 >= 3/2 then
 			return magC*unitA
 		else
 			return magC*unitB
 		end
-	elseif co > 0 and si < 1e-16*co then -- this test sees, in a stable way, if they are in the same direction and abs(tan(angle)) < 1e-16
+	elseif co > 0 and si < 1e-16*co then --- this test sees, in a stable way, if they are in the same direction and abs(tan(angle)) < 1e-16
 		return magC*((1 - t)*unitA + t*unitB).Unit
 	end
 	local ang = math.atan2(si, co)

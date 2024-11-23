@@ -74,10 +74,10 @@ function Data.changed(key: string, f: (value: any) -> ())
 end
 
 --- adds player saveprofile to cache
-function Data.addprofile(player: Player, SaveProfile: { Data: types.SaveTemplate })
+function Data.addprofile(player: Player, saveprofile: { Data: types.SaveTemplate })
 	assert(IsServer)
 
-	ServerCache[player] = SaveProfile
+	ServerCache[player] = saveprofile
 end
 
 function Data.releaseprofile(player: Player)

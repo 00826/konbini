@@ -235,22 +235,22 @@ function Inputs.platform(inputobject: InputObject): number
 end
 
 --- binds function to `UserInputService.InputBegan`
-function Inputs.began(f: (inputobject: InputObject, SunkInput: boolean) -> ())
+function Inputs.began(f: (inputobject: InputObject, sunkinput: boolean) -> ())
 	return Hook("k_InputBegan").Connect(f)
 end
 
 --- binds function to `UserInputService.InputEnded`
-function Inputs.ended(f: (inputobject: InputObject, SunkInput: boolean) -> ())
+function Inputs.ended(f: (inputobject: InputObject, sunkinput: boolean) -> ())
 	return Hook("k_InputEnded").Connect(f)
 end
 
 --- binds function to `UserInputService.InputChanged`
-function Inputs.changed(f: (inputobject: InputObject, SunkInput: boolean) -> ())
+function Inputs.changed(f: (inputobject: InputObject, sunkinput: boolean) -> ())
 	return Hook("k_InputChanged").Connect(f)
 end
 
 --- fires function when a key is double-tapped
-function Inputs.doubletap(f: (KeyCode: Enum.KeyCode) -> ())
+function Inputs.doubletap(f: (keycode: Enum.KeyCode) -> ())
 	return Hook("k_DoubleTap").Connect(f)
 end
 
@@ -336,7 +336,7 @@ end
 --- ---  ┣━ ...: any
 --- ---  ┗━ Button: TextButton
 --- ```
-function Inputs.connectGamepad2D(gamepad2d: typeof(Inputs.Gamepad2D), f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState, InputFrame: Frame) -> ())
+function Inputs.connectgamepad2D(gamepad2d: typeof(Inputs.Gamepad2D), f: (keycode: Enum.KeyCode, userinputstate: Enum.UserInputState, inputframe: Frame) -> ())
 	for keyid, keyenum in Inputs.Gamepad2DMap do
 		local buttonframe = gamepad2d:FindFirstChild(keyid)
 		if not buttonframe then warn(gamepad2d, keyid); continue end
@@ -369,7 +369,7 @@ end
 --- ---  ┣━ ...: any
 --- ---  ┗━ Button: TextButton
 --- ```
-function Inputs.connectDPad2D(dpad2d: typeof(Inputs.DPad2D), f: (KeyCode: Enum.KeyCode, UserInputState: Enum.UserInputState, InputFrame: Frame) -> ())
+function Inputs.connectdpad2D(dpad2d: typeof(Inputs.DPad2D), f: (keycode: Enum.KeyCode, userinputstate: Enum.UserInputState, inputframe: Frame) -> ())
 	for keyid, keyenum in Inputs.DPad2DMap do
 		local buttonframe = dpad2d:FindFirstChild(keyid)
 		if not buttonframe then warn(dpad2d, keyid); continue end
@@ -473,10 +473,10 @@ else
 	UIS.TouchMoved:Connect(function(...)
 		Hook("k_InputChanged").Fire(...)
 	end)
-	UIS.LastInputTypeChanged:Connect(function(InputType: Enum.UserInputType)
+	UIS.LastInputTypeChanged:Connect(function(userinputtype: Enum.UserInputType)
 		Inputs.TouchEnabled = UIS.TouchEnabled
 
-		local platformid = Inputs.Platforms[InputType] or Inputs.PlatformId
+		local platformid = Inputs.Platforms[userinputtype] or Inputs.PlatformId
 		if Inputs.PlatformId ~= platformid then
 			Inputs.PlatformId = platformid
 			Hook("k_PlatformChanged").Fire(Inputs.PlatformId)

@@ -360,12 +360,12 @@ function Encoder.string(len: number?): string
 		if value <= 26 then
 			local coinflip = types.R:NextInteger(0, 1) == 0
 			if coinflip then
-				str ..= string.char(value + 64) -- [A-Z]
+				str ..= string.char(value + 64) --- [A-Z]
 			else
-				str ..= string.char(value + 96) -- [a-z]
+				str ..= string.char(value + 96) --- [a-z]
 			end
 		else
-			str ..= tostring(36 - value) -- [0-9]
+			str ..= tostring(36 - value) --- [0-9]
 		end
 	end
 	return str

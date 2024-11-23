@@ -203,7 +203,7 @@ if IsServer then
 
 		for id, keys in Entity.Bucket do
 			if type(keys) == "table" then
-				-- update keys
+				--- update keys
 				packet[id] = {}
 				local e = Entity.Cache[id]
 				if not e then continue end
@@ -211,13 +211,13 @@ if IsServer then
 					(packet[id]::{})[key] = e[key]
 				end
 			elseif keys == false then
-				-- entity destroyed
+				--- entity destroyed
 				packet[id] = false
 			else
 				warn(`fringe case this should not happen {id} {type(keys)} {keys}`)
 			end
 
-			Entity.Bucket[id] = nil -- does this leak?
+			Entity.Bucket[id] = nil --- does this leak?
 		end
 
 		if next(packet) == nil then return end

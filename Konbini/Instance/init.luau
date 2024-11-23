@@ -160,24 +160,24 @@ local InstanceK = {
 function InstanceK.new(tree: types.Tree): Instance
 	local newinstance: any = Instance.new(tree.ClassName)
 
-	for Property, Value in pairs(tree) do
-		if Property == "ClassName" then continue end
-		if Property == "Parent" then continue end
-		if Property == "Children" then continue end
+	for property, value in pairs(tree) do
+		if property == "ClassName" then continue end
+		if property == "Parent" then continue end
+		if property == "Children" then continue end
 
 		--- yes, these checks make the function very slow
 		--- but property write errors on yet-to-be-parented instances are silent and yield indefinitely
 		--- so its preferred to have something that works versus something thats fast
-		if not InstanceK.ispropertyof(newinstance, Property) then
-			warn(`{debug.traceback()}{Property} is not a property of {tree.ClassName} "{tree.Name or tree.ClassName}"`)
+		if not InstanceK.ispropertyof(newinstance, property) then
+			warn(`{debug.traceback()}{property} is not a property of {tree.ClassName} "{tree.Name or tree.ClassName}"`)
 			continue
 		end
-		if (newinstance[Property] ~= nil) and (typeof(Value) ~= typeof(newinstance[Property])) then
-			warn(`{debug.traceback()}Attempt to write {typeof(Value)} to {tree.ClassName} "{tree.Name or tree.ClassName}" property {Property} ({typeof(newinstance[Property])})`)
+		if (newinstance[property] ~= nil) and (typeof(value) ~= typeof(newinstance[property])) then
+			warn(`{debug.traceback()}Attempt to write {typeof(value)} to {tree.ClassName} "{tree.Name or tree.ClassName}" property {property} ({typeof(newinstance[property])})`)
 			continue
 		end
 
-		newinstance[Property] = Value
+		newinstance[property] = value
 	end
 
 	if tree.Children then
@@ -192,24 +192,24 @@ function InstanceK.new(tree: types.Tree): Instance
 	return newinstance
 end
 
---- returns instance at the end of path `"path/to/instance"`, beginning at root `inst`
-function InstanceK.path(inst: Instance, path: string, yield: boolean?): Instance?
+--- returns instance at the end of path `"path/to/instance"`, beginning at root `instance`
+function InstanceK.path(instance: Instance, path: string, yield: boolean?): Instance?
 	for _, ref in ipairs(string.split(path, "/")) do
-		local new = yield and inst:WaitForChild(ref) or inst:FindFirstChild(ref)
+		local new = yield and instance:WaitForChild(ref) or instance:FindFirstChild(ref)
 
 		if not new then
-			warn(`ref "{ref}" is not a member of {inst.ClassName} "{inst}"`)
+			warn(`ref "{ref}" is not a member of {instance.ClassName} "{instance}"`)
 			return nil
 		end
-		inst = new
+		instance = new
 	end
 
-	return inst
+	return instance
 end
 
 --- returns true if property is a property of instance
-function InstanceK.ispropertyof(inst: Instance, property: string): boolean
-	return pcall(function() return (inst :: any)[property] end)
+function InstanceK.ispropertyof(instance: Instance, property: string): boolean
+	return pcall(function() return (instance :: any)[property] end)
 end
 
 --- welds b to a at offset \
@@ -226,30 +226,30 @@ function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstrai
 end
 
 --- iterative property setter
-function InstanceK.properties(inst: Instance, properties: {[string]: any})
+function InstanceK.properties(instance: Instance, properties: {[string]: any})
 	for k, v in properties do
 		if k == "Parent" then continue end
-		(inst :: any)[k] = v
+		(instance :: any)[k] = v
 	end
 	if properties.Parent then
-		inst.Parent = properties.Parent
+		instance.Parent = properties.Parent
 	end
 end
 
 --- iterative attribute setter
-function InstanceK.attributes(inst: Instance, attributes: {[string]: any})
+function InstanceK.attributes(instance: Instance, attributes: {[string]: any})
 	for k, v in attributes do
-		inst:SetAttribute(k, v)
+		instance:SetAttribute(k, v)
 	end
 end
 
 --- yields until child of class is parented under instance
-function InstanceK.waitforchildofclass(inst: Instance, classname: string, timeout: number?): Instance?
-	local thing, time = inst:FindFirstChildOfClass(classname), timeout or 10
+function InstanceK.waitforchildofclass(instance: Instance, classname: string, timeout: number?): Instance?
+	local thing, time = instance:FindFirstChildOfClass(classname), timeout or 10
 	if not thing then
 		repeat
 			time -= task.wait()
-			thing = inst:FindFirstChildOfClass(classname)
+			thing = instance:FindFirstChildOfClass(classname)
 		until (thing ~= nil) or (time < 0)
 	end
 
@@ -257,8 +257,8 @@ function InstanceK.waitforchildofclass(inst: Instance, classname: string, timeou
 end
 
 --- returns first child of instance where `comp(a) -> true`
-function InstanceK.findfirstchildwithcase(inst: Instance, comp: (a: Instance) -> boolean): Instance?
-	for _, thing in inst:GetChildren() do
+function InstanceK.findfirstchildwithcase(instance: Instance, comp: (a: Instance) -> boolean): Instance?
+	for _, thing in instance:GetChildren() do
 		if comp(thing) then return thing end
 	end
 
@@ -266,8 +266,8 @@ function InstanceK.findfirstchildwithcase(inst: Instance, comp: (a: Instance) ->
 end
 
 --- returns children of instance where `comp(a) -> true`
-function InstanceK.getchildrenwithcase(inst: Instance, comp: (a: Instance) -> boolean)
-	local things = inst:GetChildren()
+function InstanceK.getchildrenwithcase(instance: Instance, comp: (a: Instance) -> boolean)
+	local things = instance:GetChildren()
 	local list = table.create(#things)
 	for _, thing in things do
 		if comp(thing) == false then continue end
@@ -278,8 +278,8 @@ function InstanceK.getchildrenwithcase(inst: Instance, comp: (a: Instance) -> bo
 end
 
 --- destroys children of instance where `comp(a) -> true`
-function InstanceK.clearchildrenwithcase(inst: Instance, comp: (a: Instance) -> boolean)
-	for _, thing in inst:GetChildren() do
+function InstanceK.clearchildrenwithcase(instance: Instance, comp: (a: Instance) -> boolean)
+	for _, thing in instance:GetChildren() do
 		if comp(thing) == false then continue end
 		thing:Destroy()
 	end
@@ -296,8 +296,8 @@ end
 --- --- ┗━ Animator: Animator
 --- InstanceK.findhighestancestorofclass(RightFin, "Model") --> Fish
 --- ```
-function InstanceK.findhighestancestorofclass(inst: Instance, classname: string): Instance?
-	local ancestor = inst:FindFirstAncestorOfClass(classname)
+function InstanceK.findhighestancestorofclass(instance: Instance, classname: string): Instance?
+	local ancestor = instance:FindFirstAncestorOfClass(classname)
 	if ancestor then
 		local thisancestor = InstanceK.findhighestancestorofclass(ancestor, classname)
 		if not thisancestor then
