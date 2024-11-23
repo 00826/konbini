@@ -6,7 +6,7 @@
 |5|u8|type|bullet type|
 |6|f32|time|bullet spawn time|
 |[10, 14, 18]|f32|pX, pY, pZ|bullet position|
-|[22, 26, 30]|f32|dX, dY, dZ|bullet direction<br>`.Unit` = direction<br>`.Magnitude` = distance or speed|
+|[22, 26, 30]|f32|dX, dY, dZ|bullet vector, describing either direction or a point in 3d space<br>`.Unit` = direction<br>`.Magnitude` = distance or speed|
 |-|-|-|-|
 |34|-|-|empty bullet size|
 
@@ -53,6 +53,6 @@
 |34|-|-|*bytes carried from empty bullet*|
 |-|-|-|-|
 |34|string4|target|4-character id of target|
-|[38, 42, 46]|f32|tX, tY, tZ|tracking position of this bullet relative to its target|
+|38|u16|speed|speed of this tracking bullet|
 |-|-|-|-|
-|50|-|-|buffer describing a tracking bullet|
+|40|-|-|buffer describing a tracking bullet|

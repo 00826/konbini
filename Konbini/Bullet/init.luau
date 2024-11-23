@@ -32,7 +32,7 @@ local Bullet = {
 		Ballistic = 34 + 5;
 		Beam = 34 + 2;
 		Bezier = 34 + 14;
-		Track = 34 + 16;
+		Track = 34 + 6;
 	};
 
 	Coefficient = 0.5 * Vector3.yAxis; --- the 0.5 of 0.5*g*t*t
@@ -52,8 +52,8 @@ function Bullet.write(b: buffer, options: types.WriteOptions)
 	if options.Position then
 		Encoder.writevector3(b, 10, options.Position)
 	end
-	if options.Direction then
-		Encoder.writevector3(b, 22, options.Direction)
+	if options.Vector then
+		Encoder.writevector3(b, 22, options.Vector)
 	end
 end
 
@@ -65,7 +65,7 @@ function Bullet.unpack(b: buffer)
 		Type = buffer.readu8(b, 5);
 		Time = buffer.readf32(b, 6);
 		Position = Encoder.readvector3(b, 10);
-		Direction = Encoder.readvector3(b, 22);
+		Vector = Encoder.readvector3(b, 22);
 	}
 end
 
@@ -185,7 +185,7 @@ function Bullet.beamsolve(b: buffer)
 end
 
 --- returns an empty bezier bullet \
---- bullet byte range for direction `[22, 26, 30]` is used to hold the bezier endpoint \
+--- target vector byte range `[22, 26, 30]` is used to hold the bezier endpoint \
 --- type `4`
 function Bullet.bezier(time: number?)
 	local b = buffer.create(Bullet.Widths.Bezier)
@@ -243,7 +243,7 @@ function Bullet.beziersolve(b: buffer, dt: number?)
 end
 
 --- returns an empty track bullet \
---- bullet byte range for direction `[22, 26, 30]` is used to hold the bullet speed (`(Vector3.zAxis * speed).Magnitude`) \
+--- target vector byte range `[22, 26, 30]` is used to hold the bullet tracking position \
 --- type `5`
 function Bullet.track(time: number?): buffer
 	local b = buffer.create(Bullet.Widths.Track)
@@ -256,12 +256,12 @@ function Bullet.track(time: number?): buffer
 end
 
 --- writes properties to track bullet
-function Bullet.trackwrite(b: buffer, target: string?, relativeposition: Vector3?)
+function Bullet.trackwrite(b: buffer, target: string?, speed: number?)
 	if target then
 		buffer.writestring(b, 34, target, 4)
 	end
-	if relativeposition then
-		Encoder.writevector3(b, 38, relativeposition)
+	if speed then
+		buffer.writeu16(b, 38, speed)
 	end
 end
 
@@ -269,8 +269,8 @@ end
 --- interpolant is clamped within bounds of `[0, 1]` such that this bullet will never overshoot its target
 function Bullet.tracksolve(b: buffer, solve: (target: string, relativeposition: Vector3) -> Vector3, dt: number?)
 	local position = Encoder.readvector3(b, 10)
-	local targetposition = solve(buffer.readstring(b, 34, 4), Encoder.readvector3(b, 38))
-	local speed = Encoder.readvector3(b, 22).Magnitude
+	local targetposition = solve(buffer.readstring(b, 34, 4), Encoder.readvector3(b, 22))
+	local speed = buffer.readu16(b, 38)
 
 	local start = buffer.readf32(b, 6)
 	local now = Time.now()

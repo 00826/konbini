@@ -17,8 +17,8 @@ export type WriteOptions = {
 	Time: number?;
 	--- initial position
 	Position: Vector3?;
-	--- initial direction
-	Direction: Vector3?;
+	--- target vector
+	Vector: Vector3?;
 }
 
 --- Collisions.luau
