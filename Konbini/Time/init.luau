@@ -13,19 +13,19 @@ local TimeRemote = script:WaitForChild("TimeRemote")
 --- server-authoritative global time
 local Time = {
 	rate = 1/60;
-	buffer = buffer.create(4);
+	buffer = buffer.create(8);
 
 	incomingreplicationlag = 80;
 }
 
 --- returns konbini time
 function Time.now(latency: number?): number
-	return buffer.readf32(Time.buffer, 0) + (latency or 0)
+	return buffer.readf64(Time.buffer, 0) + (latency or 0)
 end
 
 --- extends expiry `x` by `time` seconds, where `x`, if behind konbini time, is set to current konbini time
 function Time.extend(x: number, time: number)
-	return math.max(x or 0, buffer.readf32(Time.buffer, 0)) + time
+	return math.max(x or 0, buffer.readf64(Time.buffer, 0)) + time
 end
 
 --- applies debounce against instance `i` \
@@ -89,7 +89,7 @@ end
 if IsServer then
 	local elapsed = 0
 	local function UpdateTime(t, dt)
-		buffer.writef32(Time.buffer, 0, t)
+		buffer.writef64(Time.buffer, 0, t)
 
 		elapsed += dt
 		if elapsed < Time.rate then return end
@@ -101,7 +101,7 @@ if IsServer then
 	RunService.Stepped:Connect(UpdateTime)
 else
 	TimeRemote.OnClientEvent:Connect(function(tBuffer: buffer)
-		buffer.writef32(Time.buffer, 0, buffer.readf32(tBuffer, 0))
+		buffer.writef64(Time.buffer, 0, buffer.readf64(tBuffer, 0))
 	end)
 end
 
