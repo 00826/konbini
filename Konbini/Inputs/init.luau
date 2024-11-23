@@ -62,12 +62,11 @@ local Inputs = {
 	DoubleTapTime = 0.2;
 	
 	MobileScreenCenter = nil :: (() -> Vector2)?;
-	AssistMousePosition = nil :: (() -> Vector2)?;
 
 	--- write externally
 	MoveVector = Vector3.zero;
 
-	CursorBlacklist = table.create(8);
+	CursorBlacklist = table.create(16);
 	GuiInset = Vector2.zero;
 
 	Aliases = require(script.Aliases);
@@ -109,11 +108,15 @@ function Inputs.cursorblacklistadd(thing: Instance)
 	if not table.find(Inputs.CursorBlacklist, thing) then
 		table.insert(Inputs.CursorBlacklist, thing)
 	end
+
+	BlacklistParams.FilterDescendantsInstances = Inputs.CursorBlacklist
 end
 
 --- removes instance from cursor blacklist
 function Inputs.cursorblacklistremove(thing: Instance)
 	table.remove(Inputs.CursorBlacklist, table.find(Inputs.CursorBlacklist, thing) or 0)
+
+	BlacklistParams.FilterDescendantsInstances = Inputs.CursorBlacklist
 end
 
 --- packs cursor vectors into a buffer
@@ -326,7 +329,7 @@ function Inputs.togglemobileinterface(thumbstickenabled: boolean?, jumpbuttonena
 end
 
 --- connects on-screen gamepad \
---- emits keycodes `ButtonY`, `ButtonX`, `ButtonB`, `ButtonA`, `ButtonR3`, `ButtonL1`, `ButtonR1`, `ButtonL2`, `ButtonR2`
+--- emits keycodes `ButtonY`, `ButtonX`, `ButtonB`, `ButtonA`, `ButtonL1`, `ButtonR1`, `ButtonL2`, `ButtonR2`, `ButtonR3`
 --- ```
 --- --- Gamepad2D: GuiObject
 --- --- ┗┳ [KeyId]: GuiObject
@@ -406,7 +409,7 @@ else
 		Inputs.GuiInset = GuiService:GetGuiInset()
 	end)
 
-	local function UpdateMouse(inputobject: InputObject)
+	local function updatemouse(inputobject: InputObject)
 		local screenposition = Vector2.zero
 		if Inputs.PlatformId == 2 then
 			local inputposition: Vector2|Vector3 = inputobject.Position
@@ -417,20 +420,16 @@ else
 		else
 			screenposition = UIS:GetMouseLocation() - Inputs.GuiInset
 		end
-
-		if Inputs.AssistMousePosition then
-			screenposition = Inputs.AssistMousePosition() or screenposition
-		end
 	
 		local unitray = Camera:ScreenPointToRay(screenposition.X, screenposition.Y)
-		local result = rayblacklist(unitray.Origin, unitray.Direction * 10000)
+		local result = rayblacklist(unitray.Origin, unitray.Direction * 0x800) --- ray length 2048 units
 
 		if result then
 			Cursor.Position = result.Position
 			Cursor.Normal = result.Normal
 			Cursor.Instance = result.Instance
 		else
-			Cursor.Position = unitray.Origin + (unitray.Direction * 10000)
+			Cursor.Position = unitray.Origin + (unitray.Direction * 0x800)
 			Cursor.Normal = Vector3.yAxis
 			Cursor.Instance = nil
 		end
@@ -454,15 +453,15 @@ else
 			end
 		end
 
-		UpdateMouse(inputobject)
+		updatemouse(inputobject)
 	end)
 	UIS.InputEnded:Connect(function(...)
 		Hook("k_InputEnded").Fire(...)
-		UpdateMouse(...)
+		updatemouse(...)
 	end)
 	UIS.InputChanged:Connect(function(...)
 		Hook("k_InputChanged").Fire(...)
-		UpdateMouse(...)
+		updatemouse(...)
 	end)
 	UIS.TouchStarted:Connect(function(...)
 		if not Inputs.sinkthumbstickcheck(...) then return end

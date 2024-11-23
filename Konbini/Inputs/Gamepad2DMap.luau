@@ -13,5 +13,5 @@ return {
 	["L2"] = Enum.KeyCode.ButtonL2;
 	["R2"] = Enum.KeyCode.ButtonR2;
 
-	["L3"] = Enum.KeyCode.ButtonL3;
+	["R3"] = Enum.KeyCode.ButtonR3;
 } :: {[string]: Enum.KeyCode}

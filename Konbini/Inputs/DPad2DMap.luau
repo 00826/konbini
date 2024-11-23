@@ -8,5 +8,5 @@ return {
 	["Right"] = Enum.KeyCode.DPadRight;
 	["Down"] = Enum.KeyCode.DPadDown;
 
-	["R3"] = Enum.KeyCode.ButtonR3;
+	["L3"] = Enum.KeyCode.ButtonL3;
 } :: {[string]: Enum.KeyCode}
