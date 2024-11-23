@@ -29,13 +29,11 @@
 |[Inputs.luau](./Konbini/Inputs/init.luau)|`UserInputService` wrapper, universal mouse position|`Konbini.Hook`|❌|
 |[Instance.luau](./Konbini/Instance/init.luau)|`Instance` library extension|-|❌|
 |[Interface.luau](./Konbini/Interface/init.luau)|user-interface helper functions|-|❌|
-|[Keyframe.luau](./Konbini/Keyframe/init.luau)|a more versatile tween function that supports more data types|-|❌|
 |[Math.luau](./Konbini/Math/init.luau)|`math` library extension|-|❌|
 |[Misc.luau](./Konbini/Misc/init.luau)|collection of miscellaneous functions|-|❌|
 |[Network.luau](./Konbini/Network/init.luau)|straightforward networking interface<br>tired of referencing remotes on every new script|`Konbini.await`|❌|
 |[Table.luau](./Konbini/Table/init.luau)|`table` library extension|-|❌|
 |[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|❌|
-|*[Tween.luau](./Konbini/Tween/init.luau)*|`TweenService` wrapper|-|❌|
 |[Vector3.luau](./Konbini/Vector3/init.luau)|`Vector3` library extension|-|❌|
 |[Zone.luau](./Konbini/Zone/init.luau)|server-defined, client-authoritative load zones|-|❌|
 

@@ -79,6 +79,13 @@ function Time.latency(client: Player?): number
 	end
 end
 
+--- calls function `n` times, with `x` seconds between each call
+function Time.stagger<A...>(n: number, x: number, f: (A...) -> (), ...: A...)
+	for i = 0, n - 1, 1 do
+		task.delay(x * i, f, ...)
+	end
+end
+
 if IsServer then
 	local elapsed = 0
 	local function UpdateTime(t, dt)

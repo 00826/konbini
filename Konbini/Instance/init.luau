@@ -6,6 +6,7 @@ local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
 local Ball = script:WaitForChild("BallSocketConstraint")
 local Motor = script:WaitForChild("Motor6D")
@@ -13,17 +14,147 @@ local MoverRemote = script:WaitForChild("MoverRemote")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
+local KeyframeBucket = {} :: {[Instance]: types.KeyframeInfo}
+local Keyframable = table.freeze{
+	"number";
+	"boolean";
+	"vector";
+
+	"CFrame";
+	"Color3";
+	"ColorSequence";
+	"EnumItem";
+	"NumberRange";
+	"NumberSequence";
+	"UDim";
+	"UDim2";
+}
+
+local function iskeyframable<T>(a: T): boolean
+	local h, k = type(a), typeof(a)
+	for _, t in Keyframable do
+		if h == t then
+			return true
+		elseif k == t then
+			return true
+		end
+	end
+	return false
+end
+
+@native
+local function lerp(initial: number, goal: number, a: number)
+	return (1 - a) * initial + a * goal
+end
+
+local function lerpcolorsequencekeypoint(initial: ColorSequenceKeypoint, goal: ColorSequenceKeypoint, a: number)
+	return ColorSequenceKeypoint.new(lerp(initial.Time, goal.Time, a), initial.Value:Lerp(goal.Value, a))
+end
+
+local function lerpnumbersequencekeypoint(initial: NumberSequenceKeypoint, goal: NumberSequenceKeypoint, a: number)
+	return NumberSequenceKeypoint.new(lerp(initial.Time, goal.Time, a), lerp(initial.Value, goal.Value, a), lerp(initial.Envelope, goal.Envelope, a))
+end
+
+local function getvalue(initial: any, goal: any, a: number, style: Enum.EasingStyle, direction: Enum.EasingDirection): any
+	a = TweenService:GetValue(a, style, direction)
+
+	local h, k = type(initial), typeof(initial)
+
+	if h == "number" then
+		return lerp(initial, goal, a)
+	elseif h == "boolean" then
+		if (initial == goal) then
+			return goal
+		elseif (initial == true) and (goal == false) then
+			return a < 1
+		elseif (initial == false) and (goal == true) then
+			return a >= 1
+		end
+	elseif h == "vector" then
+		return initial:Lerp(goal, a)
+	elseif k == "CFrame" then
+		return initial:Lerp(goal, a)
+	elseif k == "Color3" then
+		return initial:Lerp(goal, a)
+	elseif k == "ColorSequence" then
+		local keys0 = initial.Keypoints
+		local keys1 = goal.Keypoints :: {ColorSequenceKeypoint}
+
+		local len = #keys0
+		assert(len == #keys1, "initial and goal ColorSequences must have the same # of ColorSequenceKeypoints")
+
+		local sequencekeys = table.create(len)
+		for i, csk in ipairs(keys0) do
+			sequencekeys[i] = lerpcolorsequencekeypoint(csk, keys1[i], a)
+		end
+
+		return ColorSequence.new(sequencekeys)
+	elseif k == "EnumItem" then
+		return a < 1 and initial or goal
+	elseif k == "NumberRange" then
+		return NumberRange.new(lerp(initial.Min, goal.Min, a), lerp(initial.Max, goal.Max, a))
+	elseif k == "NumberSequence" then
+		local keys0 = initial.Keypoints
+		local keys1 = goal.Keypoints :: {NumberSequenceKeypoint}
+
+		local len = #keys0
+		assert(len == #keys1, "initial and goal NumberSequences must have the same # of NumberSequenceKeypoints")
+
+		local sequencekeys = table.create(len)
+		for i, nsk in ipairs(keys0) do
+			sequencekeys[i] = lerpnumbersequencekeypoint(nsk, keys1[i], a)
+		end
+
+		return NumberSequence.new(sequencekeys)
+	elseif k == "UDim" then
+		return UDim.new(lerp(initial.Scale, goal.Scale, a), lerp(initial.Offset, goal.Offset, a))
+	elseif k == "UDim2" then
+		return initial:Lerp(goal, a)
+	end
+
+	error(`untweenable property (this should not happen) type({h}) typeof({k})`)
+end
+
+local function interpolate(object: Instance, keyframeinfo: types.KeyframeInfo, dt: number)
+	local framerate = keyframeinfo.Framerate
+	keyframeinfo.Framerule += dt
+	keyframeinfo.Elapsed += dt
+	if keyframeinfo.Framerule < framerate then return end
+	keyframeinfo.Framerule -= framerate
+
+	local a = math.clamp(keyframeinfo.Elapsed / keyframeinfo.Time, 0, 1)
+	local style = keyframeinfo.Style
+	local direction = keyframeinfo.Direction
+
+	for property, initial in keyframeinfo.Initial do
+		local goal = keyframeinfo.Goal[property]
+		local value = getvalue(initial, goal, a, style, direction)
+		if value ~= nil then
+			(object::any)[property] = value
+		end
+	end
+
+	if a >= 1 then
+		table.clear(KeyframeBucket[object] or table.create(0))
+		KeyframeBucket[object] = nil
+
+		if keyframeinfo.Destruct then
+			task.delay(keyframeinfo.Destruct, function()
+				object:Destroy()
+			end)
+		end
+	end
+end
+
 --- ### Instance.luau
 ---
 --- extension of Instance library & instance-related functions
 local InstanceK = {
-	Movers = {};
-	emitContainer = workspace;
-}
+	Movers = script:WaitForChild("Movers");
+	EmitContainer = workspace;
 
-for _, BodyMover in script:WaitForChild("Movers"):GetChildren() do
-	InstanceK.Movers[BodyMover.ClassName] = BodyMover
-end
+	KeyframeFramerate = 1/30;
+}
 
 --- recursive `Instance.new()` using instance tree
 function InstanceK.new(tree: types.Tree): Instance
@@ -37,7 +168,7 @@ function InstanceK.new(tree: types.Tree): Instance
 		--- yes, these checks make the function very slow
 		--- but property write errors on yet-to-be-parented instances are silent and yield indefinitely
 		--- so its preferred to have something that works versus something thats fast
-		if not InstanceK.IsPropertyOf(newinstance, Property) then
+		if not InstanceK.ispropertyof(newinstance, Property) then
 			warn(`{debug.traceback()}{Property} is not a property of {tree.ClassName} "{tree.Name or tree.ClassName}"`)
 			continue
 		end
@@ -50,9 +181,9 @@ function InstanceK.new(tree: types.Tree): Instance
 	end
 
 	if tree.Children then
-		for _, v in pairs(tree.Children) do
-			v.Parent = newinstance
-			InstanceK.new(v)
+		for _, branch in (tree.Children::{[string]: types.Tree}) do
+			branch.Parent = newinstance
+			InstanceK.new(branch)
 		end
 	end
 
@@ -62,38 +193,40 @@ function InstanceK.new(tree: types.Tree): Instance
 end
 
 --- returns instance at the end of path `"path/to/instance"`, beginning at root `inst`
-function InstanceK.Path(inst: Instance, Path: string, Yield: boolean?): Instance?
-	for _, Ref in ipairs(string.split(Path, "/")) do
-		local new = Yield and inst:WaitForChild(Ref) or inst:FindFirstChild(Ref)
+function InstanceK.path(inst: Instance, path: string, yield: boolean?): Instance?
+	for _, ref in ipairs(string.split(path, "/")) do
+		local new = yield and inst:WaitForChild(ref) or inst:FindFirstChild(ref)
 
 		if not new then
-			warn(`Ref "{Ref}" is not a member of {inst.ClassName} "{inst}"`)
+			warn(`ref "{ref}" is not a member of {inst.ClassName} "{inst}"`)
 			return nil
 		end
 		inst = new
 	end
+
 	return inst
 end
 
 --- returns true if property is a property of instance
-function InstanceK.IsPropertyOf(inst: Instance, property: string): boolean
+function InstanceK.ispropertyof(inst: Instance, property: string): boolean
 	return pcall(function() return (inst :: any)[property] end)
 end
 
 --- welds b to a at offset \
 --- `a`: "root" part \
 --- `b`: "loose" part
-function InstanceK.Weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstraint
+function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstraint
 	local newweld = Weld:Clone()
 	b.CFrame = a.CFrame * (offset or CFrame.identity)
 	newweld.Part0 = b
 	newweld.Part1 = a
 	newweld.Parent = b
+
 	return newweld
 end
 
---- iterative `Property` setter
-function InstanceK.Properties(inst: Instance, properties: {[string]: any})
+--- iterative property setter
+function InstanceK.properties(inst: Instance, properties: {[string]: any})
 	for k, v in properties do
 		if k == "Parent" then continue end
 		(inst :: any)[k] = v
@@ -103,15 +236,15 @@ function InstanceK.Properties(inst: Instance, properties: {[string]: any})
 	end
 end
 
---- iterative `Attribute` setter
-function InstanceK.Attributes(inst: Instance, attributes: {[string]: any})
+--- iterative attribute setter
+function InstanceK.attributes(inst: Instance, attributes: {[string]: any})
 	for k, v in attributes do
 		inst:SetAttribute(k, v)
 	end
 end
 
 --- yields until child of class is parented under instance
-function InstanceK.WaitForChildOfClass(inst: Instance, classname: string, timeout: number?): Instance?
+function InstanceK.waitforchildofclass(inst: Instance, classname: string, timeout: number?): Instance?
 	local thing, time = inst:FindFirstChildOfClass(classname), timeout or 10
 	if not thing then
 		repeat
@@ -119,49 +252,40 @@ function InstanceK.WaitForChildOfClass(inst: Instance, classname: string, timeou
 			thing = inst:FindFirstChildOfClass(classname)
 		until (thing ~= nil) or (time < 0)
 	end
+
 	return thing
 end
 
---- returns all children of instance whose names match vararg
-function InstanceK.GetChildrenWithName(inst: Instance, ...: string): {Instance}
-	local names = {...}
-	local children = inst:GetChildren()
-	local matches = table.create(#children)
-
-	for _, thing in children do
-		if not table.find(names, thing.Name) then continue end
-
-		table.insert(matches, thing)
+--- returns first child of instance where `comp(a) -> true`
+function InstanceK.findfirstchildwithcase(inst: Instance, comp: (a: Instance) -> boolean): Instance?
+	for _, thing in inst:GetChildren() do
+		if comp(thing) then return thing end
 	end
 
-	return matches
-end
-
---- returns all children of instance whose classnames match vararg
-function InstanceK.GetChildrenOfClass(inst: Instance, ...: string): {Instance}
-	local names = {...}
-	local children = inst:GetChildren()
-	local matches = table.create(#children)
-
-	for _, thing in children do
-		if not table.find(names, thing.ClassName) then continue end
-
-		table.insert(matches, thing)
-	end
-
-	return matches
-end
-
---- returns first child of instance where `f(thing) -> true`
-function InstanceK.FindFirstChildWithCase(inst: Instance, f: (thing: Instance) -> boolean): Instance?
-	for _, thing: Instance in inst:GetChildren() do
-		if string.sub(thing.Name, 1, 1) == "_" then continue end
-		if f(thing) then return thing end
-	end
 	return
 end
 
---- recursively searches for the highest ancestor `ancestor` of Instance `inst` whose ClassName property matches string `ClassName`
+--- returns children of instance where `comp(a) -> true`
+function InstanceK.getchildrenwithcase(inst: Instance, comp: (a: Instance) -> boolean)
+	local things = inst:GetChildren()
+	local list = table.create(#things)
+	for _, thing in things do
+		if comp(thing) == false then continue end
+		table.insert(list, thing)
+	end
+
+	return list
+end
+
+--- destroys children of instance where `comp(a) -> true`
+function InstanceK.clearchildrenwithcase(inst: Instance, comp: (a: Instance) -> boolean)
+	for _, thing in inst:GetChildren() do
+		if comp(thing) == false then continue end
+		thing:Destroy()
+	end
+end
+
+--- recursively searches for the highest ancestor of class
 --- ```
 --- --- Fish: Model
 --- --- ┣━ Scales: Part
@@ -170,12 +294,12 @@ end
 --- ---  ┣━ RightFin: Part
 --- ---  ┗━ LeftFin: Part
 --- --- ┗━ Animator: Animator
---- InstanceK.FindHighestAncestorOfClass(RightFin, "Model") --> Fish
+--- InstanceK.findhighestancestorofclass(RightFin, "Model") --> Fish
 --- ```
-function InstanceK.FindHighestAncestorOfClass(inst: Instance, classname: string): Instance?
+function InstanceK.findhighestancestorofclass(inst: Instance, classname: string): Instance?
 	local ancestor = inst:FindFirstAncestorOfClass(classname)
 	if ancestor then
-		local thisancestor = InstanceK.FindHighestAncestorOfClass(ancestor, classname)
+		local thisancestor = InstanceK.findhighestancestorofclass(ancestor, classname)
 		if not thisancestor then
 			return ancestor
 		else
@@ -183,89 +307,6 @@ function InstanceK.FindHighestAncestorOfClass(inst: Instance, classname: string)
 		end
 	end
 	return ancestor
-end
-
---- returns desired parents of things
-function InstanceK.FindParentsOfClass(things: {Instance | RaycastResult}, classname: string, ignore: Instance?): {Instance}
-	local matches = table.create(#things)
-
-	for _, thing in things do
-		local parent = nil
-		if typeof(thing) == "RaycastResult" then
-			parent = thing.Instance.Parent
-		else
-			parent = thing.Parent
-		end
-
-		if not parent then continue end
-		if not parent:IsA(classname) then continue end
-		if table.find(matches, parent) then continue end
-		if parent == ignore then continue end
-
-		table.insert(matches, parent)
-	end
-
-	return matches
-end
-
---- Instance:IsDescendantOf() but it accepts varargs
-function InstanceK.IsDescendantOf(inst: Instance, ...: Instance): boolean
-	for _, thing in {...} do
-		if inst:IsDescendantOf(thing) then
-			return true
-		end
-	end
-	return false
-end
-
---- ClearAllChildrenWithNames()
-function InstanceK.ClearChildrenWithName(inst: Instance, name: string)
-	local thingwithclassname = inst:FindFirstChild(name)
-	if thingwithclassname then
-		thingwithclassname:Destroy()
-		InstanceK.ClearChildrenWithName(inst, name)
-	else
-		return
-	end
-end
-
---- ClearAllChildrenWithoutNames()
-function InstanceK.ClearWithoutName(inst: Instance, ...: string)
-	local names = {...}
-	for _, thing: Instance in inst:GetChildren() do
-		if string.sub(thing.Name, 1, 1) == "_" then continue end
-		if table.find(names, thing.Name) then continue end
-		thing:Destroy()
-	end
-end
-
---- ClearChildrenWithClassName()
-function InstanceK.ClearChildrenWithClassName(inst: Instance, classname: string)
-	local thingwithclassname = inst:FindFirstChildOfClass(classname)
-	if thingwithclassname then
-		thingwithclassname:Destroy()
-		InstanceK.ClearChildrenWithClassName(inst, classname)
-	else
-		return
-	end
-end
-
---- ClearChildrenWithoutClassName()
-function InstanceK.ClearChildrenWithoutClassName(inst: Instance, classname: string)
-	for _, thing: Instance in inst:GetChildren() do
-		if string.sub(thing.Name, 1, 1) == "_" then continue end
-		if thing.ClassName == classname then continue end
-		thing:Destroy()
-	end
-end
-
---- ClearChildrenWithCase()
-function InstanceK.ClearChildrenWithCase(inst: Instance, shoulddelete: (thing: Instance) -> boolean)
-	for _, thing: Instance in inst:GetChildren() do
-		if string.sub(thing.Name, 1, 1) == "_" then continue end
-		if shoulddelete(thing) == false then continue end
-		thing:Destroy()
-	end
 end
 
 --- emits sound at optional position or instance
@@ -318,12 +359,12 @@ function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart|M
 	local real = template:Clone()
 
 	if typeof(at) == "Vector3" then
-		real.Parent = InstanceK.emitContainer
+		real.Parent = InstanceK.EmitContainer
 		if real:IsA("BasePart") then
 			real.Position = at
 		end
 	elseif typeof(at) == "CFrame" then
-		real.Parent = InstanceK.emitContainer
+		real.Parent = InstanceK.EmitContainer
 		if real:IsA("BasePart") then
 			real.CFrame = at
 		end
@@ -333,7 +374,7 @@ function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart|M
 			real.Anchored = false
 			real.Massless = true
 
-			InstanceK.Weld(at, real)
+			InstanceK.weld(at, real)
 		end
 	elseif at:IsA("Model") then
 		real.Parent = at
@@ -341,7 +382,7 @@ function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart|M
 			real.Anchored = false
 			real.Massless = true
 
-			InstanceK.Weld(at.PrimaryPart, real)
+			InstanceK.weld(at.PrimaryPart, real)
 		end
 	else
 		real:Destroy()
@@ -477,7 +518,7 @@ function InstanceK.applybodymover(target: Model|BasePart, class: types.MoverClas
 		end
 	end
 
-	local newmover = InstanceK.Movers[class]:Clone()
+	local newmover = InstanceK.Movers:FindFirstChildOfClass(class):Clone()
 
 	if properties then
 		for k, v in properties do
@@ -495,9 +536,103 @@ function InstanceK.applybodymover(target: Model|BasePart, class: types.MoverClas
 	return newmover
 end
 
+--- clears bodymovers from primarypart of target
+function InstanceK.clearbodymovers(target: Model|BasePart, class: types.MoverClass)
+	local rootpart
+	if target:IsA("Model") then
+		rootpart = target.PrimaryPart
+	else
+		rootpart = target
+	end
+	assert(rootpart, `{target} has no PrimaryPart`)
+
+	for _, thing in rootpart:GetChildren() do
+		if thing.ClassName == class then
+			thing:Destroy()
+		end
+	end
+end
+
+--- equivalent to `TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()` \
+--- `...[1]`: `Enum.EasingStyle` \
+--- `...[2]`: `Enum.EasingDirection` \
+--- `...[3...]`: (remainder of `TweenInfo.new()` args)
+function InstanceK.tween(object: Instance, properties: {[string]: any}, time: number, ...)
+	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
+end
+
+--- transforms properties of object toward goal with respect to framerate \
+--- `time(?=1)`: seconds for keyframes to complete \
+--- `style(?=Enum.EasingDirection.Linear)`: effect easingstyle \
+--- `direction(?=Enum.EasingDirection.Out)`: effect easingdirection \
+--- `framerate(?=InstanceK.KeyframeFramerate)`: effect framerate \
+--- `destruct(?=nil)`: destroy object `n` seconds after effect completion \
+--- all transformations are deferred \
+--- \
+--- returns a mutable `KeyframeInfo` table
+function InstanceK.keyframe(object: Instance, goal: {[string]: types.KeyframeType}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?, destruct: number?): types.KeyframeInfo
+	assert(not IsServer, "InstanceK.keyframe() can only be called on client")
+
+	if KeyframeBucket[object] then
+		KeyframeBucket[object] = nil
+	end
+
+	local keyframeinfo = {
+		Framerate = framerate or InstanceK.KeyframeFramerate;
+		Framerule = 0;
+
+		Time = time or 1;
+		Elapsed = 0;
+		IsPaused = false;
+
+		Style = style or Enum.EasingStyle.Linear;
+		Direction = direction or Enum.EasingDirection.Out;
+
+		Initial = {};
+		Goal = table.clone(goal);
+		Destruct = destruct;
+	}
+
+	keyframeinfo.Reset = function()
+		keyframeinfo.Elapsed = 0
+	end;
+	keyframeinfo.Pause = function()
+		keyframeinfo.IsPaused = true
+	end;
+	keyframeinfo.Resume = function()
+		for property in goal do
+			keyframeinfo.Initial[property] = (object::any)[property]
+		end
+		keyframeinfo.IsPaused = false
+	end;
+	keyframeinfo.Stop = function()
+		table.clear(KeyframeBucket[object] or table.create(0))
+		KeyframeBucket[object] = nil
+	end;
+
+	for property, value in goal do
+		if iskeyframable(value) then
+			keyframeinfo.Initial[property] = (object::any)[property]
+		else
+			warn(`skipping untweenable property "{property}" type({type(value)}) typeof({typeof(value)})`)
+		end
+	end
+
+	KeyframeBucket[object] = keyframeinfo
+
+	return keyframeinfo
+end
+
 if IsServer then
 else
 	MoverRemote.OnClientEvent:Connect(InstanceK.applybodymover)
+
+	RunService.Heartbeat:Connect(function(dt)
+		for object, keyframeinfo in KeyframeBucket do
+			if keyframeinfo.IsPaused then continue end
+			task.defer(interpolate, object, keyframeinfo, dt)
+		end
+	end)
 end
 
 return InstanceK
