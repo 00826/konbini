@@ -22,18 +22,17 @@
 |-|-|-|-|
 |34|-|-|*bytes carried from empty bullet*|
 |-|-|-|-|
-|34|u16|lifetime|how long this bullet will travel before it is destroyed|
-|36|i16|gravity|force of gravity acting on this bullet|
-|38|i8|ylimit|bullet will be destroyed if it goes below this y-value|
+|34|i16|gravity|force of gravity acting on this bullet|
+|36|i8|ylimit|bullet will be destroyed if it goes below this y-value|
 |-|-|-|-|
-|39|-|-|buffer describing a ballistic bullet|
+|37|-|-|buffer describing a ballistic bullet|
 
 ### beam
 |offset/total|type|alias|desc|
 |-|-|-|-|
 |34|-|-|*bytes carried from empty bullet*|
 |-|-|-|-|
-|34|u16|speed|speed of this beam|
+|34|u16|speed|speed of this bullet|
 |-|-|-|-|
 |36|-|-|buffer describing a beam bullet|
 
@@ -42,8 +41,8 @@
 |-|-|-|-|
 |34|-|-|*bytes carried from empty bullet*|
 |-|-|-|-|
-|[34, 38, 42]|f32|cX, cY, cZ|bezier control point|
-|46|u16|speed|speed of this bezier bullet|
+|[34, 38, 42]|f32|cX, cY, cZ|control point of this bullet|
+|46|u16|speed|speed of this bullet|
 |-|-|-|-|
 |48|-|-|buffer describing a bezier bullet|
 
@@ -53,6 +52,6 @@
 |34|-|-|*bytes carried from empty bullet*|
 |-|-|-|-|
 |34|string4|target|4-character id of target|
-|38|u16|speed|speed of this tracking bullet|
+|38|u16|speed|speed of this bullet|
 |-|-|-|-|
 |40|-|-|buffer describing a tracking bullet|

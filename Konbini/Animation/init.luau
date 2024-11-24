@@ -98,7 +98,7 @@ function Animation.fitremaining(animtrack: AnimationTrack, time: number)
 	animtrack:AdjustSpeed((animtrack.Length - animtrack.TimePosition) / time)
 end
 
---- returns an empty animation instance, parented to this script
+--- returns an animation instance, parented to this script
 function Animation.create(id: string?)
 	local a = Instance.fromExisting(Empty)
 	a.Name = id or ""

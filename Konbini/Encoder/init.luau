@@ -214,7 +214,7 @@ function Encoder.readu24(b: buffer, offset: number): number
 	return int
 end
 
---- returns an empty `int16`-width matrix-buffer \
+--- returns a `int16`-width matrix-buffer \
 --- space complexity of `2 + (2*columns*rows)` \
 --- *matrix value placements start at offset `2`, as column/row info is stored in the first 2 bytes*
 function Encoder.creatematrix(columns: number, rows: number): buffer

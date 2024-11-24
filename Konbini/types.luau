@@ -8,18 +8,54 @@ export type LocomotionState =
 
 --- Bullet.luau types
 
-export type WriteOptions = {
-	--- string id
+export type BaseOptions = {
+	--- [*Bullet*] \
+	--- bullet id
 	Id: string?;
-	--- frame cycle
+	--- [*Bullet*] \
+	--- bullet update every nth frame
 	Cycle: number?;
-	--- initial time
+	--- [*Bullet*] \
+	--- bullet time
 	Time: number?;
-	--- initial position
+	--- [*Bullet*] \
+	--- bullet position
 	Position: Vector3?;
-	--- target vector
+	--- [*Bullet*] \
+	--- bullet vector
 	Vector: Vector3?;
 }
+
+export type TypeOptions = {
+	--- [*Ballistic*] \
+	--- gravity acting upon a ballistic bullet
+	Gravity: number?;
+	--- [*Ballistic*] \
+	--- y-limit of a ballistic bullet
+	Ylimit: number?;
+	--- [*Ballistic, Beam, Bezier, Track*] \
+	--- speed of any non-hitscan bullet
+	Speed: number?;
+	--- [*Bezier*] \
+	--- control point of a bezier bullet
+	Start: Vector3?;
+	--- [*Bezier*] \
+	--- control point of a bezier bullet
+	Control: Vector3?;
+	--- [*Bezier*] \
+	--- goal point of a bezier bullet
+	Goal: Vector3?;
+	--- [*Track*] \
+	--- string describing the target of a track bullet
+	Target: string?;
+}
+
+export type Bullet =
+	| "Hitscan" --- 1
+	| "Ballistic" --- 2
+	| "Beam" --- 3
+	| "Bezier" --- 4
+	| "Track" --- 5
 
 --- Collisions.luau
 
