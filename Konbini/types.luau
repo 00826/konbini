@@ -1,4 +1,4 @@
---- Animation.luau types
+--- Animation.luau
 
 export type AnimLibraryEntry = {Id: string?, Priority: Enum.AnimationPriority?, Animation: Animation?} & {[string]: any}
 export type LocomotionState = 
@@ -6,7 +6,7 @@ export type LocomotionState =
 	| "Walk"
 	| "Run"
 
---- Bullet.luau types
+--- Bullet.luau
 
 export type BaseOptions = {
 	--- [*Bullet*] \
