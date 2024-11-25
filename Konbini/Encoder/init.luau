@@ -56,7 +56,7 @@ function Encoder.writevector3(b: buffer, offset: number, value: Vector3)
 	buffer.writef32(b, offset + 8, value.Z)
 end
 
---- writes unit vector from buffer
+--- reads unit vector from buffer
 function Encoder.readunitvector(b: buffer, offset: number): Vector3
 	return Vector3.new(
 		buffer.readi8(b, offset),
@@ -71,6 +71,25 @@ function Encoder.writeunitvector(b: buffer, offset: number, value: Vector3)
 	buffer.writei8(b, offset, math.clamp(value.X * 127, -127, 127))
 	buffer.writei8(b, offset + 1, math.clamp(value.Y * 127, -127, 127))
 	buffer.writei8(b, offset + 2, math.clamp(value.Z * 127, -127, 127))
+end
+
+--- reads Vector3i24 from buffer
+function Encoder.readvector3i24(b: buffer, offset: number, precision: number?)
+	return Vector3.new(
+		Encoder.readi24(b, offset),
+		Encoder.readi24(b, offset + 3),
+		Encoder.readi24(b, offset + 6)
+	) * (precision and 1/precision or 1)
+end
+
+--- writes Vector3i24 to buffer
+function Encoder.writevector3i24(b: buffer, offset: number, value: Vector3, precision: number?)
+	if precision then
+		value *= precision
+	end
+	Encoder.writei24(b, offset, value.X)
+	Encoder.writei24(b, offset + 3, value.Y)
+	Encoder.writei24(b, offset + 6, value.Z)
 end
 
 --- reads CFrame from buffer

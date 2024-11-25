@@ -64,7 +64,7 @@ function Time.framerule(x: number, f: (...any) -> ()): RBXScriptConnection
 	return RunService.Heartbeat:Connect(frame)
 end
 
---- returns latency, in milliseconds: \
+--- returns latency, in seconds: \
 --- `in-studio, regardless of calling environment`: `Time.incomingreplicationlag` \
 --- `server`: `client:GetNetworkPing()` or `0` \
 --- `client`: `localplayer:GetNetworkPing()`
@@ -73,9 +73,9 @@ function Time.latency(client: Player?): number
 		return Time.incomingreplicationlag / 1000
 	else
 		if IsServer then
-			return client and client:GetNetworkPing() * 1000 or 0
+			return client and client:GetNetworkPing() or 0
 		end
-		return LocalPlayer:GetNetworkPing() * 1000
+		return LocalPlayer:GetNetworkPing()
 	end
 end
 
