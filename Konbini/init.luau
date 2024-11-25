@@ -12,6 +12,7 @@ return table.freeze{
 	Bullet = require(script:WaitForChild("Bullet"));
 	CFrame = require(script:WaitForChild("CFrame"));
 	Collisions = require(script:WaitForChild("Collisions"));
+	Color3 = require(script:WaitForChild("Color3"));
 	Couture = require(script:WaitForChild("Couture"));
 	Data = require(script:WaitForChild("Data"));
 	Encoder = require(script:WaitForChild("Encoder"));

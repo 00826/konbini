@@ -4,7 +4,7 @@
 
 --- ### CFrame.luau
 ---
---- CFrame convenience module
+--- extension of CFrame library
 local CFrameK = {
 	angles = table.freeze{
 		x = table.freeze{
@@ -69,6 +69,17 @@ function CFrameK.matchlookvector(cframe: CFrame, lookvector: Vector3, rate: numb
 	else
 		local axis = cframe.LookVector:Cross(lookvector)
 		return CFrame.fromAxisAngle(axis, angle * rate) * cframe.Rotation + cframe.Position
+	end
+end
+
+--- affixes numeric or vector3 volume to cframe; equvalent to: \
+--- `number`: `cframe * CFrame.new(0, 0, volume * 0.5)` \
+--- `Vector3`: `cframe * CFrame.new(0, 0, volume.Z * 0.5)`
+function CFrameK.affix(cframe: CFrame, volume: number|Vector3)
+	if type(volume) == "number" then 
+		return cframe * CFrame.new(0, 0, volume * 0.5)
+	else
+		return cframe * CFrame.new(0, 0, volume.Z * 0.5)
 	end
 end
 
