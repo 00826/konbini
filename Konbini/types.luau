@@ -59,9 +59,6 @@ export type Bullet =
 
 --- Collisions.luau
 
-export type CastShape =
-	| "Box"
-	| "Ball"
 export type CastList =
 	| "Whitelist"
 	| "Blacklist"
@@ -118,7 +115,6 @@ export type Cursor = {
 	--- instance that cursor is on
 	Instance: Instance?;
 }
-export type DynamicGamepadKey = "Y" | "X" | "B" | "A" | "L1" | "R1" | "L2" | "R2" | "R3"
 
 export type Keybind = {
 	--- real-time values that will activate this keybind \
@@ -235,10 +231,6 @@ export type Sprite = {
 export type LeftOrRight =
 	| "Left"
 	| "Right"
-
---- Math.luau
-
-export type UnitCircleVertex = { X: number, Z: number }
 
 --- Network.luau
 
