@@ -2,8 +2,6 @@
 --!native
 --!optimize 2
 
-local types = require(script.Parent.types)
-
 --- ### Math.luau
 ---
 --- extension of math library
@@ -32,40 +30,40 @@ local MathK = {
 
 --- returns cooldown value of x with respect to deltatime \
 --- solves `"%x per second"`, where `x ∈ [0, 100]`
-function MathK.cooldownrate(x: number, dt: number): number
+function MathK.cooldownrate(x: number, dt: number)
 	return dt * (100 / x)
 end
 
 --- returns regen value of x with respect to deltatime \
 --- solves `"x per second"`, where `x ∈ ℝ`
-function MathK.regenrate(x: number, dt: number): number
+function MathK.regenrate(x: number, dt: number)
 	return dt * x
 end
 
 --- returns `x ^ y` \
 --- *in contexts where `y == 2`, returns `x * x`*
-function MathK.pow(x: number, y: number): number
+function MathK.pow(x: number, y: number)
 	return y == 2 and x * x or x ^ y
 end
 
 --- returns `x ^ 0.5`
-function MathK.sqrt(x: number): number
+function MathK.sqrt(x: number)
 	return x ^ 0.5
 end
 
 --- returns interpolant with respect to deltatime (`1 - (x ^ dt)`) \
 --- `x` is ideally passed in `e-` notation form (such as `10e-11`)
-function MathK.interpolant(x: number, dt: number): number
+function MathK.interpolant(x: number, dt: number)
 	return 1 - (x ^ dt)
 end
 
 --- linearly interpolates `x` towards `y` with respect to interpolant `a`
-function MathK.lerp(x: number, y: number, a: number): number
+function MathK.lerp(x: number, y: number, a: number)
 	return (1 - a) * x + a * y;
 end
 
 --- returns `b` as an interpolant between `x` and `y`, where `b ∈ [x, y]`
-function MathK.alpha(x: number, y: number, b: number): number
+function MathK.alpha(x: number, y: number, b: number)
 	if b >= y then
 		return 1
 	elseif b <= x then
@@ -76,7 +74,7 @@ function MathK.alpha(x: number, y: number, b: number): number
 end
 
 --- maps `x` such that `x ∈ [a, b] ⟶ [c, d]`
-function MathK.map(x: number, a: number, b: number, c: number, d: number): number
+function MathK.map(x: number, a: number, b: number, c: number, d: number)
 	return (x - a) * (d - c) / (b - a) + c;
 end
 
@@ -95,9 +93,10 @@ end
 --- `Shift(5, 1, 6) -> 6` \
 --- `Shift(5, 2, 6) -> 1` \
 --- `Shift(1, -3, 6) -> 4`
-function MathK.shift(x: number, a: number, b: number): number
+function MathK.shift(x: number, a: number, b: number)
 	x += a
 	local c = x % b
+
 	return c == 0 and b or c
 end
 
@@ -105,7 +104,7 @@ end
 --- `RallyPoint(25, 24, 25) -> 0` \
 --- `RallyPoint(25, 25, 27) -> 2` \
 --- `RallyPoint(25, 25, 0) -> 1`
-function MathK.rallypoint(score: number, h: number, k: number): number
+function MathK.rallypoint(score: number, h: number, k: number)
 	if (h >= score) and (h - k >= 2) then
 		return 1
 	elseif (k >= score) and (k - h >= 2) then
@@ -119,7 +118,7 @@ end
 --- `BestOf(3, 1, 2) -> 2` \
 --- `BestOf(5, 2, 2) -> 0` \
 --- `BestOf(7, 4, 3) -> 1`
-function MathK.bestof(series: number, h: number, k: number): number
+function MathK.bestof(series: number, h: number, k: number)
 	local wins = 1 + (series // 2)
 
 	if h == wins then
@@ -133,7 +132,7 @@ end
 
 --- returns `x` scaled against limit where `a ∈ [0, ∞]` and slope scalar where `k ∈ [steep, flat]` \
 --- `y=\frac{ax}{k+x}`
-function MathK.limit(x: number, a: number, k: number): number
+function MathK.limit(x: number, a: number, k: number)
 	return (a * x) / (k + x)
 end
 
@@ -166,6 +165,7 @@ function MathK.aligncenter(x: number, reverse: boolean?): {number}
 
 			table.insert(t, i)
 		end
+
 		return t
 	end
 end
@@ -175,7 +175,7 @@ end
 --- where `x in [a, b]`: `{1}` \
 --- where `x in (b, c]`: `(1, 0]` \
 --- where `x in (c, ∞]`: `{0}`
-function MathK.falloff(x: number, a: number, b: number, c: number): number
+function MathK.falloff(x: number, a: number, b: number, c: number)
 	if x < a then
 		return x / a
 	elseif x > c then
@@ -192,7 +192,7 @@ end
 --- `t`: time \
 --- `b`: frequency \
 --- `k`: offset of wave from 0
-function MathK.sinewave(a: number, t: number, b: number, k: number): number
+function MathK.sinewave(a: number, t: number, b: number, k: number)
 	return a * math.sin(t / b) + k
 end
 
@@ -202,11 +202,12 @@ function MathK.coneradius(h: number, r: number)
 end
 
 --- scales numbersequence by `x`
-function MathK.scalenumbersequence(numbersequence: NumberSequence, x: number): NumberSequence
+function MathK.scalenumbersequence(numbersequence: NumberSequence, x: number)
 	local newsequence = {}
 	for _, keypoint in ipairs(numbersequence.Keypoints) do
 		table.insert(newsequence,NumberSequenceKeypoint.new(keypoint.Time, keypoint.Value * x))
 	end
+
 	return NumberSequence.new(newsequence)
 end
 
@@ -216,7 +217,7 @@ function MathK.rsign()
 end
 
 --- converts `x`, where `x in [0, 1]`, to a numbersequence
-function MathK.alphatonumbersequence(x: number): NumberSequence
+function MathK.alphatonumbersequence(x: number)
 	if x <= 0.01 then
 		return MathK.NumberSequence.zero
 	elseif x == 1 then
@@ -225,6 +226,7 @@ function MathK.alphatonumbersequence(x: number): NumberSequence
 		return MathK.NumberSequence.one
 	end
 	x = math.clamp(x, 0, 1)
+
 	return NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0);
 		NumberSequenceKeypoint.new(x, 0);
@@ -236,7 +238,7 @@ end
 --- returns a unit circle \
 --- *in contexts where `vertices == 1`, the vertex is placed at `x = -r`* \
 --- *in contexts where `vertices == 2`, the vertices are placed at `x = ±r`*
-function MathK.unitcircle(vertices: number, radius: number): { types.UnitCircleVertex }
+function MathK.unitcircle(vertices: number, radius: number)
 	if vertices == 1 then
 		return { {X = -radius; Z = 0;} }
 	elseif vertices == 2 then
@@ -245,14 +247,14 @@ function MathK.unitcircle(vertices: number, radius: number): { types.UnitCircleV
 
 	local step = MathK.tau / vertices
 	local tilt = math.pi / vertices
-	local V = table.create(vertices)
+	local unitcircle = table.create(vertices)
 
 	for i = 1, vertices do
 		local a = (i * step) - tilt
-		table.insert(V, { X = radius * math.cos(a); Z = radius * math.sin(a); })
+		table.insert(unitcircle, { X = radius * math.cos(a); Z = radius * math.sin(a); })
 	end
 
-	return V
+	return unitcircle
 end
 
 return table.freeze(MathK)
