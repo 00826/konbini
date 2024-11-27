@@ -2,109 +2,116 @@
 
 local types = require(script.Parent.types)
 
-local Players = game:GetService("Players")
-
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
-local await = require(script.Parent.await)
+local Players = game:GetService("Players")
 
 --- ### Network.luau
 ---
---- `RemoteEvent` wrapper
+--- remote wrapper
 local Network = {
-	Cache = {} :: {[string]: types.Remote};
-	PollTimeout = 5;
+	RemoteEvent = script:WaitForChild("RemoteEvent");
+	UnreliableRemoteEvent = script:WaitForChild("UnreliableRemoteEvent");
 }
 
-script.ChildAdded:Connect(function(Remote: types.Remote)
-	Network.Cache[Remote.Name] = Remote
-end)
-for _, Remote: types.Remote in script:GetChildren() do
-	Network.Cache[Remote.Name] = Remote
-end
-
---- sends `...` via remote to client(s) of clientarg
-function Network.toclient(remote: string, clientarg: types.ClientArg?, ...: any?)
-	local remoteevent = Network.Cache[remote]
-	if typeof(clientarg) == "nil" then
-		remoteevent:FireAllClients(...)
-	elseif typeof(clientarg) == "number" then
-		local P = Players:GetPlayerByUserId(clientarg)
-		if P then
-			remoteevent:FireClient(P, ...)
-		end
-	elseif typeof(clientarg) == "Instance" then
-		assert(clientarg:IsA("Player"))
-		remoteevent:FireClient(clientarg, ...)
-	elseif typeof(clientarg) == "table" then
-		for _, Client in clientarg do
-			if typeof(Client) == "number" then
-				local P = Players:GetPlayerByUserId(Client)
-				if P then
-					remoteevent:FireClient(P, ...)
-				end
-			else
-				remoteevent:FireClient(Client, ...)
-			end
-		end
-	elseif typeof(clientarg) == "function" then
-		for _, Client in Players:GetPlayers() do
-			if clientarg(Client) == true then
-				remoteevent:FireClient(clientarg, ...)
-			end
-		end
-	end
-end
-
---- sends `...` via remote to server
-function Network.toserver(remote: string, ...: any?)
-	local remoteevent = Network.Cache[remote]
-
-	remoteevent:FireServer(...)
-end
-
---- `server`: creates and/or connects remote to `f` with option to make the remote unreliable \
---- `client`: connects remote to `f` with option to yield until the remote is created (recommended)
-function Network.recv(remote: string, f: ((...any) -> ())?, yield: boolean?, unreliable: boolean?): RBXScriptConnection?
-	local remoteevent = Network.Cache[remote]
-
+--- sends packet related to this scope
+function Network.send(scope: string, packet: { }, unreliable: boolean?, client: types.ClientArg?)
+	local remote = unreliable and Network.UnreliableRemoteEvent or Network.RemoteEvent
 	if IsServer then
-		if not remoteevent then
-			local newremote = Instance.new(unreliable and "UnreliableRemoteEvent" or "RemoteEvent")
-			newremote.Name = remote
-			newremote.Parent = script
-
-			remoteevent = newremote
-		end
-		if f then
-			return remoteevent.OnServerEvent:Connect(f)
+		if type(client) == "nil" then --- fire all
+			remote:FireAllClients(packet)
+		elseif type(client) == "number" then --- fire by userid
+			local player = Players:GetPlayerByUserId(packet)
+			if player then
+				remote:FireClient(player, packet)
+			end
+		elseif typeof(client) == "Instance" then --- fire by player
+			assert(client:IsA("Player"), string.format("expected Player, got %s", client.ClassName))
+			remote:FireClient(client, packet)
+		elseif type(client) == "table" then --- fire by list of userids or players
+			for _, a in client do
+				if typeof(a) == "number" then
+					local player = Players:GetPlayerByUserId(a)
+					if player then
+						remote:FireClient(player, packet)
+					end
+				else
+					remote:FireClient(a, packet)
+				end
+			end
+		elseif type(client) == "function" then --- fire by case
+			for _, a in Players:GetPlayers() do
+				if client(a) == true then
+					remote:FireClient(a, packet)
+				end
+			end
+		else
+			warn(string.format("(packet dropped) error solving client: type(%s) typeof(%s)", type(client), typeof(client)), client, packet)
 		end
 	else
-		if yield and not remoteevent then
-			remoteevent = script:WaitForChild(remote)
-			Network.Cache[remote] = remoteevent
-		end
-		if f then
-			return remoteevent.OnClientEvent:Connect(f)
-		end
+		remote:FireServer(packet)
 	end
-	return
 end
 
---- `client`: sends `...` via remote to server, yielding the calling thread until a response is received, returning the values, if any, contained in the response
-function Network.poll(remote: string, ...: any?): {any}
-	local remoteevent = Network.Cache[remote]
-	local packet = nil
+--- connects function to remote-events related to this scope
+function Network.recv(scope: string, recv: ((packet: { }) -> ()) & (player: Player, packet: { }) -> ())
+	if IsServer then
+		local function serverrecv(player: Player, recvscope: string, packet: { })
+			assert(type(recvscope) == "string", string.format("expected string scope, got %s", type(recvscope)))
+			assert(type(packet) == "table", string.format("expected table packet, got %s", type(packet)))
 
-	local C = remoteevent.OnClientEvent:Once(function(...) packet = {...} end)
-	remoteevent:FireServer(...)
+			if recvscope == scope then recv(player, packet) end
+		end
+		local a = Network.RemoteEvent.OnServerEvent:Connect(serverrecv)
+		local b = Network.UnreliableRemoteEvent.OnServerEvent:Connect(serverrecv)
 
-	await(Network.PollTimeout, function() return packet ~= nil end, function(traceback: string) warn(`{traceback}: Network.poll({remote}, ...) did not receive packet after {Network.PollTimeout}s`) end)
+		return a, b
+	else
+		local function clientrecv(recvscope: string, packet: { })
+			assert(type(recvscope) == "string", string.format("expected string scope, got %s", type(recvscope)))
+			assert(type(packet) == "table", string.format("expected table packet, got %s", type(packet)))
 
-	if C then C:Disconnect() end
+			if recvscope == scope then recv(packet) end
+		end
+		local a = Network.RemoteEvent.OnServerEvent:Connect(clientrecv)
+		local b = Network.UnreliableRemoteEvent.OnServerEvent:Connect(clientrecv)
 
-	return packet and unpack(packet) or {}
+		return a, b
+	end
+end
+
+--- yields until this scope receives a packet from the server
+function Network.wait(scope: string, timeout: number?)
+	assert(not IsServer, "Network.wait() can only be called on client")
+
+	local a, b, response
+	local function scopewait(recvscope: string, packet: { })
+		assert(type(recvscope) == "string", string.format("expected string scope, got %s", type(recvscope)))
+
+		if recvscope == scope then
+			response = packet
+
+			if a then a:Disconnect() end
+			if b then b:Disconnect() end
+		end
+	end
+	a = Network.RemoteEvent.OnServerEvent:Once(scopewait)
+	b = Network.UnreliableRemoteEvent.OnServerEvent:Once(scopewait)
+
+	timeout = timeout or 5
+	assert(timeout)
+
+	repeat timeout -= task.wait() until (timeout < 0) or (response ~= nil)
+
+	if (timeout < 0) and (response == nil) then
+		warn(`Network.wait({scope}, {timeout}) timeout exhausted`)
+	end
+
+	if a then a:Disconnect() end
+	if b then b:Disconnect() end
+
+	return response
 end
 
 return Network

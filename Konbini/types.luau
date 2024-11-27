@@ -242,7 +242,6 @@ export type UnitCircleVertex = { X: number, Z: number }
 
 --- Network.luau
 
-export type Remote = RemoteEvent|UnreliableRemoteEvent|any
 export type ClientArg = 
 	| nil
 	| number
