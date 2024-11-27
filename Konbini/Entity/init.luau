@@ -14,6 +14,7 @@ local TableK = require(script.Parent.Table)
 --- entity handler, belongs as a standalone
 local Entity = {
 	Cache = {};
+	ListeningTo = {};
 	
 	Rate = 1/40;
 	Bucket = {} :: {[string]: {string}|boolean};
@@ -46,6 +47,7 @@ function Entity.create(t: {[string]: any}?): ({[string]: any}, string)
 end
 
 --- removes entity `e` stored at `Cache[id]` \
+--- disconnects, if connected, `Entity.listento(id)` \
 --- fires bind `k_EntityRemoved` *prior* to removal \
 --- does not automatically queue after removal
 function Entity.remove(id: string)
@@ -56,6 +58,7 @@ function Entity.remove(id: string)
 	end]]
 
 	Entity.Cache[id] = nil
+	table.remove(Entity.ListeningTo, table.find(Entity.ListeningTo, id) or 0)
 end
 
 --- queues keys of entity at `Cache[id]` for the next replication cycle \
@@ -145,6 +148,18 @@ function Entity.added(f: (e: any, id: string) -> ())
 	return Hook("k_EntityAdded").Connect(f)
 end
 
+--- listens to key changes for this entity
+function Entity.listento(id: string)
+	if not table.find(Entity.ListeningTo, id) then
+		table.insert(Entity.ListeningTo, id)
+	end
+end
+
+--- fires function when an entity, added by `Entity.listento`, has any of its keys changed
+function Entity.changed(f: (e: any, id: string, changes: {unknown}) -> ())
+	return Hook("k_EntityChanged").Connect(f)
+end
+
 --- fires function when an entity is removed
 function Entity.removed(f: (e: any, id: string) -> ())
 	return Hook("k_EntityRemoved").Connect(f)
@@ -158,10 +173,13 @@ end
 --- writes key-values of update `u` into `e`, such that `e` inherits all non-nil key-values of `u` \
 --- when possible, mutable data types (same-width buffers, same-type tables) have their references preserved
 function Entity.update(e: {}, u: {})
+	local changes = table.create(32)
+
 	for k, updatevalue in u do
 		local thisvalue = e[k]
 		if thisvalue == nil then
 			e[k] = updatevalue
+			table.insert(changes, k)
 		elseif thisvalue == updatevalue then
 			continue
 		else
@@ -188,8 +206,11 @@ function Entity.update(e: {}, u: {})
 					e[k] = updatevalue
 				end
 			end
+			table.insert(changes, k)
 		end
 	end
+
+	return changes
 end
 
 if IsServer then
@@ -235,12 +256,16 @@ else
 					Entity.Cache[id] = update
 					added[id] = update
 				else
-					Entity.update(Entity.Cache[id], update)
+					local changes = Entity.update(Entity.Cache[id], update)
+					if #changes > 0 then
+						Hook("k_EntityChanged").Fire(Entity.Cache[id], id, changes)
+					end
 				end
 			elseif type(update) == "boolean" then
 				if Entity.Cache[id] then
 					removed[id] = Entity.Cache[id]
 					Entity.Cache[id] = nil
+					table.remove(Entity.ListeningTo, table.find(Entity.ListeningTo, id) or 0)
 				end
 			end
 		end

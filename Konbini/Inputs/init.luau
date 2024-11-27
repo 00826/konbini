@@ -211,6 +211,25 @@ function Inputs.keybindassert(j: {[string]: {number}}, k: {[string]: types.Keybi
 	end
 end
 
+--- returns an enumeration of keybind aliases with respect to keybind table `k`
+function Inputs.keybindenumerate(keyids: {string}, k: {[string]: types.Keybind})
+	local platformid = Inputs.PlatformId
+	if platformid ~= 0 then
+		local enumeration = table.create(#keyids)
+
+		for i, keyid in ipairs(keyids) do
+			local defaults = k[keyid].Defaults :: {number}
+			local reals = k[keyid].Reals :: {number}
+			local keycode = searchkeycodes(Keycodes, reals[platformid] or defaults[platformid])
+			table.insert(enumeration, i, Inputs.Aliases[keycode::any] or keycode and keycode.Name or keyid) --- remove ::any when solver grows a brain
+		end
+
+		return enumeration
+	end
+
+	return keyids
+end
+
 --- returns associated mouse button `Enum.KeyCode` with respect to inputobject
 function Inputs.inputobjecttomousekeycode(inputobject: InputObject): Enum.KeyCode?
 	local inputtype = inputobject.UserInputType

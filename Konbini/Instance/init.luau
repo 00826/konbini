@@ -28,6 +28,8 @@ local Keyframable = table.freeze{
 	"NumberSequence";
 	"UDim";
 	"UDim2";
+	"Vector2";
+	"Vector3";
 }
 
 local function iskeyframable<T>(a: T): boolean
@@ -109,6 +111,8 @@ local function getvalue(initial: any, goal: any, a: number, style: Enum.EasingSt
 	elseif k == "UDim" then
 		return UDim.new(lerp(initial.Scale, goal.Scale, a), lerp(initial.Offset, goal.Offset, a))
 	elseif k == "UDim2" then
+		return initial:Lerp(goal, a)
+	elseif k == "Vector2" then
 		return initial:Lerp(goal, a)
 	end
 
@@ -214,10 +218,16 @@ end
 
 --- welds b to a at offset \
 --- `a`: "root" part \
---- `b`: "loose" part
-function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?): WeldConstraint
+--- `b`: "loose" part \
+--- `offset:` `b.CFrame = a.CFrame * offset` \
+--- `force:` `b.CFrame = force`
+function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame?): WeldConstraint
 	local newweld = Weld:Clone()
-	b.CFrame = a.CFrame * (offset or CFrame.identity)
+	if force then
+		b.CFrame = force
+	elseif offset then
+		b.CFrame = a.CFrame * offset
+	end
 	newweld.Part0 = b
 	newweld.Part1 = a
 	newweld.Parent = b
