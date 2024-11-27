@@ -400,6 +400,19 @@ function Encoder.readbits(x: number, field: number, range: number): string
 	return bitstring
 end
 
+--- returns value represented as a boolean
+function Encoder.toboolean(value: any): boolean
+	if not value then return false end
+	local t = type(value)
+	return
+		(t == "boolean" and value) or
+		(t == "number" and value == value) or
+		(t == "string" and value ~= "") or
+		(t == "vector" and value.Magnitude > 0) or
+		(t == "table" and next(value) ~= nil) or
+		(t == "function" and (value::any)()) or false
+end
+
 --- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
 --- `len (?=4, P(62,4)=677040)`: string length
 function Encoder.string(len: number?): string

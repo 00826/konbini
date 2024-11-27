@@ -19,22 +19,22 @@
 |[Animation.luau](./Konbini/Animation/init.luau)|aio animation handler|-|❌|
 |*[await.luau](./Konbini/await/init.luau)*|`task.await()`|-|❌|
 |[Bullet.luau](./Konbini/Bullet/init.luau)|projectile solver|`Konbini.Encoder`<br>`Konbini.Time`|❌|
-|[CFrame.luau](./Konbini/CFrame/init.luau)|`CFrame` library extension|-|❌|
+|**[CFrame.luau](./Konbini/CFrame/init.luau)**|`CFrame` library extension|-|❌|
 |[Collisions.luau](./Konbini/Collisions/init.luau)|condensed spatial queries|-|❌|
+|**[Color3.luau](./Konbini/Color3/init.luau)**|`Color3` library extension|-|❌|
 |[Couture.luau](./Konbini/Couture/init.luau)|near-client-authoritative accessory/cosmetic handling<br>game server has better things to do than weld accessories|-|❌|
 |[Data.luau](./Konbini/Data/init.luau)|glorified `ProfileService` interface|`Konbini.Hook`<br>*implied dependence on profileservice*|❌|
 |[Encoder.luau](./Konbini/Encoder/init.luau)|buffer/string manip library|-|❌|
 |[Entity.luau](./Konbini/Entity/init.luau)|entity replicator|`Konbini.Hook`<br>`Konbini.Table`|❌|
 |*[Hook.luau](./Konbini/Hook/init.luau)*|function binder|-|❌|
 |[Inputs.luau](./Konbini/Inputs/init.luau)|`UserInputService` wrapper, universal mouse position|`Konbini.Hook`|❌|
-|[Instance.luau](./Konbini/Instance/init.luau)|`Instance` library extension|-|❌|
+|**[Instance.luau](./Konbini/Instance/init.luau)**|`Instance` library extension|-|❌|
 |[Interface.luau](./Konbini/Interface/init.luau)|user-interface helper functions|-|❌|
-|[Math.luau](./Konbini/Math/init.luau)|`math` library extension|-|❌|
-|[Misc.luau](./Konbini/Misc/init.luau)|collection of miscellaneous functions|-|❌|
-|[Network.luau](./Konbini/Network/init.luau)|straightforward networking interface<br>tired of referencing remotes on every new script|`Konbini.await`|❌|
-|[Table.luau](./Konbini/Table/init.luau)|`table` library extension|-|❌|
+|**[Math.luau](./Konbini/Math/init.luau)**|`math` library extension|-|❌|
+|[Network.luau](./Konbini/Network/init.luau)|straightforward networking interface|-|❌|
+|**[Table.luau](./Konbini/Table/init.luau)**|`table` library extension|-|❌|
 |[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|❌|
-|[Vector3.luau](./Konbini/Vector3/init.luau)|`Vector3` library extension|-|❌|
+|**[Vector3.luau](./Konbini/Vector3/init.luau)**|`Vector3` library extension|-|❌|
 |[Zone.luau](./Konbini/Zone/init.luau)|server-defined, client-authoritative load zones|-|❌|
 
 ## design language

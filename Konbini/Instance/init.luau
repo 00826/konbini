@@ -633,6 +633,82 @@ function InstanceK.keyframe(object: Instance, goal: {[string]: types.KeyframeTyp
 	return keyframeinfo
 end
 
+--- `ContentProvider:PreloadAsync(assets)` \
+--- `destruct (?=false)`: clear assets after preloading? if asset is an instance, `:Destroy`
+function InstanceK.preloadasync(assets: {any}, f: ((contentstring: string, assetfetchstatus: Enum.AssetFetchStatus) -> ())?, destruct: boolean?)
+	game:GetService("ContentProvider"):PreloadAsync(assets, f) --- call jit bc its only really used once
+
+	if destruct then
+		for _, thing in assets do
+			if typeof(thing) == "Instance" then
+				thing:Destroy()
+			end
+		end
+
+		table.clear(assets)
+	end
+end
+
+--- returns a filtered list of `ContentProvider:PreloadAsync()`-digestible instances \
+--- \
+--- *"...For any of the Instances which have properties that define links to content, such as a Decal or a Sound, the engine attempts to load these assets from Roblox."*
+function InstanceK.preloadfilter(things: {Instance}): {Instance}
+	local filtered: {any} = table.create(#things)
+
+	for _, thing in things do
+		if not thing:IsA("MeshPart")
+		and not thing:IsA("SpecialMesh")
+		and not thing:IsA("Texture")
+		and not thing:IsA("Decal")
+		and not thing:IsA("ImageLabel")
+		and not thing:IsA("ImageButton")
+		and not thing:IsA("Animation")
+		and not thing:IsA("ParticleEmitter")
+		and not thing:IsA("Shirt")
+		and not thing:IsA("Pants")
+		then continue end
+		
+		table.insert(filtered, thing)
+	end
+
+	return filtered
+end
+
+--- converts asset id strings into a `ContentProvider:PreloadAsync()`-digestible array \
+--- \
+--- *"...however these strings must correspond to image assets. Attempting to load non-image assets through the use of their content ID strings will result in failure."*
+function InstanceK.preloadconvert(assetids: {string}, class: "Image"|"Sound"|"Animation"|"Mesh"): {string|Sound|Animation|SpecialMesh}
+	local assets: {any} = table.create(#assetids)
+
+	if class == "Image" then
+		table.move(assetids, 1, #assetids, 1, assets)
+	elseif class == "Sound" then
+		for _, assetid in assetids do
+			local sound = Instance.new("Sound")
+			sound.SoundId = assetid
+
+			table.insert(assets, sound)
+		end
+	elseif class == "Animation" then
+		for _, assetid in assetids do
+			local animation = Instance.new("Animation")
+			animation.AnimationId = assetid
+
+			table.insert(assets, animation)
+		end
+	elseif class == "Mesh" then
+		for _, assetid in assetids do
+			local specialmesh = Instance.new("SpecialMesh")
+			specialmesh.MeshType = Enum.MeshType.FileMesh
+			specialmesh.MeshId = assetid
+
+			table.insert(assets, specialmesh)
+		end
+	end
+
+	return assets
+end
+
 if IsServer then
 else
 	MoverRemote.OnClientEvent:Connect(InstanceK.applybodymover)

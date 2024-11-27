@@ -22,7 +22,6 @@ return table.freeze{
 	Instance = require(script:WaitForChild("Instance"));
 	Interface = require(script:WaitForChild("Interface"));
 	Math = require(script:WaitForChild("Math"));
-	Misc = require(script:WaitForChild("Misc"));
 	Network = require(script:WaitForChild("Network"));
 	Table = require(script:WaitForChild("Table"));
 	Time = require(script:WaitForChild("Time"));
