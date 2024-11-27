@@ -219,14 +219,14 @@ end
 --- welds b to a at offset \
 --- `a`: "root" part \
 --- `b`: "loose" part \
---- `offset:` `b.CFrame = a.CFrame * offset` \
+--- `offset: (?=CFrame.identity)`: `b.CFrame = a.CFrame * offset` \
 --- `force:` `b.CFrame = force`
 function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame?): WeldConstraint
 	local newweld = Weld:Clone()
 	if force then
 		b.CFrame = force
-	elseif offset then
-		b.CFrame = a.CFrame * offset
+	else
+		b.CFrame = a.CFrame * (offset or CFrame.identity)
 	end
 	newweld.Part0 = b
 	newweld.Part1 = a

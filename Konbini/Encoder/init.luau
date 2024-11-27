@@ -22,6 +22,36 @@ local Encoder = {
 	}
 }
 
+--- asserts all types of table `a` against typestring-table `typetable` \
+--- values of typetable are separated such that each type is capturable by pattern `%w+` and is compared against `typeof(a[k])` \
+--- returns table `c` of all truthful asserted values with respect to `typetable`
+--- ```lua
+--- e_assert({cats = 5}, {cats = "number"}) --- ok
+--- e_assert({}, {cats = "number|nil"}) --- ok
+--- e_assert({cats = Vector3.one}, {cats = "number|nil"}) --- error: expected typeof(a["cats"]) (Vector3) to be in set number|nil
+--- ```
+function Encoder.assert<T>(a: T & {[string]: unknown}, typetable: {[string]: string}): T & {[string]: unknown}
+	assert(type(a) == "table", string.format("expected type(a) (%s) to be table", type(a)))
+
+	local c = {}
+
+	for key, typestring in typetable do
+		local value = a[key]
+		local type = typeof(value)
+
+		string.gsub(typestring, "%w+", function(substring)
+			if substring == type then
+				c[key] = value
+				return substring
+			end
+			
+			error(string.format("expected typeof(a[%s]) (%s) to be in typeof-set %s", key, type, typestring), 2)
+		end)
+	end
+
+	return c :: T & {[string]: unknown}
+end
+
 --- returns byte width with respect to int/float types
 function Encoder.sizeof(intfloats: {types.intfloat|number}): number
 	local size = 0

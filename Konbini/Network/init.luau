@@ -50,7 +50,7 @@ function Network.send(scope: string, packet: { }, unreliable: boolean?, client: 
 			warn(string.format("(packet dropped) error solving client: type(%s) typeof(%s)", type(client), typeof(client)), client, packet)
 		end
 	else
-		remote:FireServer(packet)
+		remote:FireServer(scope, packet)
 	end
 end
 
@@ -74,8 +74,8 @@ function Network.recv(scope: string, recv: ((packet: { }) -> ()) & (player: Play
 
 			if recvscope == scope then recv(packet) end
 		end
-		local a = Network.RemoteEvent.OnServerEvent:Connect(clientrecv)
-		local b = Network.UnreliableRemoteEvent.OnServerEvent:Connect(clientrecv)
+		local a = Network.RemoteEvent.OnClientEvent:Connect(clientrecv)
+		local b = Network.UnreliableRemoteEvent.OnClientEvent:Connect(clientrecv)
 
 		return a, b
 	end
@@ -96,8 +96,8 @@ function Network.wait(scope: string, timeout: number?)
 			if b then b:Disconnect() end
 		end
 	end
-	a = Network.RemoteEvent.OnServerEvent:Once(scopewait)
-	b = Network.UnreliableRemoteEvent.OnServerEvent:Once(scopewait)
+	a = Network.RemoteEvent.OnClientEvent:Once(scopewait)
+	b = Network.UnreliableRemoteEvent.OnClientEvent:Once(scopewait)
 
 	timeout = timeout or 5
 	assert(timeout)
