@@ -21,7 +21,11 @@ local Color3K = {
 	pink = Color3.fromRGB(255, 85, 255);
 	hotpink = Color3.fromRGB(255, 85, 170);
 
-	glow = Color3.fromRGB(1000, 1000, 1000);
+	glow300 = Color3.fromRGB(300, 300, 300);
+	glow400 = Color3.fromRGB(400, 400, 400);
+	glow500 = Color3.fromRGB(500, 500, 500);
+	glow750 = Color3.fromRGB(750, 750, 750);
+	glow1000 = Color3.fromRGB(1000, 1000, 1000);
 
 	PlayerColors = table.freeze{
 		[1] = Color3.fromRGB(253, 41, 67); --- Color3.new(253/255, 41/255, 67/255);
