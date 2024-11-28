@@ -182,9 +182,11 @@ end
 --- swaps range of bytes stored at offsets `x` and `y` \
 --- `range (?=1)` range of bytes to swap
 function Encoder.swap(b: buffer, x: number, y: number, range: number?)
-	local z = buffer.readstring(b, x, range or 1)
-	buffer.writestring(b, x, buffer.readstring(b, y, range or 1))
-	buffer.writestring(b, y, z)
+	range = range or 1
+	local temp = buffer.create(range::number)
+	buffer.copy(temp, x, b, 0, range)
+	buffer.copy(b, x, b, y, range)
+	buffer.copy(b, y, temp, 0, range)
 end
 
 --- returns true if `a == b`
