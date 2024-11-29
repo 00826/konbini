@@ -47,6 +47,20 @@ function Vector3K.reject(v: Vector3, w: Vector3)
 	return v - Vector3K.project(v, w)
 end
 
+--- writes non-zero components of `w` onto `v`
+--- ```lua
+--- write(vector[1, 2, 3], vector[5, 0, -10]) -> vector[5, 2, -10]
+--- ```
+function Vector3K.write(v: Vector3, w: Vector3)
+	local x, y, z = w.X, w.Y, w.Z
+
+	return Vector3.new(
+		x == 0 and v.X or x,
+		y == 0 and v.Y or y,
+		z == 0 and v.Z or z
+	)
+end
+
 --- returns `v` as a tuple
 function Vector3K.components(v: Vector3)
 	return v.X, v.Y, v.Z
