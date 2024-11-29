@@ -18,13 +18,6 @@ local OverlapBlack = OverlapParams.new()
 OverlapBlack.FilterType = Enum.RaycastFilterType.Exclude
 OverlapBlack.RespectCanCollide = false
 
-@native
-local function fastdistance(a: Vector3, b: Vector3): number
-	b -= a
-	local x, y, z = b.X, b.Y, b.Z
-	return ((x * x) + (y * y) + (z * z)) ^ 0.5
-end
-
 --- ### Collisions.luau
 ---
 --- collision solver and spatial query wrapper
@@ -48,7 +41,7 @@ function Collisions.quickcast(at: Vector3, distance: number, search: {Model}): {
 		local cframe, size = Model:GetBoundingBox()
 		size *= 0.5
 
-		if fastdistance(at, cframe.Position) <= (math.max(size.X, size.Y, size.Z) + distance) then
+		if vector.magnitude(cframe.Position::any - at::any) <= (math.max(size.X, size.Y, size.Z) + distance) then
 			table.insert(found, Model)
 		end
 	end
@@ -88,7 +81,7 @@ end
 --- `position`: nearest point on target towards its position on cone
 function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart): (number, number, Vector3)
 	local point = target:GetClosestPointOnSurface(at)
-	local distance = fastdistance(at, point)
+	local distance = vector.magnitude(point::any - at::any)
 	return distance, look:Angle((point - at).Unit), point
 end
 
@@ -156,7 +149,7 @@ end
 
 --- returns true if point is within bounds of radius defined by position and radius
 function Collisions.ispointinradius(point: Vector3, position: Vector3, radius: number)
-	return fastdistance(point, position) <= radius
+	return vector.magnitude(position::any - point::any) <= radius
 end
 
 return Collisions

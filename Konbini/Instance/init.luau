@@ -18,7 +18,6 @@ local KeyframeBucket = {} :: {[Instance]: types.KeyframeInfo}
 local Keyframable = table.freeze{
 	"number";
 	"boolean";
-	"vector";
 
 	"CFrame";
 	"Color3";
@@ -72,7 +71,7 @@ local function getvalue(initial: any, goal: any, a: number, style: Enum.EasingSt
 		elseif (initial == false) and (goal == true) then
 			return a >= 1
 		end
-	elseif h == "vector" then
+	elseif k == "Vector3" then
 		return initial:Lerp(goal, a)
 	elseif k == "CFrame" then
 		return initial:Lerp(goal, a)

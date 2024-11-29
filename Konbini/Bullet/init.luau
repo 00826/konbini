@@ -6,12 +6,6 @@ local types = require(script.Parent.types)
 local Encoder = require(script.Parent.Encoder)
 local Time = require(script.Parent.Time)
 
-local function fastdistance(a: Vector3, b: Vector3)
-	b -= a
-	local x, y, z = b.X, b.Y, b.Z
-	return ((x * x) + (y * y) + (z * z)) ^ 0.5
-end
-
 --- ### Bullet.luau
 ---
 --- projectile-type solver \
@@ -270,7 +264,7 @@ end
 --- `A`: interpolant used to solve the position \
 --- *distance is approximated by adding the distances from `a` to `b` and `b` to `c`*
 function Bullet.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number)
-	local i = (time * velocity) / (fastdistance(a, b) + fastdistance(b, c))
+	local i = (time * velocity) / (vector.magnitude(a::any - b::any) + vector.magnitude(b::any - c::any))
 	local P0 = a:Lerp(b, i)
 	local P1 = b:Lerp(c, i)
 	return P0:Lerp(P1, i), i

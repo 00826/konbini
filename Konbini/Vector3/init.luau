@@ -29,36 +29,27 @@ end
 
 --- returns `v.Unit`, or, if `NaN`, `Vector3.zero`
 function Vector3K.unit_or_zero(v: Vector3)
-    if v.Magnitude > 0 then
-        return v.Unit
-    else
-        return Vector3.zero
-    end
+	if v.Magnitude > 0 then
+		return v.Unit
+	else
+		return Vector3.zero
+	end
 end
 
 --- returns `v` projected onto `w`
 function Vector3K.project(v: Vector3, w: Vector3)
-    w = Vector3K.unit_or_zero(w)
-    return v:Dot(w) * w
+	w = Vector3K.unit_or_zero(w)
+	return v:Dot(w) * w
 end
 
 --- returns `v` rejected from `w`
 function Vector3K.reject(v: Vector3, w: Vector3)
-    return v - Vector3K.project(v, w)
+	return v - Vector3K.project(v, w)
 end
 
 --- returns `v` as a tuple
-function Vector3K.unpack(v: Vector3)
+function Vector3K.components(v: Vector3)
 	return v.X, v.Y, v.Z
-end
-
---- returns `a` clamped within bounds of `[v, w]`
-function Vector3K.clamp(a: Vector3, v: Vector3, w: Vector3)
-	return Vector3.new(
-		math.clamp(a.X, math.min(v.X, w.X), math.max(v.X, w.X)),
-		math.clamp(a.Y, math.min(v.Y, w.Y), math.max(v.Y, w.Y)),
-		math.clamp(a.Z, math.min(v.Z, w.Z), math.max(v.Z, w.Z))
-	)
 end
 
 --- stretches `v` towards `w`, within bounds of `radius`
@@ -84,26 +75,21 @@ function Vector3K.bezier(points: {Vector3}, a: number)
 end
 
 --- returns random unit vector
-function Vector3K.randomunit(R: Random?)
+function Vector3K.nextunitvector(R: Random?)
 	return (R or types.R):NextUnitVector()
 end
 
 --- returns random unit vector within cone
-function Vector3K.randomspread(normal: Vector3, radians: number, R: Random?)
+function Vector3K.nextunitspread(normal: Vector3, radians: number, R: Random?)
 	return (
-		CFrame.new(Vector3.zero, normal)
+		CFrame.lookAlong(Vector3.zero, normal)
 		* CFrame.Angles(0, 0, (R or types.R):NextNumber(0, math.pi * 2))
 		* CFrame.Angles(math.acos((R or types.R):NextNumber(math.cos(radians), 1)), 0, 0)
 	).LookVector
 end
 
 --- returns random point within bounds of `[v, w]`
-function Vector3K.randompoint(v: Vector3, w: Vector3, R: Random?)
-	--[[return Vector3.new(
-		(R or types.R):NextNumber(v.X, w.X),
-		(R or types.R):NextNumber(v.Y, w.Y),
-		(R or types.R):NextNumber(v.Z, w.Z)
-	)]]
+function Vector3K.nextpointinbounds(v: Vector3, w: Vector3, R: Random?)
 	return
 		  (Vector3.xAxis * (R or types.R):NextNumber(v.X, w.X))
 		+ (Vector3.yAxis * (R or types.R):NextNumber(v.Y, w.Y))
@@ -126,11 +112,8 @@ function Vector3K.tovector(variant: types.xyzType?): Vector3
 end
 
 --- returns `(w - v).Magnitude`
-function Vector3K.distance(v: Vector3, w: Vector3): number
-	w -= v
-	local x, y, z = w.X, w.Y, w.Z
-
-	return ((x * x) + (y * y) + (z * z)) ^ 0.5
+function Vector3K.distance(v: Vector3, w: Vector3)
+	return vector.magnitude(w::any - v::any)
 end
 
 --- returns `(w - v).Unit`
