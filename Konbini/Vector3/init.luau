@@ -62,7 +62,7 @@ function Vector3K.write(v: Vector3, w: Vector3)
 end
 
 --- returns `v` as a tuple
-function Vector3K.components(v: Vector3)
+function Vector3K.unpack(v: Vector3)
 	return v.X, v.Y, v.Z
 end
 

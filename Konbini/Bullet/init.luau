@@ -149,8 +149,8 @@ function Bullet.ballisticsolve(b: buffer, dt: number?)
 	local now = Time.now()
 	local elapsed = now - start
 
-	local thisframe = position + Bullet.solveballistic(unitvector, velocity, elapsed, gravity)
-	local stepframe = position + Bullet.solveballistic(unitvector, velocity, elapsed + (dt or Bullet.Framerate), gravity)
+	local thisframe = position + Bullet._solveballistic(unitvector, velocity, elapsed, gravity)
+	local stepframe = position + Bullet._solveballistic(unitvector, velocity, elapsed + (dt or Bullet.Framerate), gravity)
 
 	return {
 		Position = thisframe;
@@ -200,8 +200,8 @@ function Bullet.beziersolve(b: buffer, dt: number?)
 	local now = Time.now()
 	local elapsed = now - start
 
-	local thisframe, a = Bullet.solvebezier(startpoint, controlpoint, goalpoint, speed, elapsed)
-	local stepframe = Bullet.solvebezier(startpoint, controlpoint, goalpoint, speed, elapsed + (dt or Bullet.Framerate))
+	local thisframe, a = Bullet._solvebezier(startpoint, controlpoint, goalpoint, speed, elapsed)
+	local stepframe = Bullet._solvebezier(startpoint, controlpoint, goalpoint, speed, elapsed + (dt or Bullet.Framerate))
 
 	return {
 		Position = thisframe;
@@ -243,17 +243,9 @@ function Bullet.tracksolve(b: buffer, solve: (target: string, relativeposition: 
 end
 
 --- returns, with respect to time elapsed: \
---- `Vector3`: size of transform as `Vector3(diameter, diameter, length)` \
---- `Vector3`: offset of transform as `Vector3(0, 0, length / 2)`
-function Bullet.solvetransform(size: Vector3, velocity: number, time: number)
-	local distance = velocity * time
-	return Vector3.new(size.X, size.Y, distance), Vector3.new(0, 0, -0.5 * distance)
-end
-
---- returns, with respect to time elapsed: \
 --- `Vector3`: offset of ballistic projectile \
 --- *in contexts where `gravity == 0`, ballistic projectile will behave like a linear projectile*
-function Bullet.solveballistic(direction: Vector3, velocity: number, time: number, gravity: number?)
+function Bullet._solveballistic(direction: Vector3, velocity: number, time: number, gravity: number?)
 	return (direction * (velocity * time)) - (Bullet.Coefficient * (gravity or Bullet.Gravity) * (time * time))
 end
 
@@ -263,11 +255,9 @@ end
 --- `Vector3`: position of bezier-curve projectile \
 --- `A`: interpolant used to solve the position \
 --- *distance is approximated by adding the distances from `a` to `b` and `b` to `c`*
-function Bullet.solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number)
+function Bullet._solvebezier(a: Vector3, b: Vector3, c: Vector3, velocity: number, time: number)
 	local i = (time * velocity) / (vector.magnitude(a::any - b::any) + vector.magnitude(b::any - c::any))
-	local P0 = a:Lerp(b, i)
-	local P1 = b:Lerp(c, i)
-	return P0:Lerp(P1, i), i
+	return a:Lerp(b, i):Lerp(b:Lerp(c, i), i), i
 end
 
 return Bullet

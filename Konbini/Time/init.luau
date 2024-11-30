@@ -67,15 +67,16 @@ end
 --- returns latency, in seconds: \
 --- `in-studio, regardless of calling environment`: `Time.incomingreplicationlag` \
 --- `server`: `client:GetNetworkPing()` or `0` \
---- `client`: `localplayer:GetNetworkPing()`
-function Time.latency(client: Player?): number
+--- `client`: `localplayer:GetNetworkPing()` \
+--- `roundtrip (?=false)`: apply cost of network roundtrip? `(latency * 2)`
+function Time.latency(client: Player?, roundtrip: boolean?): number
 	if RunService:IsStudio() then
-		return Time.incomingreplicationlag / 1000
+		return (Time.incomingreplicationlag / 1000) * (roundtrip and 2 or 1)
 	else
 		if IsServer then
-			return client and client:GetNetworkPing() or 0
+			return (client and client:GetNetworkPing() or 0) * (roundtrip and 2 or 1)
 		end
-		return LocalPlayer:GetNetworkPing()
+		return (LocalPlayer:GetNetworkPing()) * (roundtrip and 2 or 1)
 	end
 end
 
