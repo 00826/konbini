@@ -2,6 +2,7 @@
 
 local types = require(script.Parent.types)
 
+local GuiService = game:GetService("GuiService")
 local StarterGui = game:GetService("StarterGui")
 local TweenService = game:GetService("TweenService")
 
@@ -89,6 +90,30 @@ local Interface = {
 
 	suffixes = table.freeze{""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
+
+--- returns `GuiService.PreferredTransparency`
+function Interface.preferredtransparency()
+	return GuiService.PreferredTransparency
+end
+
+--- connects function to `GuiService:GetPropertyChangedSignal("PreferredTransparency")`
+function Interface.preferredtransparencychanged(f: (preferredtransparency: number) -> ())
+	return GuiService:GetPropertyChangedSignal("PreferredTransparency"):Connect(function()
+		f(GuiService.PreferredTransparency)
+	end)
+end
+
+--- returns `GuiService.ReducedMotionEnabled`
+function Interface.reducedmotionenabled()
+	return GuiService.ReducedMotionEnabled
+end
+
+--- connects function to `GuiService:GetPropertyChangedSignal("ReducedMotionEnabled")`
+function Interface.reducedmotionchanged(f: (reducedmotionenabled: boolean) -> ())
+	return GuiService:GetPropertyChangedSignal("ReducedMotionEnabled"):Connect(function()
+		f(GuiService.ReducedMotionEnabled)
+	end)
+end
 
 --- returns point on bezier curve at interpolant `A`
 function Interface.bezier(A: number, points: {UDim2}): UDim2
