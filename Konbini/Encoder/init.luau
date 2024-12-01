@@ -189,20 +189,44 @@ function Encoder.swap(b: buffer, x: number, y: number, range: number?)
 	buffer.copy(b, y, temp, 0, range)
 end
 
---- returns true if `a == b`
-function Encoder.compare(a: buffer, b: buffer): boolean
-	local sizeA = buffer.len(a)
-	local sizeB = buffer.len(b)
-	if sizeA ~= sizeB then
+--- returns true if `a == b` \
+--- `offset (?=0)` begin comparison at offset
+function Encoder.compare(a: buffer, b: buffer, offset: number?): boolean
+	local lenA = buffer.len(a)
+	local lenB = buffer.len(b)
+
+	offset = offset or 0
+	assert(offset) --- solver kick rocks
+
+	if lenA ~= lenB then
 		return false
+	elseif offset >= lenA then
+		return true
 	else
-		for offset = 0, sizeA - 1 do
-			if buffer.readu8(a, offset) ~= buffer.readu8(b, offset) then
+		local traverse = lenA - offset
+		if traverse >= 4 then
+			--- print(`comparing u32 {buffer.readu32(a, offset)} against {buffer.readu32(b, offset)} at {offset}, {offset+4}/{lenA}`)
+			if buffer.readu32(a, offset) == buffer.readu32(b, offset) then
+				return Encoder.compare(a, b, offset + 4)
+			else
+				return false
+			end
+		elseif traverse >= 2 then
+			--- print(`comparing u16 {buffer.readu16(a, offset)} against {buffer.readu16(b, offset)} at {offset}, {offset+2}/{lenA}`)
+			if buffer.readu16(a, offset) == buffer.readu16(b, offset) then
+				return Encoder.compare(a, b, offset + 2)
+			else
+				return false
+			end
+		else
+			--- print(`comparing u8 {buffer.readu8(a, offset)} against {buffer.readu8(b, offset)} at {offset}, {offset+1}/{lenA}`)
+			if buffer.readu8(a, offset) == buffer.readu8(b, offset) then
+				return Encoder.compare(a, b, offset + 1)
+			else
 				return false
 			end
 		end
 	end
-	return true
 end
 
 --- merges value stored in new buffer into old buffer, returning values of changes made \
