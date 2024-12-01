@@ -202,18 +202,18 @@ function MathK.coneradius(h: number, r: number)
 end
 
 --- returns `-1|1`, chosen randomly
-function MathK.rsign()
-	return (MathK.random:NextInteger(0, 255) / 255) > 0.5 and 1 or -1
+function MathK.rsign(R: Random?)
+	return ((R or MathK.random):NextInteger(0, 255) / 255) > 0.5 and 1 or -1
 end
 
---- returns the equivalent of `Random.new():NextNumber(x, y)` with a predefined random object
-function MathK.nextnumber(x: number, y: number)
-	return MathK.random:NextNumber(x, y)
+--- returns the equivalent of `Random.new():NextNumber(x, y)`
+function MathK.nextnumber(x: number, y: number, R: Random?)
+	return (R or MathK.random):NextNumber(x, y)
 end
 
---- returns the equivalent of `Random.new():NextInteger(x, y)` with a predefined random object
-function MathK.nextinteger(x: number, y: number)
-	return MathK.random:NextInteger(x, y)
+--- returns the equivalent of `Random.new():NextInteger(x, y)`
+function MathK.nextinteger(x: number, y: number, R: Random?)
+	return (R or MathK.random):NextInteger(x, y)
 end
 
 --- scales numbersequence by `x`
