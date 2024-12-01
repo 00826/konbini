@@ -201,6 +201,21 @@ function MathK.coneradius(h: number, r: number)
 	return h * math.tan(r)
 end
 
+--- returns `-1|1`, chosen randomly
+function MathK.rsign()
+	return (MathK.random:NextInteger(0, 255) / 255) > 0.5 and 1 or -1
+end
+
+--- returns the equivalent of `Random.new():NextNumber(x, y)` with a predefined random object
+function MathK.nextnumber(x: number, y: number)
+	return MathK.random:NextNumber(x, y)
+end
+
+--- returns the equivalent of `Random.new():NextInteger(x, y)` with a predefined random object
+function MathK.nextinteger(x: number, y: number)
+	return MathK.random:NextInteger(x, y)
+end
+
 --- scales numbersequence by `x`
 function MathK.scalenumbersequence(numbersequence: NumberSequence, x: number)
 	local newsequence = {}
@@ -209,11 +224,6 @@ function MathK.scalenumbersequence(numbersequence: NumberSequence, x: number)
 	end
 
 	return NumberSequence.new(newsequence)
-end
-
---- returns `-1|1`, chosen randomly
-function MathK.rsign()
-	return (MathK.random:NextInteger(0, 255) / 255) > 0.5 and 1 or -1
 end
 
 --- converts `x`, where `x in [0, 1]`, to a numbersequence

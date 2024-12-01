@@ -292,7 +292,7 @@ function Inputs.setmouseiconenabled(state: boolean)
 	UIS.MouseIconEnabled = state
 end
 
---- returns true if mousebehavior == lockcenter
+--- returns `UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter`
 function Inputs.ismouselockcenter(): boolean
 	return UIS.MouseBehavior == Enum.MouseBehavior.LockCenter
 end

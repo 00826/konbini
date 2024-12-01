@@ -1,4 +1,5 @@
 --!strict
+--!native
 
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
@@ -26,16 +27,6 @@ end
 --- extends expiry `x` by `time` seconds, where `x`, if behind konbini time, is set to current konbini time
 function Time.extend(x: number, time: number)
 	return math.max(x or 0, buffer.readf32(Time.buffer, 0)) + time
-end
-
---- applies debounce against instance `i` \
---- returns true if debounce passed, returns false if not passed
-function Time.debounce(i: Instance, name: string, time: number): boolean
-	local now, later = Time.now(), i:GetAttribute("K_Time_debounce_" .. name) or 0
-	if later > now then return false end
-
-	i:SetAttribute("K_Time_debounce_" .. name, now + time)
-	return true
 end
 
 --- runs function for `x` seconds, or until function returns `true`

@@ -189,7 +189,7 @@ function Encoder.swap(b: buffer, x: number, y: number, range: number?)
 	buffer.copy(b, y, temp, 0, range)
 end
 
---- returns true if `a == b` \
+--- returns `a == b` \
 --- `offset (?=0)` begin comparison at offset
 function Encoder.compare(a: buffer, b: buffer, offset: number?): boolean
 	local lenA = buffer.len(a)

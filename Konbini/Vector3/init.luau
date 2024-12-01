@@ -152,7 +152,7 @@ function Vector3K.midpoint(vectors: { Vector3 | types.xyzType }): Vector3
 end
 
 --- returns points along line drawn from `v` towards `w`
-function Vector3K.segment(v: Vector3, w: Vector3, segments: number)
+function Vector3K.segment(v: Vector3, w: Vector3, segments: number, transform: ((u: Vector3) -> Vector3)?)
 	local partition = table.create(segments)
 	partition[1] = v
 	partition[segments] = w
@@ -162,7 +162,11 @@ function Vector3K.segment(v: Vector3, w: Vector3, segments: number)
 	else
 		local step = segments - 1
 		for i = 1, segments - 2, 1 do
-			partition[i + 1] = v:Lerp(w, i / step)
+			local u = v:Lerp(w, i / step)
+			if transform then
+				u = transform(u)
+			end
+			partition[i + 1] = u
 		end
 
 		return partition
