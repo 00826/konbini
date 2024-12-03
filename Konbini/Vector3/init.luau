@@ -17,15 +17,10 @@ local Vector3K = {
 	zAxisHalf = Vector3.zAxis * 0.5;
 
 	--- returns `Vector3.one * w`
-	fromConstant = function(w: number)
+	fromconstant = function(w: number)
 		return Vector3.one * w
 	end;
 }
-
---- returns `w.Y - v.Y`
-function Vector3K.height(v: Vector3, w: Vector3)
-	return w.Y - v.Y
-end
 
 --- returns `v.Unit`, or, if `NaN`, `Vector3.zero`
 function Vector3K.unit_or_zero(v: Vector3)
@@ -93,7 +88,7 @@ function Vector3K.nextunitvector(R: Random?)
 	return (R or types.R):NextUnitVector()
 end
 
---- returns random unit vector within cone
+--- returns random unit vector within bounds of cone
 function Vector3K.nextunitspread(normal: Vector3, radians: number, R: Random?)
 	return (
 		CFrame.lookAlong(Vector3.zero, normal)
@@ -125,13 +120,14 @@ function Vector3K.tovector(variant: types.xyzType?): Vector3
 	return Vector3.zero
 end
 
---- returns `(w - v).Magnitude`
+--- returns `vector.magnitude(w - v)`
 function Vector3K.distance(v: Vector3, w: Vector3)
 	return vector.magnitude(w::any - v::any)
 end
 
---- returns `(w - v).Unit`
+--- returns `vector.normalize(w - v)`
 function Vector3K.unit(v: Vector3, w: Vector3)
+	--- return vector.normalize(w::any - v::any)
 	return (w - v).Unit
 end
 

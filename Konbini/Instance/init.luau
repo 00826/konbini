@@ -157,6 +157,7 @@ local InstanceK = {
 	EmitContainer = workspace;
 
 	KeyframeFramerate = 1/30;
+	KeyframeActiveObjects = 0;
 }
 
 --- recursive `Instance.new()` using instance tree
@@ -713,10 +714,13 @@ else
 	MoverRemote.OnClientEvent:Connect(InstanceK.applybodymover)
 
 	RunService.Heartbeat:Connect(function(dt)
+		local x = 0
 		for object, keyframeinfo in KeyframeBucket do
 			if keyframeinfo.IsPaused then continue end
 			task.defer(interpolate, object, keyframeinfo, dt)
+			x += 1
 		end
+		InstanceK.KeyframeActiveObjects = x
 	end)
 end
 

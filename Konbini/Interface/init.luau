@@ -26,7 +26,7 @@ local Interface = {
 		zero = UDim.new(0, 0);
 
 		--- returns `UDim.new(w, w)`
-		fromConstant = function(w: number)
+		fromconstant = function(w: number)
 			return UDim.new(w, w)
 		end;
 	};
@@ -51,7 +51,7 @@ local Interface = {
 		bottomRight = UDim2.fromScale(1, 1);
 
 		--- returns `UDim2.new(w, w)`
-		fromConstant = function(w: number)
+		fromconstant = function(w: number)
 			return UDim2.new(w, w)
 		end;
 	};
@@ -67,7 +67,7 @@ local Interface = {
 		bottomRight = Vector2.new(1, 1);
 
 		--- returns `Vector2.new(w, w)`
-		fromConstant = function(w: number)
+		fromconstant = function(w: number)
 			return Vector2.new(w, w)
 		end;
 	};

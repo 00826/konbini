@@ -33,11 +33,11 @@ local CFrameK = {
 		};
 	};
 	--- returns `CFrame.fromOrientation(v.X, v.Y, v.Z)`
-	anglesFromVector = function(v: Vector3)
+	anglesfromvector = function(v: Vector3)
 		return CFrame.fromOrientation(v.X, v.Y, v.Z)
 	end;
 	--- returns `Vector3.new(c:ToOrientation())`
-	vectorFromAngles = function(c: CFrame)
+	vectorfromangles = function(c: CFrame)
 		return Vector3.new(c:ToOrientation())
 	end;
 }
