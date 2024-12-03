@@ -91,6 +91,18 @@ local Interface = {
 	suffixes = table.freeze{""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
 
+--- returns `GuiService.PreferredTextSize`
+function Interface.preferredtextsize()
+	return GuiService.PreferredTextSize
+end
+
+--- connects function to `GuiService:GetPropertyChangedSignal("PreferredTextSize")`
+function Interface.preferredtextsizechanged(f: (preferredtextsize: Enum.PreferredTextSize) -> ())
+	return GuiService:GetPropertyChangedSignal("PreferredTextSize"):Connect(function()
+		f(GuiService.PreferredTextSize)
+	end)
+end
+
 --- returns `GuiService.PreferredTransparency`
 function Interface.preferredtransparency()
 	return GuiService.PreferredTransparency
