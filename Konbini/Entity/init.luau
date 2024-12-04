@@ -257,7 +257,7 @@ else
 					added[id] = update
 				else
 					local changes = Entity.update(Entity.Cache[id], update)
-					if #changes > 0 then
+					if (#changes > 0) and (table.find(Entity.ListeningTo, id)) then
 						Hook("k_EntityChanged").Fire(Entity.Cache[id], id, changes)
 					end
 				end
