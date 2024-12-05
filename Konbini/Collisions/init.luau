@@ -23,53 +23,17 @@ OverlapBlack.RespectCanCollide = false
 --- collision solver and spatial query wrapper
 local Collisions = {}
 
---- sets collision group of baseparts under model
-function Collisions.setmodelcollisiongroup(model: Model, collisiongroup: string)
-	for _, Part in model:GetDescendants() do
-		if Part:IsA("Part") then
-			Part.CollisionGroup = collisiongroup
-		elseif Part:IsA("MeshPart") then
-			Part.CollisionGroup = collisiongroup
-		end
-	end
-end
-
---- simulates raycast against models with theoretical furthest possible raycast
-function Collisions.quickcast(at: Vector3, distance: number, search: {Model}): {Model}
-	local found = table.create(#search)
-	for _, Model in search do
-		local cframe, size = Model:GetBoundingBox()
-		size *= 0.5
-
-		if vector.magnitude(cframe.Position::any - at::any) <= (math.max(size.X, size.Y, size.Z) + distance) then
-			table.insert(found, Model)
-		end
-	end
-
-	return found
-end
-
---- non-cancollide-safe BasePart:GetTouchingParts()
-function Collisions.collide(part: BasePart): {BasePart}
-	local c = part.Touched:Connect(function() end)
-	local t = part:GetTouchingParts()
-	c:Disconnect()
-	return t
-end
-
 --- `workspace:GetPartBoundsInBox()`
-function Collisions.box(listtype: types.CastList, search: {Instance}, at: CFrame, size: Vector3): {BasePart}
-	local overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
-	assert(typeof(overlap) == "OverlapParams")
+function Collisions.box(type: types.CastList, search: {Instance}, at: CFrame, size: Vector3)
+	local overlap:any = (type == "Whitelist" and OverlapWhite) or (type == "Blacklist" and OverlapBlack)
 	overlap.FilterDescendantsInstances = search
 
 	return workspace:GetPartBoundsInBox(at, size, overlap)
 end
 
 --- `workspace:GetPartBoundsInRadius()`
-function Collisions.ball(listtype: types.CastList, search: {Instance}, at: Vector3, radius: number): {BasePart}
-	local overlap = (listtype == "Whitelist" and OverlapWhite) or (listtype == "Blacklist" and OverlapBlack)
-	assert(typeof(overlap) == "OverlapParams")
+function Collisions.ball(type: types.CastList, search: {Instance}, at: Vector3, radius: number)
+	local overlap:any = (type == "Whitelist" and OverlapWhite) or (type == "Blacklist" and OverlapBlack)
 	overlap.FilterDescendantsInstances = search
 
 	return workspace:GetPartBoundsInRadius(at, radius, overlap)
@@ -79,32 +43,25 @@ end
 --- `distance`: units between `at` and its nearest point on `target` \
 --- `radians`: angle between the cone cast with `at & look` against `target` \
 --- `position`: nearest point on target towards its position on cone
-function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart): (number, number, Vector3)
+function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart)
 	local point = target:GetClosestPointOnSurface(at)
 	local distance = vector.magnitude(point::any - at::any)
 	return distance, look:Angle((point - at).Unit), point
 end
 
---- `workspace:RaycastWhitelist()` \
+--- `workspace:Raycast()` \
 --- `collisiongroup (?="Default")`
-function Collisions.raywhitelist(at: Vector3, direction: Vector3, whitelist: {Instance}, collisiongroup: string?): RaycastResult
-	WhitelistParams.FilterDescendantsInstances = whitelist
-	WhitelistParams.CollisionGroup = collisiongroup  or "Default"
-	return workspace:Raycast(at, direction, WhitelistParams)
-end
-
---- `workspace:RaycastBlacklist()` \
---- `collisiongroup (?="Default")`
-function Collisions.rayblacklist(at: Vector3, direction: Vector3, blacklist: {Instance}, collisiongroup: string?): RaycastResult
-	BlacklistParams.FilterDescendantsInstances = blacklist
-	WhitelistParams.CollisionGroup = collisiongroup  or "Default"
-	return workspace:Raycast(at, direction, BlacklistParams)
+function Collisions.raycast(type: types.CastList, at: Vector3, direction: Vector3, search: {Instance}, collisiongroup: string?)
+	local list:any = (type == "Whitelist" and WhitelistParams) or (type == "Blacklist" and BlacklistParams)
+	list.FilterDescendantsInstances = search
+	list.CollisionGroup = collisiongroup or "Default"
+	return workspace:Raycast(at, direction, list)
 end
 
 --- `workspace:Fancast()` \
 --- `resolution (?=3, minimum)`: # of rays that the fancast is composed of \
 --- `collisiongroup (?="Default")`
-function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Vector3, radians: number, search: {Instance}, resolution: number?, collisiongroup: string?): {RaycastResult}
+function Collisions.fancast(type: types.CastList, at: Vector3, direction: Vector3, radians: number, search: {Instance}, resolution: number?, collisiongroup: string?)
 	resolution = math.clamp(resolution or 3, 3, math.huge)
 	assert(resolution)
 
@@ -118,12 +75,7 @@ function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Ve
 	for i = 1, resolution do
 		local real = pivot * CFrame.Angles(0, (i - 1) * step, 0)
 
-		local result: RaycastResult? = nil
-		if listtype == "Whitelist" then
-			result = Collisions.raywhitelist(at, real.LookVector * distance, search, collisiongroup)
-		elseif listtype == "Blacklist" then
-			result = Collisions.rayblacklist(at, real.LookVector * distance, search, collisiongroup)
-		end
+		local result: RaycastResult? = Collisions.raycast(type, at, real.LookVector * distance, search, collisiongroup)
 
 		if result then
 			if table.find(bucket, result.Instance) then continue end
@@ -133,6 +85,15 @@ function Collisions.fancast(listtype: types.CastList, at: Vector3, direction: Ve
 	end
 
 	return results
+end
+
+--- sets collision group of baseparts under model
+function Collisions.setmodelcollisiongroup(model: Model, collisiongroup: string)
+	for _, thing in model:GetDescendants() do
+		if thing:IsA("BasePart") then
+			thing.CollisionGroup = collisiongroup
+		end
+	end
 end
 
 --- returns true if point is within bounds of box defined by cframe and size
@@ -148,6 +109,7 @@ function Collisions.ispointinbox(point: Vector3, cframe: CFrame, size: Vector3)
 end
 
 --- returns true if point is within bounds of radius defined by position and radius
+@native
 function Collisions.ispointinradius(point: Vector3, position: Vector3, radius: number)
 	return vector.magnitude(position::any - point::any) <= radius
 end
