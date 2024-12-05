@@ -29,17 +29,18 @@ function Time.extend(x: number, time: number)
 	return math.max(x or 0, buffer.readf32(Time.buffer, 0)) + time
 end
 
---- runs function for `x` seconds, or until function returns `true`
-function Time.run(x: number, f: (elapsed: number, dt: number) -> boolean?): RBXScriptConnection
+--- runs function for `x` seconds
+function Time.run(x: number, f: (elapsed: number, dt: number) -> ()): RBXScriptConnection
 	local elapsed = 0
-	local C; C = RunService.Heartbeat:Connect(function(dt: number)
+	local c; c = RunService.Heartbeat:Connect(function(dt: number)
 		elapsed += dt
-		local result = f(elapsed, dt)
-		if (elapsed > x) or (result == true) then
-			C:Disconnect()
+		f(elapsed, dt)
+
+		if elapsed > x then
+			c:Disconnect()
 		end
 	end)
-	return C
+	return c
 end
 
 --- runs function at every second interval `x`

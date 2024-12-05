@@ -88,13 +88,31 @@ function Vector3K.nextunitvector(R: Random?)
 	return (R or types.R):NextUnitVector()
 end
 
---- returns random unit vector within bounds of cone
-function Vector3K.nextunitspread(normal: Vector3, radians: number, R: Random?)
-	return (
-		CFrame.lookAlong(Vector3.zero, normal)
-		* CFrame.Angles(0, 0, (R or types.R):NextNumber(0, math.pi * 2))
-		* CFrame.Angles(math.acos((R or types.R):NextNumber(math.cos(radians), 1)), 0, 0)
-	).LookVector
+--- returns random unit vector within bounds of cone \
+--- quasiduck is the goat
+function Vector3K.nextunitspread(v: Vector3, radians: number, R: Random?)
+	--- create an orthonormal basis (u, w, v)
+	--- equivalent of producing the rightvector (u) and upvector (w) of v
+	local u
+	if math.abs(v.Y) < 0.999 then
+		u = v:Cross(Vector3.yAxis).Unit
+	else
+		u = v:Cross(Vector3.xAxis).Unit
+	end
+	local w = v:Cross(u)
+
+	--- generate a random point within the spherical cap (from unit sphere)
+	--- produces spherical coordinates
+	local cosTheta = (R or types.R):NextNumber(math.cos(radians), 1)
+	local sinTheta = (1 - cosTheta * cosTheta)^0.5
+	local phi = (R or types.R):NextNumber(0, 2*math.pi)
+
+	local x = sinTheta * math.cos(phi)
+	local y = sinTheta * math.sin(phi)
+	local z = cosTheta
+
+	--- construct the random vector in the original coordinate system
+	return (x*u) + (y*w) + (z*v)
 end
 
 --- returns random point within bounds of `[v, w]`

@@ -6,32 +6,6 @@
 ---
 --- extension of CFrame library
 local CFrameK = {
-	angles = table.freeze{
-		x = table.freeze{
-			pi = CFrame.Angles(math.pi, 0, 0);
-			pi2 = CFrame.Angles(math.pi/2, 0, 0);
-			pi4 = CFrame.Angles(math.pi/4, 0, 0);
-			_pi = CFrame.Angles(-math.pi, 0, 0);
-			_pi2 = CFrame.Angles(-math.pi/2, 0, 0);
-			_pi4 = CFrame.Angles(-math.pi/4, 0, 0);
-		};
-		y = table.freeze{
-			pi = CFrame.Angles(0, math.pi, 0);
-			pi2 = CFrame.Angles(0, math.pi/2, 0);
-			pi4 = CFrame.Angles(0, math.pi/4, 0);
-			_pi = CFrame.Angles(0, -math.pi, 0);
-			_pi2 = CFrame.Angles(0, -math.pi/2, 0);
-			_pi4 = CFrame.Angles(0, -math.pi/4, 0);
-		};
-		z = table.freeze{
-			pi = CFrame.Angles(0, 0, math.pi);
-			pi2 = CFrame.Angles(0, 0, math.pi/2);
-			pi4 = CFrame.Angles(0, 0, math.pi/4);
-			_pi = CFrame.Angles(0, 0, -math.pi);
-			_pi2 = CFrame.Angles(0, 0, -math.pi/2);
-			_pi4 = CFrame.Angles(0, 0, -math.pi/4);
-		};
-	};
 	--- returns `CFrame.fromOrientation(v.X, v.Y, v.Z)`
 	anglesfromvector = function(v: Vector3)
 		return CFrame.fromOrientation(v.X, v.Y, v.Z)

@@ -46,6 +46,7 @@ end
 function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart)
 	local point = target:GetClosestPointOnSurface(at)
 	local distance = vector.magnitude(point::any - at::any)
+
 	return distance, look:Angle((point - at).Unit), point
 end
 
@@ -55,6 +56,7 @@ function Collisions.raycast(type: types.CastList, at: Vector3, direction: Vector
 	local list:any = (type == "Whitelist" and WhitelistParams) or (type == "Blacklist" and BlacklistParams)
 	list.FilterDescendantsInstances = search
 	list.CollisionGroup = collisiongroup or "Default"
+
 	return workspace:Raycast(at, direction, list)
 end
 
