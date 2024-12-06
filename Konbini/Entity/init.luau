@@ -40,7 +40,7 @@ function Entity.create(t: {[string]: any}?): ({[string]: any}, string)
 		end
 	end
 
-	local key = TableK.assign(Entity.Cache, e, 4)
+	local key = TableK.insertkey(Entity.Cache, e, 4)
 	Hook("k_EntityAdded").Fire(e, key)
 
 	return e, key
@@ -78,11 +78,15 @@ function Entity.queue(id: string, keys: {string}?)
 
 	if keys then
 		for _, key in keys do
-			TableK.queue_ifandonlyif(ref, key)
+			if not table.find(ref, key) then
+				table.insert(ref, key)
+			end
 		end
 	else
 		for key in e do
-			TableK.queue_ifandonlyif(ref, key)
+			if not table.find(ref, key) then
+				table.insert(ref, key)
+			end
 		end
 	end
 end

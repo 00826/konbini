@@ -10,380 +10,80 @@ local Encoder = require(script.Parent.Encoder)
 --- extension of table library
 local TableK = {}
 
---- removes and returns the first (oldest) element in queue
-function TableK.queue_pop<T>(queue: {T}): T?
-	return table.remove(queue, 1)
-end
-
---- returns the first (oldest) element in queue
-function TableK.queue_front<T>(queue: {T}): T?
-	return queue[1]
-end
-
---- returns the last (newest) element in queue
-function TableK.queue_back<T>(queue: {T}): T?
-	return queue[#queue]
-end
-
---- adds a value to the back of queue
-function TableK.queue_push<T>(queue: {T}, value: T)
-	table.insert(queue, value)
-end
-
---- pushes a value to queue, if any only if it isn't already an element of the queue
-function TableK.queue_ifandonlyif<T>(queue: {T}, value: T): boolean
-	if not table.find(queue, value) then
-		table.insert(queue, value)
-		return true
-	end
-	return false
-end
-
---- pushes all values of source into queue
-function TableK.queue_fill<T>(queue: {T}, source: {T})
-	for _, v in source do
-		table.insert(queue, v)
-	end
-end
-
---- pops all values in queue, calling `f(value)` as they are popped
-function TableK.queue_flush<T>(queue: {T}, f: (value: T) -> ())
-	local value = table.remove(queue, 1)
-	if value then
-		f(value)
-		TableK.queue_flush(queue, f)
-	else
-		return
-	end
-end
-
---- encodes string-number table as a string
---- ```
---- encode({str = -2, dex = 10, int = 7}) -> "str:-2/dex:10/int:7"
---- ```
-function TableK.encode(T: {[string]: number}): string
-	local encoded = ""
-	for k, v in T do
-		encoded ..= k ..":".. v .. "/"
-	end
-
-	return string.sub(encoded, 1, -2)
-end
-
---- decodes string as a string-number table
---- ```
---- decode("str:-2/dex:10/int:7") -> {str = -2, dex = 10, int = 7}
---- ```
-function TableK.decode(str: string): {[string] : number}
-	local decoded = {}
-
-	for _, kv in string.split(str, "/") do
-		local split = string.split(kv, ":")
-		decoded[split[1]] = tonumber(split[2]) or 0
-	end
-
-	return decoded
-end
-
---- reads single value stored in encoded string
---- ```
---- read("str:-2/dex:10/int:7", "dex") -> 10
---- ```
-function TableK.read(str: string, key: string): number
-	return tonumber(string.match(str, "%f[A-Za-z]" .. key .. "%f[^A-Za-z]:(%d+)") or 0) or 0
-end
-
---- returns a deep-copy of table
-function TableK.deepcopy(T: {[any]: any}): {[any]: any}
-	local copy = {}
-
-	for k, v in T do
-		if type(v) == "table" then
-			copy[k] = TableK.deepcopy(v)
-		else
-			copy[k] = v
+--- returns a reverse iterator function, array `t`, and the number `0`
+function TableK.ipairsr<T>(t: {T}): (({T}, number) -> (number?, T), {T}, number)
+	return coroutine.wrap(function()
+		for i = #t, 1, -1 do
+			coroutine.yield(i, t[i])
 		end
-	end
-
-	return copy
+	end), t, 0
 end
 
---- packs vararg into a space-allocated array
-function TableK.pack(...: any): {any}
-	local temp = {...}
+--- similar to `table.insert`, where `T[random alphanumeric key] = value` \
+--- returns `random alphanumeric key` for convenience \
+--- `len (?=4)`: key length
+function TableK.insertkey(t: {[string]: any}, value: any, len: number?): string
+	local key = string.rep("0", len or 4)
+	repeat key = Encoder.string(len or 4)
+	until t[key] == nil
 
-	return table.move(temp, 1, #temp, 1, table.create(#temp))
+	t[key] = value
+
+	return key
 end
 
 --- returns average or weighted average of elements in array \
 --- assumes a single-type array populated with types that support operators `+`, `*`, `/`
-function TableK.average(A: {any}, weights: {number}?): any
-	local n = #A
-	local sum = table.remove(A, 1)
-	for i, V in ipairs(A) do
-		sum += V * (weights and weights[i] or 1)
+function TableK.average(array: {any}, weights: {number}?): any
+	local len = #array
+	local sum = table.remove(array, 1)
+	for i, v in ipairs(array) do
+		sum += v * (weights and weights[i] or 1)
 	end
 
-	return sum and sum / n
+	return sum and sum / len
 end
 
---- returns a frozen, space-allocated, shallow-copy of array
-function TableK.readonly<T>(A: {T}): {T}
-	local t = table.create(#A)
-	for _, v in ipairs(A) do
-		table.insert(t, v)
+--- returns list of elements picked from droptable \
+--- compatible with weighted tables whose sum of values does not equal 100
+function TableK.droptable(droptable: {[string]: number}, count: number?, R: Random?): {string}
+	local items = table.create(count or 1)
+	local weightsum = 0
+
+	for _, weight in droptable do
+		weightsum += weight
 	end
 
-	return t
-end
+	for _ = 1, count or 1 do
+		local roll, passed = (R or types.R):NextNumber(0, weightsum), 0
+		for key, weight in droptable do
+			passed += weight
 
---- returns list of elements picked from drop table \
---- assume sum of odds in drop table equate to 100
-function TableK.pickfromdroptable(D: {[string]: number}, n: number, R: Random?): {string}
-	if not R then R = types.R end
-	if not n then n = 1 end
-
-	assert(R)
-	assert(n)
-
-	local items = table.create(n)
-
-	for _ = 1, n do
-		local roll, passed = 100 * (R:NextNumber()), 0
-		for Key, Value in D do
-			passed += Value
-			if roll > passed then continue end
-			table.insert(items, Key)
-			break
+			if roll < passed then
+				table.insert(items, key)
+				break
+			end
 		end
 	end
 
 	return items
 end
 
---- returns non-repeating list of elements picked from array
-function TableK.pickfromlist<T>(A: {T}, n: number?, R: Random?): {T}
-	if #A == 0 then
+--- returns list of elements drawn from droplist
+function TableK.droplist<T>(droplist: {T}, count: number?, R: Random?): {T}
+	local len = #droplist
+	if len == 0 then
 		warn(`empty array passed, returning new empty array`)
+
 		return table.create(0)
-	end
-
-	if not R then R = types.R end
-	if not n then n = 1 end
-
-	assert(R)
-	assert(n)
-
-	local B = table.clone(A)
-	R:Shuffle(B)
-
-	return table.move(B, 1, math.clamp(n, 1, #B), 1, table.create(n))
-end
-
---- returns true if table contains value and its associated key
-function TableK.contains(A: {[any]: any}, value: any): (boolean, string?)
-	for k, v in A do
-		if value == v then
-			return true, k
-		end
-	end
-	return false
-end
-
---- returns shuffled copy of array
-function TableK.shuffle(A: {any}, R: Random?): {any}
-	R = R or types.R
-	assert(R)
-
-	local B = table.clone(A)
-	R:Shuffle(B)
-
-	return B
-end
-
---- similar to `table.insert`, where `T[random alphanumeric key] = value` \
---- returns `random alphanumeric key` for convenience \
---- `len (?=4)`: key length
-function TableK.assign(T: {[string]: any}, value: any, len: number?): string
-	local key = string.rep("0", len or 4)
-	repeat
-		key = Encoder.string(len or 4)
-	until T[key] == nil
-	T[key] = value
-	return key
-end
-
---- reflects value such that `destination[i] = source[i]` \
---- equivalent to `table.move(source, i, i, i, destination)`
-function TableK.reflect(source: {any}, destination: {any}, i: number)
-	table.move(source, i, i, i, destination)
-end
-
---- performs a binary search on sorted array \
---- `comp` returns: \
---- `0`: value == desired value; return value \
---- `1`: value < desired value; search to the left \
---- `2`: value > desired value; search to the right \
----
---- ```lua
---- --- find x in [1, 100]:
---- local comp = function(value: number): number
---- 	if value == x then
---- 		return 0
---- 	else
---- 		return value < x and 1 or 2
---- 	end
---- end
---- ```
-function TableK.search<T>(A: {T}, comp: (value: T) -> number): T?
-	local L = 1
-	local R = #A
-
-	if L > R then
-		return nil
 	else
-		local idx = (L + R) // 2
-		local value = A[idx]
+		local B = table.clone(droplist);
+		(R or types.R):Shuffle(B)
+	
+		local start = (R or types.R):NextInteger(1, len - (count or 1))
+		local range = math.clamp(start + (count or 1), 1, #B)
 
-		local result = comp(value)
-
-		if result == 0 then
-			return value
-		else
-			if result == 1 then
-				L = idx + 1
-			elseif result == 2 then
-				R = idx - 1
-			else
-				error(`comp {comp} did not return exactly 0, 1, or 2`)
-			end
-			return TableK.search(table.move(A, L, R, 1, table.create(L + R)), comp)
-		end
-	end
-end
-
---- shallow-clones target *exclusively* with keys and/or indices
-function TableK.only(target: {any}, keys: {any}?, indices: {number}?): {}
-	local clone = {}
-
-	if keys then
-		for _, key in keys do
-			clone[key] = target[key]
-		end
-	end
-	if indices then
-		for _, idx in indices do
-			table.move(target, idx, idx, idx, clone)
-		end
-	end
-
-	return clone
-end
-
---- shallow-clones target with the *exception* of keys and/or indices
-function TableK.except(target: {any}, keys: {any}?, indices: {number}?): {}
-	local clone = {}
-
-	if keys then
-		for _, key in target do
-			if table.find(keys, key) then
-				continue
-			else
-				clone[key] = target[key]
-			end
-		end
-	end
-	if indices then
-		for i, v in ipairs(target) do
-			if table.find(indices, i) then
-				continue
-			else
-				table.move(target, i, i, i, clone)
-			end
-		end
-	end
-
-	return clone
-end
-
---- merges values from source into target, avoiding repeating elements and preserving sort order of source
-function TableK.merge<T>(target: {T}, source: {T})
-	for _, value in ipairs(source) do
-		if not table.find(target, value) then
-			table.insert(target, value)
-		end
-	end
-end
-
---- merges key-values from source into target
-function TableK.mergekv(target: { }, source: { })
-	for k, v in source do
-		target[k] = v
-	end
-end
-
---- returns union of a and b, avoiding repeating elements and preserving sort order
-function TableK.union<T>(a: {T}, b: {T})
-	local u = table.clone(a)
-
-	for _, value in ipairs(b) do
-		if not table.find(u, value) then
-			table.insert(u, value)
-		end
-	end
-
-	return u
-end
-
---- patches target table using source as a truth state
-function TableK.patch<T>(target: {[T]: any}, source: {[T]: any})
-	for k in target do
-		if not source[k] then
-			target[k] = nil
-		end
-	end
-	for k, v in source do
-		if type(target[k]) ~= type(v) then
-			target[k] = v
-		end
-	end
-end
-
---- returns length of key-value table
-function TableK.len(T: {[any]: any}): number
-	local x = 0
-
-	for _ in T do
-		x += 1
-	end
-
-	return x
-end
-
---- reverse-iterates through array with iterator function `f`: \
---- `f(i, v) -> 0`: `v` is removed from `A` \
---- `f(i, v) -> 1`: loop `continue` \
---- `f(i, v) -> 2`: loop `break`
-function TableK.ipairs_r<T>(A: {T}, f: (i: number, v: T) -> number?)
-	for i = #A, 1, -1 do
-		local result = f(i, A[i])
-		if result == 0 then
-			table.remove(A, i)
-		elseif result == 1 then
-			continue
-		elseif result == 2 then
-			break
-		end
-	end
-end
-
---- limits size of array
-function TableK.limit(A: {any}, size: number)
-	if #A > size then
-		table.remove(A)
-		TableK.limit(A, size)
-	else
-		return
+		return table.move(B, start, range, 1, table.create(count or 1))
 	end
 end
 
@@ -420,6 +120,7 @@ end
 --- ```
 function TableK.page<T>(A: {T}, size: number, offset: number): {T}
 	local max = #A
+
 	return table.move(
 		A,
 		1 + math.clamp((offset - 1) * size, 0, max),
@@ -427,6 +128,69 @@ function TableK.page<T>(A: {T}, size: number, offset: number): {T}
 		1,
 		table.create(max)
 	)
+end
+
+--- returns true if table contains value and its associated key
+function TableK.contains(t: {[any]: any}, value: any): (boolean, string?)
+	for k, v in t do
+		if value == v then
+			return true, k
+		end
+	end
+
+	return false
+end
+
+--- returns a deep-copy of table
+function TableK.deepcopy(t: {[any]: any}): {[any]: any}
+	local copy = {}
+
+	for k, v in t do
+		if type(v) == "table" then
+			copy[k] = TableK.deepcopy(v)
+		else
+			copy[k] = v
+		end
+	end
+
+	return copy
+end
+
+--- returns union of a and b, avoiding repeating elements and preserving sort order
+function TableK.union<T>(a: {T}, b: {T})
+	local union = table.clone(a)
+
+	for _, value in ipairs(b) do
+		if not table.find(union, value) then
+			table.insert(union, value)
+		end
+	end
+
+	return union
+end
+
+--- patches target table using source as a truth state
+function TableK.patch<T>(target: {[T]: any}, source: {[T]: any})
+	for k in target do
+		if not source[k] then
+			target[k] = nil
+		end
+	end
+	for k, v in source do
+		if type(target[k]) ~= type(v) then
+			target[k] = v
+		end
+	end
+end
+
+--- limits size of array
+function TableK.limit(A: {any}, size: number)
+	if #A > size then
+		table.remove(A)
+		TableK.limit(A, size)
+	else
+		return
+	end
 end
 
 return table.freeze(TableK)
