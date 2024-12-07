@@ -5,7 +5,9 @@
 --- extension of Color3 library
 local Color3K = {
 	white = Color3.fromRGB(255, 255, 255);
+	lightgray = Color3.fromRGB(222, 222, 222);
 	gray = Color3.fromRGB(148, 148, 148);
+	darkgray = Color3.fromRGB(74, 74, 74);
 	black = Color3.fromRGB(0, 0, 0);
 
 	red = Color3.fromRGB(255, 85, 85);
@@ -31,7 +33,7 @@ local Color3K = {
 		[1] = Color3.fromRGB(253, 41, 67); --- Color3.new(253/255, 41/255, 67/255);
 		[2] = Color3.fromRGB(1, 162, 255); --- Color3.new(1/255, 162/255, 255/255);
 		[3] = Color3.fromRGB(2, 184, 87); --- Color3.new(2/255, 184/255, 87/255);
-		[4] = Color3.fromRGB(107, 50, 124); --- BrickColor.new("Bright violet").Color;
+		[4] = Color3.fromRGB(180, 128, 255); --- BrickColor.new("Alder").Color; Color3.fromRGB(107, 50, 124); BrickColor.new("Bright violet").Color;
 		[5] = Color3.fromRGB(218, 133, 65); --- BrickColor.new("Bright orange").Color;
 		[6] = Color3.fromRGB(245, 205, 48); --- BrickColor.new("Bright yellow").Color;
 		[7] = Color3.fromRGB(232, 186, 200); --- BrickColor.new("Light reddish violet").Color;

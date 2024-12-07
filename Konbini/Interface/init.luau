@@ -4,6 +4,7 @@ local types = require(script.Parent.types)
 
 local GuiService = game:GetService("GuiService")
 local StarterGui = game:GetService("StarterGui")
+local TextChatService = game:GetService("TextChatService")
 local TweenService = game:GetService("TweenService")
 
 local function tween(object: Instance, properties: {[string]: any}, time: number, ...)
@@ -125,6 +126,17 @@ function Interface.reducedmotionchanged(f: (reducedmotionenabled: boolean) -> ()
 	return GuiService:GetPropertyChangedSignal("ReducedMotionEnabled"):Connect(function()
 		f(GuiService.ReducedMotionEnabled)
 	end)
+end
+
+--- locally emits a TextChatService message \
+--- `channel (?="RBXGeneral")`
+function Interface.textchatmessage(message: string, channel: string?)
+	local textchannel = TextChatService:FindFirstChild("TextChannels"):FindFirstChild(channel or "RBXGeneral")
+	if textchannel and textchannel:IsA("TextChannel") then
+		return textchannel:DisplaySystemMessage(message)
+	end
+
+	error(`"{channel}" is not a text channel of TextChatService.TextChannels`)
 end
 
 --- returns point on bezier curve at interpolant `A`

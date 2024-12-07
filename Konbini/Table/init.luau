@@ -80,8 +80,9 @@ function TableK.droplist<T>(droplist: {T}, count: number?, R: Random?): {T}
 		local B = table.clone(droplist);
 		(R or types.R):Shuffle(B)
 	
-		local start = (R or types.R):NextInteger(1, len - (count or 1))
-		local range = math.clamp(start + (count or 1), 1, #B)
+		local offset = (count or 1) - 1
+		local start = (R or types.R):NextInteger(1, len - offset)
+		local range = math.clamp(start + offset, 1, #B)
 
 		return table.move(B, start, range, 1, table.create(count or 1))
 	end
