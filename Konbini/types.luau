@@ -1,6 +1,12 @@
 --- Animation.luau
 
-export type AnimLibraryEntry = {Id: string?, Priority: Enum.AnimationPriority?, Animation: Animation?} & {[string]: any}
+export type AnimLibraryEntry = {
+	Id: string?;
+	Priority: Enum.AnimationPriority?;
+	Animation: Animation?;
+	[string]: unknown;
+}
+
 export type LocomotionState = 
 	| "Idle"
 	| "Walk"
@@ -129,7 +135,9 @@ export type Keybind = {
 	--- `2`: mobile \
 	--- `3`: gamepad
 	Defaults: {number};
-} & {[string]: any};
+
+	[string]: unknown;
+};
 
 --- Instance.luau
 
@@ -137,7 +145,9 @@ export type Tree = {
 	ClassName: string;
 	Children: { Tree }?;
 	Parent: Instance?;
-} & { [string]: any }
+
+	[string]: unknown;
+}
 
 export type MoverClass =
 	| "BodyGyro"
@@ -240,6 +250,67 @@ export type ClientArg =
 	| Player
 	| { number|Player }
 	| ((Player) -> boolean)
+
+--- Patronage.luau
+
+export type ReceiptInfo = {
+	--- unique purchase id
+	PurchaseId: string;
+	--- purchaser userid
+	PlayerId: number;
+	--- devproduct id
+	ProductId: number;
+	--- placeid of purchase
+	PlaceIdWherePurchased: number;
+	--- currency spent
+	CurrencySpent: number;
+	--- Enum.CurrencyType.Robux
+	CurrencyType: Enum.CurrencyType;
+}
+
+export type PolicyKey = 
+	--- ads
+	| "AreAdsAllowed"
+	--- lootboxes
+	| "ArePaidRandomItemsRestricted"
+	--- | "AllowedExternalLinkReferences"
+	--- off platform sharing
+	| "IsContentSharingAllowed"
+	--- commerce
+	| "IsEligibleToPurchaseCommerceProduct"
+	--- subscriptions
+	| "IsEligibleToPurchaseSubscription"
+	--- trading
+	| "IsPaidItemTradingAllowed"
+	--- china
+	| "IsSubjectToChinaPolicies"
+	--- (unknown/undefined)
+	| string --- account for undefined policies that may in fact exist
+
+export type MinProduct = {
+	--- devproduct or gamepass
+	Type: "DevProduct"|"Gamepass";
+	--- devproduct or gamepass id
+	Id: number;
+	[string]: unknown
+}
+
+export type PatronageProfile = {
+	--- number describing the player userid of this profile
+	UserId: number;
+	--- 2-wide string (country code) describing player region
+	Region: string;
+	--- boolean describing if this userid has roblox premium subscription
+	IsPremium: boolean;
+	--- array describing group membership states of this userid with respect to patronage config
+	Groups: { { GroupId: number; Rank: number; } };
+	--- binary string describing policyservice restrictions appled to this userid
+	PolicyString: string;
+	--- array describing gamepasses that are owned by this userid
+	Gamepasses: {number};
+	--- array describing the patronage lists where this userid is present
+	Lists: {string};
+}
 
 --- Vector3.luau
 

@@ -23,6 +23,7 @@ return table.freeze{
 	Interface = require(script:WaitForChild("Interface"));
 	Math = require(script:WaitForChild("Math"));
 	Network = require(script:WaitForChild("Network"));
+	Patronage = require(script:WaitForChild("Patronage"));
 	Table = require(script:WaitForChild("Table"));
 	Time = require(script:WaitForChild("Time"));
 	Vector3 = require(script:WaitForChild("Vector3"));

@@ -185,7 +185,7 @@ function InstanceK.new(tree: types.Tree): Instance
 	end
 
 	if tree.Children then
-		for _, branch in (tree.Children::{[string]: types.Tree}) do
+		for _, branch in (tree.Children) do
 			branch.Parent = newinstance
 			InstanceK.new(branch)
 		end
