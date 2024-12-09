@@ -202,7 +202,11 @@ function Patronage.listinsert(scope: string, userids: {number})
 			return list
 		end)
 	end)
-	if not s then warn(`[Patronage]: Patronage.listinsert() error: {e}`) end
+	if not s then
+		warn(`[Patronage]: Patronage.listinsert() error: {e}`)
+	else
+		print("[Patronage.listinsert]: Added", userids, `to patronage list "{scope}"`)
+	end
 
 	return s
 end
@@ -227,7 +231,11 @@ function Patronage.listremove(scope: string, userids: {number})
 			return list
 		end)
 	end)
-	if not s then warn(`[Patronage]: Patronage.listremove() error: {e}`) end
+	if not s then
+		warn(`[Patronage]: Patronage.listremove() error: {e}`)
+	else
+		print("[Patronage.listremove]: Removed", userids, `from patronage list "{scope}"`)
+	end
 
 	return s
 end
