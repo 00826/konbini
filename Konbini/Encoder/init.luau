@@ -5,7 +5,7 @@ local types = require(script.Parent.types)
 
 local int8 = 1/127
 
-local function subf(x: string): string
+local function subf(x: string)
 	return #x == 1 and "0" .. x or x
 end
 
@@ -39,21 +39,25 @@ function Encoder.assert<T>(a: T & {[string]: unknown}, typetable: {[string]: str
 		local value = a[key]
 		local type = typeof(value)
 
-		string.gsub(typestring, "%w+", function(substring)
+		local comp = string.gsub(typestring, "%w+", function(substring)
 			if substring == type then
 				c[key] = value
-				return substring
+				return ""
 			end
 			
-			error(string.format("expected typeof(a[%s]) (%s) to be in typeof-set %s", key, type, typestring), 2)
+			return substring
 		end)
+
+		if typestring == comp then
+			error(string.format("expected typeof(a[%s]) (%s) to be in typeof-set %s", key, type, typestring), 2)
+		end
 	end
 
 	return c :: T & {[string]: unknown}
 end
 
 --- returns byte width with respect to int/float types
-function Encoder.sizeof(intfloats: {types.intfloat|number}): number
+function Encoder.sizeof(intfloats: {types.intfloat|number})
 	local size = 0
 	for _, width in intfloats do
 		if type(width) == "number" then
@@ -66,12 +70,12 @@ function Encoder.sizeof(intfloats: {types.intfloat|number}): number
 end
 
 --- trims trailing whitespaces from string in buffer
-function Encoder.trimstring(str: string): string
+function Encoder.trimstring(str: string)
 	return string.gsub(string.gsub(str, "%s+", " "), "\u{0000}", "")
 end
 
 --- reads Vector3 from buffer
-function Encoder.readvector3(b: buffer, offset: number): Vector3
+function Encoder.readvector3(b: buffer, offset: number)
 	return Vector3.new(
 		buffer.readf32(b, offset),
 		buffer.readf32(b, offset + 4),
@@ -87,7 +91,7 @@ function Encoder.writevector3(b: buffer, offset: number, value: Vector3)
 end
 
 --- reads unit vector from buffer
-function Encoder.readunitvector(b: buffer, offset: number): Vector3
+function Encoder.readunitvector(b: buffer, offset: number)
 	return Vector3.new(
 		buffer.readi8(b, offset),
 		buffer.readi8(b, offset + 1),
@@ -123,7 +127,7 @@ function Encoder.writevector3i24(b: buffer, offset: number, value: Vector3, prec
 end
 
 --- reads CFrame from buffer
-function Encoder.readcframe(b: buffer, offset: number): CFrame
+function Encoder.readcframe(b: buffer, offset: number)
 	return CFrame.new(
 		buffer.readf32(b, offset),
 		buffer.readf32(b, offset + 4),
@@ -148,7 +152,7 @@ function Encoder.writecframe(b: buffer, offset: number, value: CFrame)
 end
 
 --- reads boolean from buffer
-function Encoder.readboolean(b: buffer, offset: number): boolean
+function Encoder.readboolean(b: buffer, offset: number)
 	return buffer.readu8(b, offset) == 1
 end
 
@@ -191,7 +195,7 @@ end
 
 --- returns `a == b` \
 --- `offset (?=0)` begin comparison at offset
-function Encoder.compare(a: buffer, b: buffer, offset: number?): boolean
+function Encoder.compare(a: buffer, b: buffer, offset: number?)
 	local lenA = buffer.len(a)
 	local lenB = buffer.len(b)
 
@@ -260,7 +264,7 @@ function Encoder.writei24(b: buffer, offset: number, value: number)
 end
 
 --- reads signed 24-bit integer from buffer
-function Encoder.readi24(b: buffer, offset: number): number
+function Encoder.readi24(b: buffer, offset: number)
 	local int = 0
 	int = bit32.replace(int, buffer.readu8(b, offset), 0, 8)
 	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
@@ -281,7 +285,7 @@ function Encoder.writeu24(b: buffer, offset: number, value: number)
 end
 
 --- reads unsigned 24-bit integer from buffer
-function Encoder.readu24(b: buffer, offset: number): number
+function Encoder.readu24(b: buffer, offset: number)
 	local int = 0
 	int = bit32.replace(int, buffer.readu8(b, offset), 0, 8)
 	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
@@ -292,7 +296,7 @@ end
 --- returns a `int16`-width matrix-buffer \
 --- space complexity of `2 + (2*columns*rows)` \
 --- *matrix value placements start at offset `2`, as column/row info is stored in the first 2 bytes*
-function Encoder.creatematrix(columns: number, rows: number): buffer
+function Encoder.creatematrix(columns: number, rows: number)
 	local m = buffer.create( 2 + (2 * columns * rows) )
 
 	buffer.writeu8(m, 0, columns)
@@ -341,7 +345,7 @@ function Encoder.readrowmatrix(m: buffer, row: number): {number}
 end
 
 --- reads sum of values along column of `int16`-width matrix-buffer
-function Encoder.readcolumnmatrix(m: buffer, column: number): number
+function Encoder.readcolumnmatrix(m: buffer, column: number)
 	local rows = buffer.readu8(m, 1)
 	local width = 2 * buffer.readu8(m, 0)
 
@@ -400,7 +404,7 @@ end
 --- writes value to bit-field-width of u32 stored in buffer at offset \
 --- returns new value, for convenience \
 --- accessible bit range: `[0, 31]`
-function Encoder.writeflagu32(b: buffer, offset: number, field: number, width: number, value: number): number
+function Encoder.writeflagu32(b: buffer, offset: number, field: number, width: number, value: number)
 	local x = bit32.replace(buffer.readu32(b, offset), value, field, width)
 	buffer.writeu32(b, offset, x)
 	return x
@@ -408,17 +412,17 @@ end
 
 --- reads value stored along bit-field-width of u32 stored in buffer at offset \
 --- accessible bit range: `[0, 31]`
-function Encoder.readflagu32(b: buffer, offset: number, field: number, width: number): number
+function Encoder.readflagu32(b: buffer, offset: number, field: number, width: number)
 	return bit32.extract(buffer.readu32(b, offset), field, width)
 end
 
 --- equivalent to `bit32.replace(x, value, field, width)`
-function Encoder.writebits(x: number, field: number, width: number, value: number): number
+function Encoder.writebits(x: number, field: number, width: number, value: number)
 	return bit32.replace(x, value, field, width)
 end
 
 --- returns range of bits as a string
-function Encoder.readbits(x: number, field: number, range: number): string
+function Encoder.readbits(x: number, field: number, range: number)
 	local bitstring = ""
 	for i = 1, range do
 		bitstring ..= tostring(bit32.extract(x, field + i))
@@ -427,7 +431,7 @@ function Encoder.readbits(x: number, field: number, range: number): string
 end
 
 --- returns value represented as a boolean
-function Encoder.toboolean(value: any): boolean
+function Encoder.toboolean(value: any)
 	if not value then return false end
 	local t = type(value)
 	return
@@ -441,7 +445,7 @@ end
 
 --- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
 --- `len (?=4, P(62,4)=677040)`: string length
-function Encoder.string(len: number?): string
+function Encoder.string(len: number?)
 	local str = ""
 	for i = 1, len or 4 do
 		local value = types.R:NextInteger(1, 36)
@@ -461,7 +465,7 @@ end
 
 --- replaces substrings in text matching capture pattern with respect to replacement table \
 --- `capture (?=%S+)`: capture substrings separated by whitespaces
-function Encoder.alias(text: string, replace: {[string]: string}, pattern: string?): string
+function Encoder.alias(text: string, replace: {[string]: string}, pattern: string?)
 	return string.gsub(text, pattern or "%S+", function(s: string)
 		return replace[s] or s
 	end)
@@ -483,7 +487,7 @@ end
 
 --- applies richtext color to substrings in text matching capture pattern with respect to Color3/hex code palette \
 --- `capture (?=%S+)`: capture substrings separated by whitespaces
-function Encoder.richcolor(text: string, palette: {[string]: Color3|string}, pattern: string?): string
+function Encoder.richcolor(text: string, palette: {[string]: Color3|string}, pattern: string?)
 	return string.gsub(text, pattern or "%S+", function(s: string)
 		local color = palette[s]
 		if color then
@@ -499,7 +503,7 @@ function Encoder.richcolor(text: string, palette: {[string]: Color3|string}, pat
 end
 
 --- returns unicode offset formatted as luau string `"\u{CODEPOINT}"`
-function Encoder.codepoint(offset: number|string): string
+function Encoder.codepoint(offset: number|string)
 	if type(offset) == "string" then
 		return "\\u{" .. offset .. "}"
 	elseif type(offset) == "number" then

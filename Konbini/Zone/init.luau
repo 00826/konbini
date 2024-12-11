@@ -99,7 +99,7 @@ function Zone.frame()
 end
 
 --- iterates through zone placements and emplacements, reparenting 1 placement and 1 emplacement that is *not* a descendant of its respective focus container
-function Zone.reparent(z: types.Zone, isinfocus: boolean): number
+function Zone.reparent(z: types.Zone, isinfocus: boolean)
 	local total = 0
 
 	assert(z.Placements, z, "zone no placement array")
@@ -183,7 +183,7 @@ end
 
 --- creates a silhouette of model, intended for optimization using the `comp` function \
 --- `transform` is deferred
-function Zone.silhouette(object: Model, comp: (original: Instance) -> boolean, transform: (copy: Instance) -> ()): Model
+function Zone.silhouette(object: Model, comp: (original: Instance) -> boolean, transform: (copy: Instance) -> ())
 	assert(object.PrimaryPart, `{object} PrimaryPart not set`)
 
 	local silhouette = Instance.new("Model")
@@ -215,7 +215,7 @@ end
 --- `0`: r = avg extent size \
 --- `1`: r = max extent size (optimistic) \
 --- `2`: r = min extent size (pessimistic)
-function Zone.radius(object: Model, mode: number, ignoreYaxis: boolean?): number
+function Zone.radius(object: Model, mode: number, ignoreYaxis: boolean?)
 	local size = object:GetExtentsSize()
 	local dimensions = table.create(3)
 	if ignoreYaxis == true then
@@ -242,7 +242,7 @@ function Zone.radius(object: Model, mode: number, ignoreYaxis: boolean?): number
 end
 
 --- returns a vector3 position of zone spawnbox, position, or zero-vector
-function Zone.spawnpoint(z: types.Zone): Vector3
+function Zone.spawnpoint(z: types.Zone)
 	local spawnbox = z.SpawnBox
 	if spawnbox then
 		local halfsize = spawnbox.Size * 0.5

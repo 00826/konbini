@@ -31,7 +31,7 @@ local Keyframable = table.freeze{
 	"Vector3";
 }
 
-local function iskeyframable<T>(a: T): boolean
+local function iskeyframable<T>(a: T)
 	local h, k = type(a), typeof(a)
 	for _, t in Keyframable do
 		if h == t then
@@ -221,7 +221,7 @@ end
 --- `b`: "loose" part \
 --- `offset: (?=CFrame.identity)`: `b.CFrame = a.CFrame * offset` \
 --- `force:` `b.CFrame = force`
-function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame?): WeldConstraint
+function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame?)
 	local newweld = Weld:Clone()
 	if force then
 		b.CFrame = force
@@ -433,7 +433,7 @@ function InstanceK.disablestates(humanoid: Humanoid, states: {Enum.HumanoidState
 end
 
 --- returns `target.PrimaryPart:GetNetworkOwner() == (owner or Players.LocalPlayer)`
-function InstanceK.isnetworkowner(target: Model, owner: Player?): boolean
+function InstanceK.isnetworkowner(target: Model, owner: Player?)
 	assert(target.PrimaryPart, `{target} has no primarypart`)
 	return target.PrimaryPart:GetNetworkOwner() == (owner or Players.LocalPlayer)
 end

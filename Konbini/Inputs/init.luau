@@ -94,7 +94,7 @@ local Cursor: types.Cursor = {
 	Instance = nil;
 }
 
-local function rayblacklist(origin: Vector3, direction: Vector3): RaycastResult
+local function rayblacklist(origin: Vector3, direction: Vector3)
 	return workspace:Raycast(origin, direction, BlacklistParams)
 end
 
@@ -249,7 +249,7 @@ end
 --- `1`: pc \
 --- `2`: mobile \
 --- `3`: gamepad
-function Inputs.platform(inputobject: InputObject): number
+function Inputs.platform(inputobject: InputObject)
 	return Inputs.Platforms[inputobject.UserInputType] or 0
 end
 
@@ -293,7 +293,7 @@ function Inputs.setmouseiconenabled(state: boolean)
 end
 
 --- returns `UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter`
-function Inputs.ismouselockcenter(): boolean
+function Inputs.ismouselockcenter()
 	return UIS.MouseBehavior == Enum.MouseBehavior.LockCenter
 end
 
@@ -303,7 +303,7 @@ function Inputs.findkeycodefromvalue(keycodevalue: number): Enum.KeyCode?
 end
 
 --- returns true if the inputobject was *not* obscured by the on-screen thumbstick
-function Inputs.sinkthumbstickcheck(inputobject: InputObject): boolean
+function Inputs.sinkthumbstickcheck(inputobject: InputObject)
 	if not PlayerGui then return false end
 	if Inputs.PlatformId == 2 then
 		local screenposition = inputobject.Position
@@ -322,7 +322,7 @@ end
 
 --- toggles (displaces) mobile gui elements off-screen \
 --- setting `.Enabled` does not work as that property is constantly set by the control scripts
-function Inputs.togglemobileinterface(thumbstickenabled: boolean?, jumpbuttonenabled: boolean?): RBXScriptConnection
+function Inputs.togglemobileinterface(thumbstickenabled: boolean?, jumpbuttonenabled: boolean?)
 	assert(PlayerGui)
 	local function t(TouchGui: Instance)
 		if TouchGui.Name ~= "TouchGui" then return end

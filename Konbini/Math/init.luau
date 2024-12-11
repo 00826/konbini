@@ -81,7 +81,7 @@ end
 --- returns: \
 --- where `x ∈ [a, b]`: `true` \
 --- where `x ∉ [a, b]`: `false`
-function MathK.inrange(x: number, a: number, b: number): boolean
+function MathK.inrange(x: number, a: number, b: number)
 	if x >= a and x <= b then
 		return true
 	end
@@ -138,7 +138,7 @@ end
 
 --- returns cartesian coordinates of point `p` with respect to grid width `w` \
 --- assumes a zero-indexed cartesian plane, read from `left -> right`, `top -> bottom` \
-function MathK.cartesian(p: number, w: number): (number, number)
+function MathK.cartesian(p: number, w: number)
 	p -= 1
 	return p // w, p % w
 end
@@ -147,7 +147,7 @@ end
 --- `aligncenter(2)`: `[-0.5, 0.5]` \
 --- `aligncenter(3, true)`: `[1, 0, -1]` \
 --- `aligncenter(5)`: `[-2, -1, 0, 1, 2]`
-function MathK.aligncenter(x: number, reverse: boolean?): {number}
+function MathK.aligncenter(x: number, reverse: boolean?)
 	if x == 1 then
 		return table.create(1, 0)
 	else

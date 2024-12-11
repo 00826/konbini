@@ -11,7 +11,7 @@ local function tween(object: Instance, properties: {[string]: any}, time: number
 	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
 end
 
-local function cartesian(p: number, w: number): (number, number)
+local function cartesian(p: number, w: number)
 	p -= 1
 	return p // w, p % w
 end
@@ -140,7 +140,7 @@ function Interface.textchatmessage(message: string, channel: string?)
 end
 
 --- returns point on bezier curve at interpolant `A`
-function Interface.bezier(A: number, points: {UDim2}): UDim2
+function Interface.bezier(A: number, points: {UDim2})
 	if #points > 1 then
 		local newpoints = {}
 		for i = 1, #points - 1 do
@@ -183,7 +183,7 @@ function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number
 end
 
 --- connects button events to guibutton
-function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunctions, sounds: types.ButtonSounds): {RBXScriptConnection}
+function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunctions, sounds: types.ButtonSounds)
 	local connections = table.create(9)
 
 	if functions.ClickDown then
@@ -305,7 +305,7 @@ function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alig
 end
 
 --- returns position of target @ x,y constrained within bounds of container
-function Interface.clampposition(x: number, y: number, target: GuiObject, container: GuiObject): UDim2
+function Interface.clampposition(x: number, y: number, target: GuiObject, container: GuiObject)
 	local pX, pY = (x - container.AbsolutePosition.X), (y - container.AbsolutePosition.Y - 36)
 
 	local dY = math.abs(math.clamp(container.AbsoluteSize.Y - (pY + target.AbsoluteSize.Y), -math.huge, 0))
@@ -394,7 +394,7 @@ function Interface.gridfill(container: Frame, width: number, height: number, tem
 end
 
 --- returns entries created by `Interface.gridfill`
-function Interface.gridentries(container: Frame): {GuiObject}
+function Interface.gridentries(container: Frame)
 	local c = container:GetChildren()
 	local entries = table.create(#c)
 
@@ -457,7 +457,7 @@ function Interface.listfill(container: Frame, rows: number, template: GuiObject?
 end
 
 --- returns entries created by `Interface.listfill`
-function Interface.listentries(container: Frame): {GuiObject}
+function Interface.listentries(container: Frame)
 	local c = container:GetChildren()
 	local entries = table.create(#c)
 
@@ -556,18 +556,18 @@ function Interface.pad(guiobject: GuiObject, value: UDim)
 end
 
 --- returns padding width (`left + right`)
-function Interface.padwidth(uipadding: UIPadding?): UDim
+function Interface.padwidth(uipadding: UIPadding?)
 	return uipadding and uipadding.PaddingLeft + uipadding.PaddingRight or UDim.new(0, 0)
 end
 
 --- returns padding height (`left + right`)
-function Interface.padheight(uipadding: UIPadding?): UDim
+function Interface.padheight(uipadding: UIPadding?)
 	return uipadding and uipadding.PaddingTop + uipadding.PaddingBottom or UDim.new(0, 0)
 end
 
 --- creates a unit circle \
 --- optional initial offset theta
-function Interface.unitcircle(vertices: number, radius: number, theta: number?): {UDim2}
+function Interface.unitcircle(vertices: number, radius: number, theta: number?)
 	local results = table.create(vertices)
 
 	local start = math.rad(theta or 0)
@@ -587,7 +587,7 @@ end
 --- `abbreviate (?=10000)`: if `x >= abbreviate`, `x` will be abbreviated \
 --- `comma (?=1000)`: if `x >= comma`, `x` will be separated by commas \
 --- `decimalplaces (?=1)`: *in contexts where `x` is abbreviated, # of decimal places*
-function Interface.formatnumber(x: number, abbreviate: number?, comma: number?, decimalplaces: number?): string
+function Interface.formatnumber(x: number, abbreviate: number?, comma: number?, decimalplaces: number?)
 	if x >= (abbreviate or 10000) then
 		return Interface.abbreviatenumber(x, decimalplaces or 1)
 	elseif x >= (comma or 1000) then
@@ -597,14 +597,14 @@ function Interface.formatnumber(x: number, abbreviate: number?, comma: number?, 
 end
 
 --- formats number separated by commas
-function Interface.commanumber(x: number): string
+function Interface.commanumber(x: number)
 	if math.abs(x) < 1000 then return tostring(math.floor(x)) end
 	local a = string.gsub(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)","%1,"), ",(%-?)$","%1")
 	return string.reverse(a)
 end
 
 --- abbreviates number following a `"K", "M", "B", "T", "Qd"...`-esque notation
-function Interface.abbreviatenumber(n: number, decimalplaces: number?): string
+function Interface.abbreviatenumber(n: number, decimalplaces: number?)
 	local exp = math.floor(math.log(math.max(1, math.abs(n)), 1000))
 	local suffix = Interface.suffixes[1 + exp] or ("e+" .. exp)
 	local norm = math.floor(n * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))

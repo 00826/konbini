@@ -124,7 +124,7 @@ function Vector3K.nextpointinbounds(v: Vector3, w: Vector3, R: Random?)
 end
 
 --- returns vector3 representation of `variant`
-function Vector3K.tovector(variant: types.xyzType?): Vector3
+function Vector3K.tovector(variant: types.xyzType?)
 	if typeof(variant) == "Vector3" then
 		return variant
 	elseif typeof(variant) == "Vector3int16" then
@@ -150,7 +150,7 @@ function Vector3K.unit(v: Vector3, w: Vector3)
 end
 
 --- returns the midpoint of `vectors`
-function Vector3K.midpoint(vectors: { Vector3 | types.xyzType }): Vector3
+function Vector3K.midpoint(vectors: { Vector3 | types.xyzType })
 	local length = #vectors
 
 	local sum = Vector3.zero
@@ -188,17 +188,17 @@ function Vector3K.segment(v: Vector3, w: Vector3, segments: number, transform: (
 end
 
 --- returns true if `v` and `w` are coplanar along unit vector `u`
-function Vector3K.iscoplanar(v: Vector3, w: Vector3, u: Vector3): boolean
+function Vector3K.iscoplanar(v: Vector3, w: Vector3, u: Vector3)
 	return math.round((v - w):Dot(u)) == 0
 end
 
 --- returns unit vector `v` reflected against unit vector `w`
-function Vector3K.reflect(v: Vector3, w: Vector3): Vector3
+function Vector3K.reflect(v: Vector3, w: Vector3)
 	return 2 * v:Dot(w) * w - v
 end
 
 --- returns rotation of unit vector `v` along `axis`
-function Vector3K.rotation(v: Vector3, axis: Enum.Axis): number
+function Vector3K.rotation(v: Vector3, axis: Enum.Axis)
 	local y, x = 0, 0
 
 	if axis == Enum.Axis.X then
@@ -239,7 +239,7 @@ end
 
 --- interpolates between unit vector `v` and unit vector `w` with respect to interpolant `t` \
 --- axisangle is the goat
-function Vector3K.slerp(v: Vector3, w: Vector3, t: number): Vector3
+function Vector3K.slerp(v: Vector3, w: Vector3, t: number)
 	local magA = v.Magnitude
 	local magB = w.Magnitude
 
@@ -290,7 +290,7 @@ function Vector3K.slerp(v: Vector3, w: Vector3, t: number): Vector3
 end
 
 --- returns `v` as a string
-function Vector3K.tostring(v: Vector3, precision: number?): string
+function Vector3K.tostring(v: Vector3, precision: number?)
 	return string.sub(string.format(string.rep("%." .. (precision or 2) .. "f ", 3), v.X, v.Y, v.Z), 1, -2)
 end
 

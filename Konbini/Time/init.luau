@@ -20,7 +20,7 @@ local Time = {
 }
 
 --- returns konbini time
-function Time.now(latency: number?): number
+function Time.now(latency: number?)
 	return buffer.readf32(Time.buffer, 0) + (latency or 0)
 end
 
@@ -30,7 +30,7 @@ function Time.extend(x: number, time: number)
 end
 
 --- runs function for `x` seconds
-function Time.run(x: number, f: (elapsed: number, dt: number) -> ()): RBXScriptConnection
+function Time.run(x: number, f: (elapsed: number, dt: number) -> ())
 	local elapsed = 0
 	local c; c = RunService.Heartbeat:Connect(function(dt: number)
 		elapsed += dt
@@ -40,20 +40,45 @@ function Time.run(x: number, f: (elapsed: number, dt: number) -> ()): RBXScriptC
 			c:Disconnect()
 		end
 	end)
+
 	return c
 end
 
 --- runs function at every second interval `x`
-function Time.framerule(x: number, f: (...any) -> ()): RBXScriptConnection
-	local elapsed = 0
-	local function frame(dt)
+function Time.framerule(x: number, f: (...any) -> ())
+	local elapsed = x
+	local function frame(dt: number)
 		elapsed += dt
 		if elapsed < x then return end
 		elapsed -= x
 		f()
 	end
-	f()
+
 	return RunService.Heartbeat:Connect(frame)
+end
+
+--- runs function at exponential backoff interval `math.clamp(x + (base ^ failures) - 1, x, limit)` \
+--- `f() -> true`: failures decremented by `1` (min: `0`) \
+--- `f() -> false`: failures incremented by `1` (max: `math.huge`)
+function Time.backoff(x: number, base: number, limit: number, f: (...any) -> boolean)
+	local elapsed, failures = x, 0
+
+	return RunService.Heartbeat:Connect(function(dt: number)
+		local backoffrate = math.clamp(x + (base ^ failures) - 1, x, limit)
+		elapsed += dt
+		if elapsed < backoffrate then return end
+		elapsed -= backoffrate
+
+		local success = f()
+		if success == true then
+			failures = math.clamp(failures - 1, 0, math.huge)
+		elseif success == false then
+			failures += 1
+		else
+			warn(`{debug.traceback()}, function {f} did not return a boolean; interpreting as failure`)
+			failures += 1
+		end
+	end)
 end
 
 --- returns latency, in seconds: \
@@ -61,13 +86,14 @@ end
 --- `server`: `client:GetNetworkPing()` or `0` \
 --- `client`: `localplayer:GetNetworkPing()` \
 --- `roundtrip (?=false)`: apply cost of network roundtrip? `(latency * 2)`
-function Time.latency(client: Player?, roundtrip: boolean?): number
+function Time.latency(client: Player?, roundtrip: boolean?)
 	if RunService:IsStudio() then
 		return (Time.incomingreplicationlag / 1000) * (roundtrip and 2 or 1)
 	else
 		if IsServer then
 			return (client and client:GetNetworkPing() or 0) * (roundtrip and 2 or 1)
 		end
+
 		return (LocalPlayer:GetNetworkPing()) * (roundtrip and 2 or 1)
 	end
 end

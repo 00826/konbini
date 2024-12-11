@@ -121,7 +121,7 @@ function Couture.clearaccessories(character: Instance)
 end
 
 --- creates accessorypart from accessory instance
-function Couture.frominstance(accessory: Accessory, name: string?): BasePart
+function Couture.frominstance(accessory: Accessory, name: string?)
 	local handle = accessory:FindFirstChild("Handle")
 	assert(handle, `{accessory} missing Handle`)
 
@@ -159,7 +159,7 @@ function Couture.frominstance(accessory: Accessory, name: string?): BasePart
 end
 
 --- creates accessorypart
-function Couture.createaccessory(name: string, attachment: {}, specialmesh: {}): BasePart
+function Couture.createaccessory(name: string, attachment: {}, specialmesh: {})
 	local newpart = AccessoryPart:Clone()
 	newpart.Name = "Couture__" .. name
 
@@ -181,7 +181,7 @@ function Couture.createaccessory(name: string, attachment: {}, specialmesh: {}):
 end
 
 --- attaches accessorypart to character
-function Couture.attachaccessory(character: Instance, accessorypart: BasePart, parent: Instance?): boolean
+function Couture.attachaccessory(character: Instance, accessorypart: BasePart, parent: Instance?)
 	local accessoryattachment = accessorypart:FindFirstChildOfClass("Attachment")
 	if not accessoryattachment then return false end
 
@@ -216,7 +216,7 @@ function Couture.findattachment(character: Instance, attachmentref: string): Att
 end
 
 --- returns if player avatar is wearing a female torso with respect to `Couture.FemaleTorsos`
-function Couture.isusingfemaletorso(player: Player): boolean
+function Couture.isusingfemaletorso(player: Player)
 	local couturefolder = player:FindFirstChild("CoutureFolder")
 	if couturefolder then
 		return couturefolder:GetAttribute("UseFemaleTorso") == true

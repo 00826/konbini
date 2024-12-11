@@ -22,7 +22,7 @@ end
 --- similar to `table.insert`, where `T[random alphanumeric key] = value` \
 --- returns `random alphanumeric key` for convenience \
 --- `len (?=4)`: key length
-function TableK.insertkey(t: {[string]: any}, value: any, len: number?): string
+function TableK.insertkey(t: {[string]: any}, value: any, len: number?)
 	local key = string.rep("0", len or 4)
 	repeat key = Encoder.string(len or 4)
 	until t[key] == nil
@@ -34,7 +34,7 @@ end
 
 --- returns average or weighted average of elements in array \
 --- assumes a single-type array populated with types that support operators `+`, `*`, `/`
-function TableK.average(array: {any}, weights: {number}?): any
+function TableK.average(array: {any}, weights: {number}?)
 	local len = #array
 	local sum = table.remove(array, 1)
 	for i, v in ipairs(array) do
@@ -46,7 +46,7 @@ end
 
 --- returns list of elements picked from droptable \
 --- compatible with weighted tables whose sum of values does not equal 100
-function TableK.droptable(droptable: {[string]: number}, count: number?, R: Random?): {string}
+function TableK.droptable(droptable: {[string]: number}, count: number?, R: Random?)
 	local items = table.create(count or 1)
 	local weightsum = 0
 
@@ -70,7 +70,7 @@ function TableK.droptable(droptable: {[string]: number}, count: number?, R: Rand
 end
 
 --- returns list of elements drawn from droplist
-function TableK.droplist<T>(droplist: {T}, count: number?, R: Random?): {T}
+function TableK.droplist<T>(droplist: {T}, count: number?, R: Random?)
 	local len = #droplist
 	if len == 0 then
 		warn(`empty array passed, returning new empty array`)
@@ -119,7 +119,7 @@ end
 --- page(t, 10, 3) --- [21, ..., 25]
 --- page(t, 10, 4) --- []
 --- ```
-function TableK.page<T>(A: {T}, size: number, offset: number): {T}
+function TableK.page<T>(A: {T}, size: number, offset: number)
 	local max = #A
 
 	return table.move(

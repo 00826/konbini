@@ -18,7 +18,7 @@ local CFrameK = {
 
 --- applies selected axis from copyfrom to target \
 --- if no axis is passed, then all rotational components will be applied
-function CFrameK.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enum.Axis?): CFrame
+function CFrameK.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enum.Axis?)
 	if not axis then
 		return CFrame.new(target.X, target.Y, target.Z, select(4, copyfrom:GetComponents()))
 	end
@@ -33,7 +33,7 @@ function CFrameK.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enu
 end
 
 --- returns cframe rotated towards lookvector at uniform rate within `[0, 1]`
-function CFrameK.matchlookvector(cframe: CFrame, lookvector: Vector3, rate: number): CFrame
+function CFrameK.matchlookvector(cframe: CFrame, lookvector: Vector3, rate: number)
 	local angle = cframe.LookVector:Angle(lookvector)
 	
 	if angle < 5e-7 then

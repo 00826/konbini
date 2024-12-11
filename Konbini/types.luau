@@ -249,7 +249,7 @@ export type ClientArg =
 	| number
 	| Player
 	| { number|Player }
-	| ((Player) -> boolean)
+	| (Player) -> boolean
 
 --- Patronage.luau
 

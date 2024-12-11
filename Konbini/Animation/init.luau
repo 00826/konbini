@@ -27,6 +27,7 @@ function Animation.define(name: string, library: {[string]: types.AnimLibraryEnt
 			}
 		else
 			entry.Priority = v.Priority
+			assert(entry.Animation, "this should not happen")
 			entry.Animation.AnimationId = v.Id
 		end
 	end
@@ -47,6 +48,7 @@ function Animation.play(a: Animator|Model, library: string, name: string, priori
 	if a:IsA("Model") then
 		a = select(2, Animation.components(a))
 	end
+	assert(entry.Animation, "this should not happen")
 	assert(a:IsA("Animator"), "this should not happen")
 
 	local track = a:LoadAnimation(entry.Animation)
@@ -58,7 +60,7 @@ function Animation.play(a: Animator|Model, library: string, name: string, priori
 end
 
 --- returns `AnimationController|Humanoid` and environment-owned Animator of rig, instantiating the Animator if it doesn't already exist
-function Animation.components(rig: Model): (AnimationController|Humanoid, Animator)
+function Animation.components(rig: Model)
 	local controller = rig:FindFirstChildOfClass("AnimationController") or rig:FindFirstChildOfClass("Humanoid")
 	assert(controller, `rig "{rig.Name}" no AnimationController or Humanoid`)
 	

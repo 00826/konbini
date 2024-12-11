@@ -66,7 +66,7 @@ local Color3K = {
 			return ColorSequence.new(Color3.fromRGB(w, w, w))
 		end;
 		--- returns color3 in colorsequence at interpolant `a`
-		colorat = function(sequence: ColorSequence, a: number): Color3
+		colorat = function(sequence: ColorSequence, a: number)
 			local lastkeypoint = nil
 			for _, Keypoint in ipairs(sequence.Keypoints) do
 				if a < Keypoint.Time then
