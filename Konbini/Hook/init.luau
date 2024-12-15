@@ -26,7 +26,7 @@ return function(name: string, size: number?)
 			end
 		end
 
-		--- connects function `f` to this hook
+		--- connects function to this hook
 		hook.Connect = function(f: (...any) -> ())
 			table.insert(hook._functions, f)
 

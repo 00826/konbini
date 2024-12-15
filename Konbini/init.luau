@@ -22,6 +22,7 @@ return table.freeze{
 	Instance = require(script:WaitForChild("Instance"));
 	Interface = require(script:WaitForChild("Interface"));
 	Math = require(script:WaitForChild("Math"));
+	Memory = require(script:WaitForChild("Memory"));
 	Network = require(script:WaitForChild("Network"));
 	Patronage = require(script:WaitForChild("Patronage"));
 	Table = require(script:WaitForChild("Table"));

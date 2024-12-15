@@ -188,6 +188,7 @@ function Couture.attachaccessory(character: Instance, accessorypart: BasePart, p
 	local rigattachment = Couture.findattachment(character, accessoryattachment.Name)
 	if not rigattachment then return false end
 
+	accessorypart:SetAttribute("IsAccessory", true)
 	accessorypart.Parent = parent or character
 	accessorypart.CFrame = rigattachment.WorldCFrame * accessoryattachment.CFrame:Inverse()
 

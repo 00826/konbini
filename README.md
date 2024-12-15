@@ -32,6 +32,7 @@
 |[Interface.luau](./Konbini/Interface/init.luau)|user-interface helper functions|-|❌|
 |**[Math.luau](./Konbini/Math/init.luau)**|`math` library extension|-|❌|
 |[Network.luau](./Konbini/Network/init.luau)|straightforward two-function networking interface|-|❌|
+|[Memory.luau](./Konbini/Memory/init.luau)|`MemoryStoreService` wrapper|`Konbini.Hook`|❌|
 |[Patronage.luau](./Konbini/Patronage/init.luau)|easily handle devproducts, gamepasses, group membership, etc|`Konbini.Hook`|❌|
 |**[Table.luau](./Konbini/Table/init.luau)**|`table` library extension|-|❌|
 |[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|❌|

@@ -372,11 +372,15 @@ function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart|M
 		real.Parent = InstanceK.EmitContainer
 		if real:IsA("BasePart") then
 			real.Position = at
+		elseif real:IsA("Model") then
+			real:PivotTo(CFrame.new(at))
 		end
 	elseif typeof(at) == "CFrame" then
 		real.Parent = InstanceK.EmitContainer
 		if real:IsA("BasePart") then
 			real.CFrame = at
+		elseif real:IsA("Model") then
+			real:PivotTo(at)
 		end
 	elseif at:IsA("BasePart") then
 		real.Parent = at
@@ -415,6 +419,8 @@ function InstanceK.loadcharacter(player: Player, description: HumanoidDescriptio
 	if player.Character then
 		player.Character:Destroy()
 		player.Character = nil
+
+		player.PlayerGui:ClearAllChildren()
 	end
 	if IsServer then
 		if description then

@@ -123,7 +123,7 @@ function Entity.frombuffer(b: buffer): {}
 	return from
 end
 
---- returns first `e` that satisfies `e[scope] == value`
+--- returns first `e` and its associated `key` that satisfies `e[scope] == value`
 function Entity.fromscope(scope: string, value: any): ({}?, string?)
 	assert(value ~= nil, "cannot scope a nil value")
 
