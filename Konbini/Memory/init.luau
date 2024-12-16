@@ -41,7 +41,7 @@ local Memory = {
 }
 
 --- returns would-be memory store should this key be stored in global memory
-local function storeof(key: string)
+local function storeof(key: string): MemoryStoreSortedMap
 	key = string.upper(string.sub(key, 1, 1))
 
 	for i, mapkey in ipairs(MapKeys) do
@@ -184,7 +184,36 @@ function Memory.updateasync(key: string, data: any, expiry: number?)
 			return ref
 		end
 
-		entry.Data = data
+		if type(data) == "table" then
+			for k, v in data do
+				entry.Data[k] = v
+			end
+		else
+			entry.Data = data
+		end
+		---entry.Data = data
+		ref = entry
+
+		return entry
+	end, expiry or 300)
+	if s then
+		addunit(2)
+	else
+		warn(result)
+	end
+
+	return ref
+end
+
+--- refreshes expiry time of entry associated with key \
+--- `memory store units:` `2` \
+--- `expiry (?=300)` expiry time of entry associated with the key
+function Memory.refreshasync(key: string, expiry: number?)
+	waitforalloc(2)
+
+	local store = storeof(key)
+	local ref = nil
+	local s, result = pcall(store.UpdateAsync, store, key, function(entry: Entry?)
 		ref = entry
 
 		return entry
@@ -214,6 +243,10 @@ end
 
 --- returns first `data` and its associated `key` that satisfies `data[scope] == value`
 function Memory.fromscope(scope: string, value: any, includelocal: boolean?): ({[any]: any}?, string?)
+	if value == nil then
+		return nil, nil
+	end
+
 	if includelocal then
 		local v = Memory.Local[scope]
 		if v == value then
@@ -330,8 +363,8 @@ if RunService:IsServer() then
 	
 	local function onclose()
 		if JobId ~= "" then
-			local shard = storeof(JobId)
-			pcall(shard.RemoveAsync, shard, JobId)
+			local store = storeof(JobId)
+			pcall(store.RemoveAsync, store, JobId)
 		end
 	end
 	
