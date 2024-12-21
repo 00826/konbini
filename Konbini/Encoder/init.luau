@@ -19,7 +19,7 @@ local Encoder = {
 		i24 = 3; u24 = 3;
 		i32 = 4; u32 = 4; f32 = 4;
 		f64 = 8;
-	}
+	};
 }
 
 --- asserts all types of table `a` against typestring-table `typetable` \
@@ -57,7 +57,7 @@ function Encoder.assert<T>(a: T & {[string]: unknown}, typetable: {[string]: str
 end
 
 --- returns byte width with respect to int/float types
-function Encoder.sizeof(intfloats: {types.intfloat|number})
+function Encoder.width(intfloats: {types.intfloat|number})
 	local size = 0
 	for _, width in intfloats do
 		if type(width) == "number" then
@@ -66,6 +66,7 @@ function Encoder.sizeof(intfloats: {types.intfloat|number})
 			size += Encoder.WidthLookup[width] or 0
 		end
 	end
+
 	return size
 end
 

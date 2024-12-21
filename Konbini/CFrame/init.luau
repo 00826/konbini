@@ -33,7 +33,7 @@ function CFrameK.applyaxis(target: CFrame | Vector3, copyfrom: CFrame, axis: Enu
 end
 
 --- returns cframe rotated towards lookvector at uniform rate within `[0, 1]`
-function CFrameK.matchlookvector(cframe: CFrame, lookvector: Vector3, rate: number)
+function CFrameK.rotatetolookvector(cframe: CFrame, lookvector: Vector3, rate: number)
 	local angle = cframe.LookVector:Angle(lookvector)
 	
 	if angle < 5e-7 then

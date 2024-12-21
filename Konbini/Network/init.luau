@@ -7,10 +7,56 @@ local IsServer = RunService:IsServer()
 
 local Players = game:GetService("Players")
 
+local ByteSizes = {
+	_remoteoverhead = 9;
+	--- _remotefunctionoverhead = 2;
+	_clienttoserveroverhead = 5;
+	_type = 1;
+	_nil = 0;
+
+	f64 = 8;
+	f32 = 4;
+	u32 = 4;
+	i32 = 4;
+	u16 = 2;
+	i16 = 2;
+	u8 = 1;
+	i8 = 1;
+
+	Axes = 6;
+	boolean = 1;
+	BrickColor = 4;
+	CFrame = 19;
+	Color3 = 12;
+	Color3uint8 = 3;
+	ColorSequenceKeypoint = 16;
+	EnumItem = 4;
+	Faces = 6;
+	number = 8;
+	NumberRange = 8;
+	NumberSequenceKeypoint = 12;
+	PhysicalProperties = 20;
+	Ray = 24;
+	Rect = 16;
+	UDim = 8;
+	UDim2 = 16;
+	Vector2 = 8;
+	Vector2int16 = 4;
+	Vector3 = 12;
+	Vector3int16 = 6;
+};
+
+local function vlq(initialsize: number, length: number)
+	return math.max(math.ceil(math.log(length + initialsize, 128)), initialsize)
+end
+
 --- ### Network.luau
 ---
---- remote wrapper
+--- remote wrapper \
+--- thank you pyseph for remote packet size counter
 local Network = {
+	Queue = {};
+
 	RemoteEvent = script:WaitForChild("RemoteEvent");
 	UnreliableRemoteEvent = script:WaitForChild("UnreliableRemoteEvent");
 }
@@ -112,6 +158,97 @@ function Network.wait(scope: string, timeout: number?)
 	if b then b:Disconnect() end
 
 	return response
+end
+
+function Network.measurepacket(packet: {any}, clienttoserver: boolean)
+	local total = ByteSizes._remoteoverhead + ByteSizes._type
+
+	for a, b in ipairs(packet) do
+		total += Network.sizeof(b) + ByteSizes._type
+	end
+
+	return total
+end
+
+function Network.sizeof(data: any)
+	local total = 0
+	if data ~= nil then
+		total += ByteSizes._type
+	end
+
+	--[[
+	quicj notes
+	
+	strings and buffer sizes are vlq(1, len) + len
+
+	tables are iterated and this function is called recursively
+	both keys and values have this function called recursively on them; type overhead is added to both
+	array check is just array[1] ~= nil
+	if array, vlq(1, # of keys) + sum of values
+	if not array, vlq(1, # of keys) + sum of keys of non-arrays + sum of values
+
+	cframes have special cases but in all honesty i dont trust those because congruent cframes produced by two diff methods are not equivalent
+	worse-case size would be 1+12+6
+	also the code that exists is a second lookup like??????? just assume the worst case
+
+	numsequence/colorsequences:
+	4+sum of value of each keypoint
+
+	else:
+	error thrown!!!
+
+
+	for each entry in packet, type overhead is added to each one
+	type overhead is added to final result
+	]]
+
+	local datatype = typeof(data)
+
+	if datatype == "string" then
+		local len = #data
+		total += vlq(1, len) + len
+	elseif datatype == "buffer" then
+		local len = buffer.len(data)
+		total += vlq(1, len) + len
+	elseif datatype == "NumberSequence" then
+		total += 4
+		for _, keypoint in (data::NumberSequence).Keypoints do
+			total += ByteSizes.NumberSequenceKeypoint
+		end
+	elseif datatype == "ColorSequence" then
+		total += 4
+		for _, keypoint in (data::ColorSequence).Keypoints do
+			total += ByteSizes.ColorSequenceKeypoint
+		end
+	elseif datatype == "table" then
+		local keys = 0
+		local sum = 0
+
+		if data[1] ~= nil then
+			for _, v in data do
+				keys += 1
+				sum += Network.sizeof(v)::number + ByteSizes._type
+			end
+		else
+			for k, v in data do
+				keys += 1
+				sum += Network.sizeof(k)::number + Network.sizeof(v) + ByteSizes._type
+			end
+		end
+
+		total += vlq(1, keys) + sum
+	elseif ByteSizes[datatype] then
+		total += ByteSizes[datatype]
+	else
+		error(`unknown type {datatype}`)
+	end
+
+	return total
+end
+
+if IsServer then
+else
+
 end
 
 return Network

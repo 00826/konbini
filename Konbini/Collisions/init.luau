@@ -89,6 +89,20 @@ function Collisions.fancast(type: types.CastList, at: Vector3, direction: Vector
 	return results
 end
 
+--- returns true if nearest point on part is within bounds of volume defined by cframe and size
+function Collisions.ispartinbox(part: BasePart, at: CFrame, size: Vector3)
+	local point = part:GetClosestPointOnSurface(at.Position)
+
+	return Collisions.ispointinbox(point, at, size)
+end
+
+--- returns true if nearest point on part is within bounds of volume defined by position and radius
+function Collisions.ispartinball(part: BasePart, at: Vector3, radius: number)
+	local point = part:GetClosestPointOnSurface(at)
+	
+	return Collisions.ispointinradius(point, at, radius)
+end
+
 --- sets collision group of baseparts under model
 function Collisions.setmodelcollisiongroup(model: Model, collisiongroup: string)
 	for _, thing in model:GetDescendants() do

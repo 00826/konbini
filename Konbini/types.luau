@@ -7,10 +7,14 @@ export type AnimLibraryEntry = {
 	[string]: unknown;
 }
 
-export type LocomotionState = 
-	| "Idle"
-	| "Walk"
-	| "Run"
+export type AnimController = {
+	Rig: Model;
+	AnimPlayer: AnimationController|Humanoid;
+	Animator: Animator;
+
+	ActionTrack: AnimationTrack?;
+	LoopTrack: AnimationTrack?;
+}
 
 --- Bullet.luau
 

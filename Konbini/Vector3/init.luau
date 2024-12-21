@@ -24,6 +24,13 @@ local Vector3K = {
 
 --- returns `v.Unit`, or, if `NaN`, `Vector3.zero`
 function Vector3K.unit_or_zero(v: Vector3)
+	--[[
+	if vector.magnitude(v) > 0 then
+		return vector.normalize(v)
+	else
+		return vector.zero
+	end
+	]]
 	if v.Magnitude > 0 then
 		return v.Unit
 	else
@@ -33,6 +40,10 @@ end
 
 --- returns `v` projected onto `w`
 function Vector3K.project(v: Vector3, w: Vector3)
+	--[[
+	w = Vector3K.unit_or_zero(w)
+	return vector.dot(v, w) * w
+	]]
 	w = Vector3K.unit_or_zero(w)
 	return v:Dot(w) * w
 end
@@ -63,6 +74,13 @@ end
 
 --- stretches `v` towards `w`, within bounds of `radius`
 function Vector3K.stretch(v: Vector3, w: Vector3, radius: number)
+	--[[
+	if vector.magnitude(v, w) <= radius then
+		return w
+	end
+
+	return v + (vector.normalize(w - v) * radius)
+	]]
 	if Vector3K.distance(v, w) <= radius then
 		return w
 	end
@@ -91,6 +109,30 @@ end
 --- returns random unit vector within bounds of cone \
 --- quasiduck is the goat
 function Vector3K.nextunitspread(v: Vector3, radians: number, R: Random?)
+	--[[
+	--- create an orthonormal basis (u, w, v)
+	--- equivalent of producing the rightvector (u) and upvector (w) of v
+	local u
+	if math.abs(v.Y) < 0.999 then
+		u = vector.normalize(vector.cross(v, Vector3.yAxis))
+	else
+		u = vector.normalize(vector.cross(v, Vector3.xAxis))
+	end
+	local w = vector.cross(v, u)
+
+	--- generate a random point within the spherical cap (from unit sphere)
+	--- produces spherical coordinates
+	local cosTheta = (R or types.R):NextNumber(math.cos(radians), 1)
+	local sinTheta = (1 - cosTheta * cosTheta)^0.5
+	local phi = (R or types.R):NextNumber(0, 2*math.pi)
+
+	local x = sinTheta * math.cos(phi)
+	local y = sinTheta * math.sin(phi)
+	local z = cosTheta
+
+	--- construct the random vector in the original coordinate system
+	return (x*u) + (y*w) + (z*v)
+	]]
 	--- create an orthonormal basis (u, w, v)
 	--- equivalent of producing the rightvector (u) and upvector (w) of v
 	local u
@@ -145,7 +187,7 @@ end
 
 --- returns `vector.normalize(w - v)`
 function Vector3K.unit(v: Vector3, w: Vector3)
-	--- return vector.normalize(w::any - v::any)
+	--- return vector.normalize(w - v)
 	return (w - v).Unit
 end
 
@@ -189,11 +231,13 @@ end
 
 --- returns true if `v` and `w` are coplanar along unit vector `u`
 function Vector3K.iscoplanar(v: Vector3, w: Vector3, u: Vector3)
+	--- return math.round(vector.dot((v - w), u)) == 0
 	return math.round((v - w):Dot(u)) == 0
 end
 
 --- returns unit vector `v` reflected against unit vector `w`
 function Vector3K.reflect(v: Vector3, w: Vector3)
+	--- return 2 * vector.dot(v, w) * w - v
 	return 2 * v:Dot(w) * w - v
 end
 

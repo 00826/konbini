@@ -1,91 +1,77 @@
 --!strict
 
-local types = require(script.Parent.types)
-
-local Empty = script:WaitForChild("Animation")
+local types = require(script.Parent:WaitForChild("types"))
 
 --- ### Animation.luau
 ---
---- aio animation handler
+--- animation player/controller
 local Animation = {
-	libraries = {} :: {[string]: {[string]: types.AnimLibraryEntry}}
+	Library = {} :: {[string]: types.AnimLibraryEntry};
+
+	FadeTime = 1/16;
 }
 
---- defines animation library
-function Animation.define(name: string, library: {[string]: types.AnimLibraryEntry})
-	if not Animation.libraries[name] then
-		Animation.libraries[name] = {}
+--- returns animation controller table
+function Animation.createcontroller(rig: Model): types.AnimController
+	local animplayer = rig:FindFirstChildOfClass("AnimationController") or rig:FindFirstChildOfClass("Humanoid")
+	assert(animplayer, "no AnimationController or Humanoid found in rig")
+	local animator = animplayer:FindFirstChildOfClass("Animator")
+	if not animator then
+		local a = Instance.new("Animator")
+		a.Parent = animplayer
+		animator = a
 	end
 
-	local real = Animation.libraries[name]
-	for k, v in library do
-		local entry = real[k]
-		if not entry then
-			real[k] = {
-				Priority = v.Priority;
-				Animation = Animation.create(v.Id);
-			}
-		else
-			entry.Priority = v.Priority
-			assert(entry.Animation, "this should not happen")
-			entry.Animation.AnimationId = v.Id
-		end
-	end
+	return {
+		Rig = rig;
+		AnimPlayer = animplayer;
+		Animator = animator::Animator;
+
+		ActionTrack = nil :: AnimationTrack?;
+		LoopTrack = nil :: AnimationTrack?;
+	}
 end
 
---- plays animation from defined library
---- `priority (?=library[name].Priority|Enum.AnimationPriority.Movement)` animationtrack priority \
---- `speed (?=1)` animationtrack speed \
---- `fadetime (?=0.1)` animationtrack fadetime \
---- `weight (?=1)` animationtrack weight
-function Animation.play(a: Animator|Model, library: string, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
-	local lib = Animation.libraries[library]
-	assert(lib, `library "{library}" not defined`)
-
-	local entry = lib[name]
-	assert(entry, `library "{library}" missing entry "{name}"`)
-
-	if a:IsA("Model") then
-		a = select(2, Animation.components(a))
+--- sets and plays action track of animation controller \
+--- `priority (?=Library[name].Priority|Enum.AnimationPriority.Action)`: animation priority \
+--- returns `controller.ActionTrack` for convenience
+function Animation.playactiontrack(controller: types.AnimController, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+	if controller.ActionTrack then
+		controller.ActionTrack:Stop(fadetime or Animation.FadeTime)
+		controller.ActionTrack = nil
 	end
-	assert(entry.Animation, "this should not happen")
-	assert(a:IsA("Animator"), "this should not happen")
 
-	local track = a:LoadAnimation(entry.Animation)
-	track.Name = library .. "/" .. name
-	track.Priority = entry.Priority or Enum.AnimationPriority.Movement
-	track:Play(fadetime or 0.1, weight or 1, speed or 1)
+	local entry = Animation.Library[name]
+	assert(entry, `animation "{name}" not defined`)
+	local animobject = entry.Animation
+	assert(animobject)
+	controller.ActionTrack = controller.Animator:LoadAnimation(animobject)
+	assert(controller.ActionTrack, "lf solver")
+	controller.ActionTrack:Play(fadetime or Animation.FadeTime, weight, speed)
+	controller.ActionTrack.Priority = priority or entry.Priority or Enum.AnimationPriority.Action
 
-	return track
+	return controller.ActionTrack
 end
 
---- returns `AnimationController|Humanoid` and environment-owned Animator of rig, instantiating the Animator if it doesn't already exist
-function Animation.components(rig: Model)
-	local controller = rig:FindFirstChildOfClass("AnimationController") or rig:FindFirstChildOfClass("Humanoid")
-	assert(controller, `rig "{rig.Name}" no AnimationController or Humanoid`)
-	
-	local animator = controller:FindFirstChildOfClass("Animator")
-	if animator then
-		if animator:GetAttribute("k_OwnsFlag") then
-			return controller, animator
-		else
-			animator:Destroy()
-			animator = Instance.new("Animator")
-
-			animator.Parent = controller
-			animator:SetAttribute("k_OwnsFlag", true)
-
-			return controller, animator
-		end
-	else
-		animator = Instance.new("Animator")
-		assert(animator)
-
-		animator.Parent = controller
-		animator:SetAttribute("k_OwnsFlag", true)
+--- sets and plays loop track of animation controller \
+--- `priority (?=Library[name].Priority|Enum.AnimationPriority.Idle)`: animation priority \
+--- returns `controller.LoopTrack` for convenience
+function Animation.playlooptrack(controller: types.AnimController, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+	if controller.LoopTrack then
+		controller.LoopTrack:Stop(fadetime or Animation.FadeTime)
+		controller.LoopTrack = nil
 	end
 
-	return controller, animator::Animator
+	local entry = Animation.Library[name]
+	assert(entry, `animation "{name}" not defined`)
+	local animobject = entry.Animation
+	assert(animobject)
+	controller.LoopTrack = controller.Animator:LoadAnimation(animobject)
+	assert(controller.LoopTrack, "lf solver")
+	controller.LoopTrack:Play(fadetime or Animation.FadeTime, weight, speed)
+	controller.LoopTrack.Priority = priority or entry.Priority or Enum.AnimationPriority.Idle
+
+	return controller.LoopTrack
 end
 
 --- adjusts animationtrack speed to fit *played* time \
@@ -100,64 +86,51 @@ function Animation.fitremaining(animtrack: AnimationTrack, time: number)
 	animtrack:AdjustSpeed((animtrack.Length - animtrack.TimePosition) / time)
 end
 
---- returns an animation instance, parented to this script
-function Animation.create(id: string?)
-	local a = Instance.fromExisting(Empty)
-	a.Name = id or ""
-	a.AnimationId = id or ""
-	a.Parent = script
-
-	return a
-end
-
---- returns: \
---- `"Idle"|"Run"|"Walk"`: string describing the rig's locomotion state \
---- `scalar`: `= rig lateral speed / walk speed`
-function Animation.locomotionstate(rig: Model, walkspeed: number): (types.LocomotionState, number)
-	local root = rig.PrimaryPart
-	assert(root, `{rig.Name} no primarypart`)
-
-	local lateralspeed = math.floor((root.AssemblyLinearVelocity * (Vector3.one - Vector3.yAxis)).Magnitude)
-
-	if lateralspeed < 1 then
-		return "Idle", 1
-	elseif lateralspeed > walkspeed then
-		return "Run", lateralspeed / walkspeed
-	else
-		return "Walk", lateralspeed / walkspeed
-	end
-end
-
---- returns true if animtrack can be overwritten/played-over by a mismatching animation reference
-function Animation.evaluate(animtrack: AnimationTrack?, library: string, name: string?)
+--- returns true if passed animtationtrack can be overwritten by a mismatching animation \
+--- (exists to avoid cases where the same animation can be played over itself)
+function Animation.evaluate(animtrack: AnimationTrack?, name: string?)
 	if (animtrack == nil) and (name == nil) then return false end
 	if (animtrack == nil) then return true end
-	return animtrack.Name ~= library .. "/" .. name
+
+	return animtrack.Name ~= name
 end
 
---- converts animation poses with respect to swap table
-function Animation.convert(container: Instance, swaptable: {[string]: string})
-	for _, thing in container:GetDescendants() do
-		if not thing:IsA("Pose") then continue end
+--- defines animation library
+function Animation.define(library: {[string]: types.AnimLibraryEntry})
+	for name, entry in library do
+		if Animation.Library[name] then
+			warn(`overwrote preexisting animation "{name}" to {entry.Id}`)
+			local preexisting = Animation.Library[name].Animation
+			if preexisting then
+				preexisting.AnimationId = entry.Id
+			end
 
-		local swap = swaptable[thing.Name]
-		if not swap then continue end
+			continue
+		end
 
-		thing.Name = swap
+		Animation.Library[name] = entry
+
+		local animobject = Instance.new("Animation")
+		animobject.Name = name
+		animobject.AnimationId = entry.Id
+		animobject.Parent = script
+
+		Animation.Library[name].Animation = animobject
 	end
 end
 
---- returns animation instances for preloading
+--- returns array of animation instances for preloading
 function Animation.compile()
-	local anims = {}
-	for _, animation in script:GetChildren() do
-		if not animation:IsA("Animation") then continue end
-		if animation.AnimationId == "" then continue end
+	local a = table.create(64)
 
-		table.insert(anims, animation)
+	for _, entry in Animation.Library do
+		local anim = entry.Animation
+		if not anim then continue end
+
+		table.insert(a, anim)
 	end
 
-	return anims
+	return a
 end
 
 return Animation
