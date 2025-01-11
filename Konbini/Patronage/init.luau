@@ -20,11 +20,14 @@ local Hook = require(script.Parent.Hook)
 local Patronage = {
 	Config = require(script:WaitForChild("Config"));
 
-	Lists = {  };
+	Cache = {};
+
+	Lists = {};
 	__listsloaded = false;
 }
 
 --- returns patronage profile of player (yields) \
+--- profile is cached and retrievable with `Patronage.get()` \
 --- `producttable (?={})`: table of devproducts and/or gamepasses
 function Patronage.createprofile(player: Player, producttable: {[string]: types.MinProduct}?)
 	local userid = player.UserId
@@ -44,7 +47,14 @@ function Patronage.createprofile(player: Player, producttable: {[string]: types.
 	Patronage.refreshgamepasses(profile.Gamepasses, userid, producttable or {})
 	Patronage.refreshlists(profile.Lists, userid)
 
+	Patronage.Cache[player] = profile
+
 	return profile
+end
+
+--- returns player patronage profile
+function Patronage.get(player: Player): types.PatronageProfile?
+	return Patronage.Cache[player]
 end
 
 --- returns player policyservice restrictions as a binary string \
@@ -248,6 +258,10 @@ function Patronage.listsupdated(f: (lists: typeof(Patronage.Lists)) -> ())
 end
 
 if IsServer then
+	Players.PlayerRemoving:Connect(function(player: Player)
+		Patronage.Cache[player] = nil
+	end)
+
 	local datastorename = Patronage.Config.Datastore
 	if datastorename == "" then
 		--- print(`[Patronage]: VIP list disabled`)

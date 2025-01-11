@@ -34,6 +34,7 @@
 |[Network.luau](./Konbini/Network/init.luau)|straightforward two-function networking interface|-|❌|
 |[Memory.luau](./Konbini/Memory/init.luau)|`MemoryStoreService` wrapper|`Konbini.Hook`|❌|
 |[Patronage.luau](./Konbini/Patronage/init.luau)|easily handle devproducts, gamepasses, group membership, etc|`Konbini.Hook`|❌|
+|[Stats.luau](./Konbini/Stats/init.luau)|bars, status effects, numeric stats|-|❌|
 |**[Table.luau](./Konbini/Table/init.luau)**|`table` library extension|-|❌|
 |[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|❌|
 |**[Vector3.luau](./Konbini/Vector3/init.luau)**|`Vector3` library extension|-|❌|

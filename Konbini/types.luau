@@ -316,6 +316,31 @@ export type PatronageProfile = {
 	Lists: {string};
 }
 
+--- Stats.luau
+
+export type StatusAddMul = {
+	--- additive
+	Add: number?;
+	--- multiplicative
+	Mul: number?;
+}
+
+export type StatusManifestTable = {
+	[string]: {
+		Values: {
+			[string]: StatusAddMul;
+		};
+	} & {[string]: unknown};
+}
+
+export type MatrixEntryTable = {
+	[string]: {
+
+	} & {[string]: unknown};
+}
+
+export type MatrixSourceTable = { string }
+
 --- Vector3.luau
 
 --- anything that can be represented as pure `x, y, z`
