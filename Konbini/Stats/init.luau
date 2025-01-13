@@ -1,4 +1,5 @@
 --!strict
+--!native
 
 local types = require(script.Parent.types)
 
@@ -11,9 +12,10 @@ local Stats = {
 	R = Random.new();
 }
 
---- returns a random integer within `[0, upperlimit]`
-function Stats.roll(upperlimit: number)
-	return Stats.R:NextInteger(0, upperlimit)
+--- returns a random integer within `[0, upperlimit]` \
+--- `R (?=Stats.R)`
+function Stats.roll(upperlimit: number, R: Random?)
+	return (R or Stats.R):NextInteger(0, upperlimit)
 end
 
 --- returns `roll / upperlimit <= odds`
@@ -175,7 +177,7 @@ function Stats.statuspeek(st: {[string]: buffer}, keys: {string}, now: number, l
 		local s = st[key]
 		if not s then continue end
 
-		local active = Stats.statusinterpret(s, now)
+		local active = buffer.readf32(s, 0) > now ---Stats.statusinterpret(s, now)
 		if not active then continue end
 
 		table.insert(result, key)
@@ -187,6 +189,23 @@ function Stats.statuspeek(st: {[string]: buffer}, keys: {string}, now: number, l
 	end
 
 	return result
+end
+
+--- compares multiple state tables \
+--- `limit` active effect peek limit
+function Stats.statusmultipeek(states: { {[string]: buffer} }, keys: {string}, now: number, limit: number?)
+	local final, len = table.create(0), 0
+
+	for _, state in ipairs(states) do --- for consistent checking/sequencing
+		local result = Stats.statuspeek(state, keys, now, limit)
+		local resultlen = #result
+		if resultlen > len then
+			final = result
+			len = resultlen
+		end
+	end
+
+	return final
 end
 
 --- returns display table of active status effects \

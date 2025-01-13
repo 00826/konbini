@@ -8,7 +8,7 @@ local types = require(script.Parent:WaitForChild("types"))
 local Animation = {
 	Library = {} :: {[string]: types.AnimLibraryEntry};
 
-	FadeTime = 1/16;
+	FadeTime = 1/24;
 }
 
 --- returns animation controller table
@@ -30,6 +30,20 @@ function Animation.createcontroller(rig: Model): types.AnimController
 		ActionTrack = nil :: AnimationTrack?;
 		LoopTrack = nil :: AnimationTrack?;
 	}
+end
+
+--- plays animation \
+--- `priority (?=Library[name].Priority|Enum.AnimationPriority.Action)`: animation priority
+function Animation.play(animator: Animator, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+	local entry = Animation.Library[name]
+	assert(entry, `animation "{name}" not defined`)
+	local animobject = entry.Animation
+	assert(animobject)
+	local animtrack = animator:LoadAnimation(animobject)
+	animtrack:Play(fadetime or Animation.FadeTime, weight, speed)
+	animtrack.Priority = priority or entry.Priority or Enum.AnimationPriority.Action
+
+	return animtrack
 end
 
 --- sets and plays action track of animation controller \
