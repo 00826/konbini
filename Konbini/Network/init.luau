@@ -176,32 +176,6 @@ function Network.sizeof(data: any)
 		total += ByteSizes._type
 	end
 
-	--[[
-	quicj notes
-	
-	strings and buffer sizes are vlq(1, len) + len
-
-	tables are iterated and this function is called recursively
-	both keys and values have this function called recursively on them; type overhead is added to both
-	array check is just array[1] ~= nil
-	if array, vlq(1, # of keys) + sum of values
-	if not array, vlq(1, # of keys) + sum of keys of non-arrays + sum of values
-
-	cframes have special cases but in all honesty i dont trust those because congruent cframes produced by two diff methods are not equivalent
-	worse-case size would be 1+12+6
-	also the code that exists is a second lookup like??????? just assume the worst case
-
-	numsequence/colorsequences:
-	4+sum of value of each keypoint
-
-	else:
-	error thrown!!!
-
-
-	for each entry in packet, type overhead is added to each one
-	type overhead is added to final result
-	]]
-
 	local datatype = typeof(data)
 
 	if datatype == "string" then

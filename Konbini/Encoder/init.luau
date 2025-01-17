@@ -12,15 +12,7 @@ end
 --- ### Encoder.luau
 ---
 --- buffer and string helper functions
-local Encoder = {
-	WidthLookup = {
-		i8 = 1; u8 = 1;
-		i16 = 2; u16 = 2;
-		i24 = 3; u24 = 3;
-		i32 = 4; u32 = 4; f32 = 4;
-		f64 = 8;
-	}
-}
+local Encoder = {}
 
 --- asserts all types of table `a` against typestring-table `typetable` \
 --- values of typetable are separated such that each type is capturable by pattern `%w+` and is compared against `typeof(a[k])` \
@@ -54,19 +46,6 @@ function Encoder.assert<T>(a: T & {[string]: unknown}, typetable: {[string]: str
 	end
 
 	return c :: T & {[string]: unknown}
-end
-
---- returns byte width with respect to int/float types
-function Encoder.sizeof(intfloats: {types.intfloat|number})
-	local size = 0
-	for _, width in intfloats do
-		if type(width) == "number" then
-			size += width
-		elseif type(width) == "string" then
-			size += Encoder.WidthLookup[width] or 0
-		end
-	end
-	return size
 end
 
 --- trims trailing whitespaces from string in buffer
@@ -246,6 +225,25 @@ function Encoder.mergeu8(old: buffer, new: buffer, offset: number): (boolean, nu
 		buffer.copy(old, offset, new, offset, 1)
 	end
 	return applychange, x, y
+end
+
+--- maps worldspace `[x, y, z]` to objectspace of volume defined by cframe and size
+function Encoder.worldspacetou8(cframe: CFrame, size: Vector3, worldspace: Vector3)
+    local objectspace = cframe:PointToObjectSpace(worldspace)
+    local x = (objectspace.X + size.X) / (2 * size.X) * 255
+    local y = (objectspace.Y + size.Y) / (2 * size.Y) * 255
+    local z = (objectspace.Z + size.Z) / (2 * size.Z) * 255
+
+    return x, y, z
+end
+
+--- returns worldspace from u8 coordinates of objectspace of volume defined by cframe and size
+function Encoder.worldspacefromu8(cframe: CFrame, size: Vector3, u8coords: Vector3)
+    local x = ((u8coords.X / 255) * (2 * size.X)) - size.X
+    local y = ((u8coords.Y / 255) * (2 * size.Y)) - size.Y
+    local z = ((u8coords.Z / 255) * (2 * size.Z)) - size.Z
+
+    return cframe:PointToWorldSpace(Vector3.new(x, y, z))
 end
 
 --- writes signed 24-bit integer to buffer
