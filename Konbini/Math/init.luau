@@ -73,11 +73,6 @@ function MathK.alpha(x: number, y: number, b: number)
 	return (b - x) / (y - x)
 end
 
---- maps `x` such that `x ∈ [a, b] ⟶ [c, d]`
-function MathK.map(x: number, a: number, b: number, c: number, d: number)
-	return (x - a) * (d - c) / (b - a) + c;
-end
-
 --- returns: \
 --- where `x ∈ [a, b]`: `true` \
 --- where `x ∉ [a, b]`: `false`
