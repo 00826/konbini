@@ -28,29 +28,6 @@ local MathK = {
 	random = Random.new();
 }
 
---- returns cooldown value of x with respect to deltatime \
---- solves `"%x per second"`, where `x ∈ [0, 100]`
-function MathK.cooldownrate(x: number, dt: number)
-	return dt * (100 / x)
-end
-
---- returns regen value of x with respect to deltatime \
---- solves `"x per second"`, where `x ∈ ℝ`
-function MathK.regenrate(x: number, dt: number)
-	return dt * x
-end
-
---- returns `x ^ y` \
---- *in contexts where `y == 2`, returns `x * x`*
-function MathK.pow(x: number, y: number)
-	return y == 2 and x * x or x ^ y
-end
-
---- returns `x ^ 0.5`
-function MathK.sqrt(x: number)
-	return x ^ 0.5
-end
-
 --- returns interpolant with respect to deltatime (`1 - (x ^ dt)`) \
 --- `x` is ideally passed in `e-` notation form (such as `10e-11`)
 function MathK.interpolant(x: number, dt: number)
