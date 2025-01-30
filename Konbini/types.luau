@@ -126,6 +126,13 @@ export type Cursor = {
 	Instance: Instance?;
 }
 
+export type ThumbstickDirection =
+	| "Up"
+	| "Down"
+	| "Left"
+	| "Right"
+	| "None"
+
 export type Keybind = {
 	--- real-time values that will activate this keybind \
 	--- indices are as follows, and default to 0 when unbound: \

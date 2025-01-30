@@ -58,6 +58,10 @@ end
 local Inputs = {
 	TouchEnabled = UIS.TouchEnabled;
 	PlatformId = 0;
+
+	ThumbstickDeadzone = 0.7;
+	ThumbstickDirection = "None" :: types.ThumbstickDirection;
+
 	InputTimes = {};
 	DoubleTapTime = 0.2;
 	
@@ -287,6 +291,11 @@ function Inputs.gamepadcursorstatechanged(f: (gamepadcursorenabled: boolean) -> 
 	return Hook("k_GamepadCursorStateChanged").Connect(f)
 end
 
+--- returns Inputs.ThumbstickDirection
+function Inputs.thumbstickdirection(): types.ThumbstickDirection
+	return Inputs.ThumbstickDirection
+end
+
 --- sets visibility of mouse icon
 function Inputs.setmouseiconenabled(state: boolean)
 	UIS.MouseIconEnabled = state
@@ -455,6 +464,35 @@ else
 		Cursor.Camera = Camera.CFrame.LookVector
 	end
 
+	local function updatethumbstickdirection(inputobject: InputObject)
+		if inputobject.KeyCode ~= Enum.KeyCode.Thumbstick1 then return end
+		local inputposition = inputobject.Position
+		if inputposition.Magnitude < Inputs.ThumbstickDeadzone then
+			Inputs.ThumbstickDirection = "None"
+		else
+			local pX, pY = inputposition.X, inputposition.Y
+			local real: types.ThumbstickDirection = "None"
+			
+			if math.abs(pX) > math.abs(pY) then
+				if pX < 0 then
+					real = "Left"
+				else
+					real = "Right"
+				end
+			else
+				if pY < 0 then
+					real = "Down"
+				else
+					real = "Up"
+				end
+			end
+			
+			if Inputs.ThumbstickDirection ~= real then
+				Inputs.ThumbstickDirection = real
+			end
+		end
+	end
+
 	--- input changes
 
 	UIS.InputBegan:Connect(function(inputobject: InputObject, ...)
@@ -481,6 +519,7 @@ else
 	UIS.InputChanged:Connect(function(...)
 		Hook("k_InputChanged").Fire(...)
 		updatemouse(...)
+		updatethumbstickdirection(...)
 	end)
 	UIS.TouchStarted:Connect(function(...)
 		if not Inputs.sinkthumbstickcheck(...) then return end
