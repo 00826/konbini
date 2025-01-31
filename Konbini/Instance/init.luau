@@ -320,7 +320,7 @@ function InstanceK.findhighestancestorofclass(instance: Instance, classname: str
 end
 
 --- emits sound at optional position or instance
-function InstanceK.emitSound(sound: Sound, at: (Vector3|Instance)?)
+function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?)
 	if typeof(at) == "Instance" then
 		local real: BasePart? = nil
 		if at:IsA("BasePart") then
@@ -567,6 +567,83 @@ function InstanceK.clearbodymovers(target: Model|BasePart, class: types.MoverCla
 			thing:Destroy()
 		end
 	end
+end
+
+--- return `true` if `thing` has a `LocalTransparencyModifier` property
+function InstanceK.istransparencymodifiable(thing: Instance)
+	if thing:IsA("BasePart") then
+		return true
+	elseif thing:IsA("Decal") then
+		return true
+	elseif thing:FindFirstAncestorOfClass("Tool") then
+		return false
+	end
+	return false
+end
+
+--- returns `TransparencyController` table
+function InstanceK.createtransparencycontroller(rig: Instance): types.TransparencyController
+	local things = rig:GetDescendants()
+	local controller = {
+		Rig = rig;
+
+		TargetTransparency = 0;
+		RealTransparency = 0;
+
+		Disconnected = false;
+		Cache = table.create(#things);
+		DescendantAdded = nil :: RBXScriptConnection?;
+		DescendantRemoving = nil :: RBXScriptConnection?;
+	}
+
+	for _, thing in things do
+		if InstanceK.istransparencymodifiable(thing) then
+			table.insert(controller.Cache, thing)
+		end
+	end
+
+	controller.DescendantAdded = rig.DescendantAdded:Connect(function(thing: any)
+		if InstanceK.istransparencymodifiable(thing) and not table.find(controller.Cache, thing) then
+			table.insert(controller.Cache, thing)
+			thing.LocalTransparencyModifier = controller.RealTransparency
+		end
+	end)
+	controller.DescendantRemoving = rig.DescendantRemoving:Connect(function(thing: any)
+		if InstanceK.istransparencymodifiable(thing) then
+			table.remove(controller.Cache, table.find(controller.Cache, thing) or 0)
+		end
+	end)
+
+	controller.Disconnect = function()
+		controller.Disconnected = true
+		if controller.DescendantAdded then
+			controller.DescendantAdded:Disconnect()
+		end
+		if controller.DescendantRemoving then
+			controller.DescendantRemoving:Disconnect()
+		end
+
+		table.clear(controller)
+	end
+
+	return controller
+end
+
+--- refreshes `LocalTransparencyModifier` of instances associated with `TransparencyController`
+function InstanceK.refreshtransparencycontroller(tc: types.TransparencyController)
+	if tc.Disconnected then return false end
+
+	local target = tc.TargetTransparency
+	if target ~= tc.RealTransparency then
+		for _, thing: any in tc.Cache do
+			thing.LocalTransparencyModifier = target
+		end
+		tc.RealTransparency = target
+
+		return true
+	end
+
+	return false
 end
 
 --- equivalent to `TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()` \

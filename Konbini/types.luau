@@ -152,6 +152,20 @@ export type Keybind = {
 
 --- Instance.luau
 
+export type TransparencyController = {
+	Rig: any;
+
+	TargetTransparency: number;
+	RealTransparency: number;
+
+	Cache: {Instance}; --- BasePart | Decal
+	DescendantAdded: RBXScriptConnection?;
+	DescendantRemoving: RBXScriptConnection?;
+
+	Disconnected: boolean;
+	Disconnect: () -> ();
+}
+
 export type Tree = {
 	ClassName: string;
 	Children: { Tree }?;
