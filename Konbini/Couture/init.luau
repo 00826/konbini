@@ -3,6 +3,7 @@
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
+local HttpService = game:GetService("HttpService")
 local InsertService = game:GetService("InsertService")
 
 local Players = game:GetService("Players")
@@ -47,6 +48,7 @@ local Couture = {
 		48474356; --- r6 torso
 	};
 	AssetPrefix = "rbxassetid://";
+	DefaultFace = "rbxasset://textures/face.png";
 }
 
 --- returns table of clothing ids
@@ -258,6 +260,61 @@ function Couture.normalizefromassetid(assetid: number)
 	return handle
 end
 
+--- encodes attribute table from `CoutureFolder:GetAttributes()` into a datastore-savable table
+function Couture.encode(t: {[string]: any})
+	local result = {}
+
+	for k, v in t do
+		if k == "Accessories" then
+			result[k] = HttpService:JSONDecode(v)
+
+			continue
+		end
+		if typeof(v) == "Color3" then
+			v = v:ToHex()
+		end
+		
+		result[k] = v
+	end
+
+	return result
+end
+
+--- decodes encoded table from `Couture.encode` into attribute-settable table \
+--- `couturefolder (?=nil)`: optional target couturefolder to apply decoded key-values
+function Couture.decode(t: {[string]: any}, couturefolder: Instance?)
+	local result = {}::{[string]: any}
+
+	for k, v in t do
+		if k == "Accessories" then
+			result[k] = "[" .. table.concat(v, ",") .. "]"
+
+			continue
+		end
+		if table.find(Couture.BodyColorProperties, k) then
+			local num = tonumber("0x" .. v)
+			if num and num <= 16777215 then --- 0xFFFFFF
+				result[k] = Color3.fromHex(v)
+
+				continue
+			end
+		end
+
+		result[k] = v
+	end
+
+	if couturefolder then
+		local s, e = pcall(function()
+			for k, v in result do
+				couturefolder:SetAttribute(k, v)
+			end
+		end)
+		if not s then warn(e) end
+	end
+
+	return result
+end
+
 --- applies player appearance to couture folder, creating relevant instances (couturefolder, humanoiddescription) if they do not already exist
 function Couture.refresh(player: Player): HumanoidDescription
 	assert(IsServer)
@@ -291,6 +348,7 @@ function Couture.refresh(player: Player): HumanoidDescription
 		#Couture.BodyPartProperties +
 		#Couture.ClothingProperties
 	)
+	local accessoryblob = table.create(4 * #Couture.AccessoryProperties)
 
 	table.move(Couture.AccessoryProperties, 1, #Couture.AccessoryProperties, #remaining + 1, remaining)
 	table.move(Couture.BodyColorProperties, 1, #Couture.BodyColorProperties, #remaining + 1, remaining)
@@ -315,6 +373,8 @@ function Couture.refresh(player: Player): HumanoidDescription
 						realaccessory.Parent = container
 					end, Id)
 					if not s then warn(Id, e) end
+
+					table.insert(accessoryblob, Id)
 				end
 				return true
 			end, newdescription, couturefolder)
@@ -338,6 +398,13 @@ function Couture.refresh(player: Player): HumanoidDescription
 		for _, descproperty in Couture.BodyPartProperties do
 			pcall(function(humanoiddescription: HumanoidDescription, container: Instance)
 	
+				if (descproperty == "Face")
+				and ((humanoiddescription :: any)[descproperty] == 0)
+				then
+					container:SetAttribute(descproperty, Couture.DefaultFace)
+
+					return true
+				end
 				container:SetAttribute(descproperty, Couture.AssetPrefix .. (humanoiddescription :: any)[descproperty])
 				
 				return true
@@ -377,6 +444,8 @@ function Couture.refresh(player: Player): HumanoidDescription
 	end)
 
 	repeat task.wait() until #remaining == 0
+
+	couturefolder:SetAttribute("Accessories", "[" .. table.concat(accessoryblob, ",") .. "]")
 
 	return newdescription
 end
