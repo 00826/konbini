@@ -225,6 +225,39 @@ function Couture.isusingfemaletorso(player: Player)
 	return false
 end
 
+--- returns accessorypart normalized from model returned by `InsertService:LoadAsset(assetid)`
+function Couture.normalizefromassetid(assetid: number)
+	local asset = InsertService:LoadAsset(assetid)
+
+	local accessory = asset:FindFirstChildOfClass("Accessory")
+	assert(accessory)
+	assert(accessory:IsA("Accessory"))
+
+	local handle = accessory:FindFirstChild("Handle") or accessory:WaitForChild("Handle")
+	assert(handle)
+	assert(handle:IsA("BasePart"))
+
+	local attachment = handle:FindFirstChildOfClass("Attachment")
+	assert(attachment)
+	assert(attachment:IsA("Attachment"))
+
+	handle.Name = accessory.Name
+	handle.Locked = false
+	handle.EnableFluidForces = false
+	handle.CanCollide = false
+	handle.CanTouch = false
+	handle.CanQuery = false
+	handle.Massless = true
+	handle.Anchored = false
+	handle.Position = Vector3.zero
+	handle.Size = Vector3.one
+	handle.Parent = script
+
+	asset:Destroy()
+
+	return handle
+end
+
 --- applies player appearance to couture folder, creating relevant instances (couturefolder, humanoiddescription) if they do not already exist
 function Couture.refresh(player: Player): HumanoidDescription
 	assert(IsServer)
