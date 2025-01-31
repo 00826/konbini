@@ -9,6 +9,7 @@
 		"Size": [1, 1, 1],
 		"CFrame": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
 
+		"EnableFluidForces": false,
 		"Anchored": false,
 		"CanCollide": false,
 		"CanQuery": false,
@@ -18,7 +19,7 @@
 	"children": [
 		{
 			"ClassName": "Attachment",
-			"Name": "Attachment",
+			"Name": "HatAttachment",
 			"Properties": {
 				"CFrame": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]
 			}
