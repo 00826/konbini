@@ -22,7 +22,7 @@
 |**[CFrame.luau](./Konbini/CFrame/init.luau)**|`CFrame` library extension|-|❌|
 |[Collisions.luau](./Konbini/Collisions/init.luau)|condensed spatial queries|-|❌|
 |**[Color3.luau](./Konbini/Color3/init.luau)**|`Color3` library extension|-|❌|
-|[Couture.luau](./Konbini/Couture/init.luau)|near-client-authoritative accessory/cosmetic handling<br>game server has better things to do than weld accessories<br>*gated to `InsertService.LoadAsset()` being server-only :/*|-|❌|
+|[Couture.luau](./Konbini/Couture/init.luau)|near-client-authoritative accessory/cosmetic handling<br>game server has better things to do than weld accessories<br>*gated to `InsertService:LoadAsset()` being server-only :/*|-|❌|
 |[Data.luau](./Konbini/Data/init.luau)|glorified `ProfileService` interface|`Konbini.Hook`<br>*implied dependence on profileservice*|❌|
 |[Encoder.luau](./Konbini/Encoder/init.luau)|buffer/string manip library|-|❌|
 |[Entity.luau](./Konbini/Entity/init.luau)|entity replicator|`Konbini.Hook`<br>`Konbini.Table`|❌|
@@ -66,6 +66,8 @@ local module = {}
 --- definition.func()
 --- <line break> -- "block closer"
 --- ... | return definition -- "scope closer"
+
+--- x::y -- "kick rocks"
 
 --- runtime-sensitive work
 return module
