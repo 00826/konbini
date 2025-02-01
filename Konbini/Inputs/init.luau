@@ -75,15 +75,6 @@ local Inputs = {
 
 	Aliases = require(script.Aliases);
 	Platforms = require(script.Platforms);
-
-	Gamepad2D = script:WaitForChild("Gamepad2D");
-	Gamepad2DMap = require(script.Gamepad2DMap);
-
-	DPad2D = script:WaitForChild("DPad2D");
-	DPad2DMap = require(script.DPad2DMap);
-
-	Select2DColor = Color3.fromRGB(255, 255, 255);
-	Deselect2DColor = Color3.fromRGB(0, 0, 0);
 }
 
 local BlacklistParams = RaycastParams.new()
@@ -354,72 +345,6 @@ function Inputs.togglemobileinterface(thumbstickenabled: boolean?, jumpbuttonena
 	return PlayerGui.ChildAdded:Connect(function(thing)
 		t(thing)
 	end)
-end
-
---- connects on-screen gamepad \
---- emits keycodes `ButtonY`, `ButtonX`, `ButtonB`, `ButtonA`, `ButtonL1`, `ButtonR1`, `ButtonL2`, `ButtonR2`, `ButtonR3`
---- ```
---- --- Gamepad2D: GuiObject
---- --- ┗┳ [KeyId]: GuiObject
---- ---  ┣━ ...: any
---- ---  ┗━ Button: TextButton
---- ```
-function Inputs.connectgamepad2D(gamepad2d: typeof(Inputs.Gamepad2D), f: (keycode: Enum.KeyCode, userinputstate: Enum.UserInputState, inputframe: Frame) -> ())
-	for keyid, keyenum in Inputs.Gamepad2DMap do
-		local buttonframe = gamepad2d:FindFirstChild(keyid)
-		if not buttonframe then warn(gamepad2d, keyid); continue end
-
-		local uistroke = buttonframe:FindFirstChildOfClass("UIStroke")
-		local textbutton = buttonframe:FindFirstChildOfClass("TextButton")
-		if not textbutton then continue end
-
-		textbutton:GetPropertyChangedSignal("GuiState"):Connect(function()
-			if textbutton.GuiState == Enum.GuiState.Press then
-				f(keyenum, Enum.UserInputState.Begin, buttonframe)
-				if uistroke then
-					uistroke.Color = Inputs.Select2DColor
-				end
-			elseif textbutton.GuiState == Enum.GuiState.Idle then
-				f(keyenum, Enum.UserInputState.End, buttonframe)
-				if uistroke then
-					uistroke.Color = Inputs.Deselect2DColor
-				end
-			end
-		end)
-	end
-end
-
---- connects on-screen dpad \
---- emits keycodes `DPadUp`, `DPadLeft`, `DPadRight`, `DPadDown`, `ButtonL3`
---- ```
---- --- DPad2D: GuiObject
---- --- ┗┳ [KeyId]: GuiObject
---- ---  ┣━ ...: any
---- ---  ┗━ Button: TextButton
---- ```
-function Inputs.connectdpad2D(dpad2d: typeof(Inputs.DPad2D), f: (keycode: Enum.KeyCode, userinputstate: Enum.UserInputState, inputframe: Frame) -> ())
-	for keyid, keyenum in Inputs.DPad2DMap do
-		local buttonframe = dpad2d:FindFirstChild(keyid)
-		if not buttonframe then warn(dpad2d, keyid); continue end
-
-		local uistroke = buttonframe:FindFirstChildOfClass("UIStroke")
-		local textbutton = buttonframe:FindFirstChildOfClass("TextButton")
-		if not textbutton then continue end
-
-		textbutton:GetPropertyChangedSignal("GuiState"):Connect(function()
-			if textbutton.GuiState == Enum.GuiState.Press then
-				f(keyenum, Enum.UserInputState.Begin, buttonframe)
-				if uistroke then
-					uistroke.Color = Inputs.Select2DColor
-				end
-			elseif textbutton.GuiState == Enum.GuiState.Idle then
-				f(keyenum, Enum.UserInputState.End, buttonframe)
-				if uistroke then
-					uistroke.Color = Inputs.Deselect2DColor
-				end
-			end
-		end)
-	end
 end
 
 if IsServer then
