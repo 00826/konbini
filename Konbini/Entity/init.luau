@@ -20,30 +20,14 @@ local Entity = {
 	Bucket = {} :: {[string]: {string}|boolean};
 }
 
---- creates entity `e` from template `t (?={})`, creates id `id` \
---- stores `e` at `e = Cache[id]` \
---- buffers and tables in `t` are copied
-function Entity.create(t: {[string]: any}?): ({[string]: any}, string)
+--- inserts entity `e` stored at `Cache[id]`
+function Entity.insert(e: {}): string
 	assert(IsServer)
-
-	local e = {}
-	if t then
-		for k, v in t do
-			if type(v) == "buffer" then
-				e[k] = buffer.create(buffer.len(v))
-				buffer.copy(e[k], 0, v, 0)
-			elseif type(v) == "table" then
-				e[k] = table.clone(v :: any) :: any
-			else
-				e[k] = v :: any
-			end
-		end
-	end
-
+	
 	local key = TableK.insertkey(Entity.Cache, e, 4)
 	Hook("k_EntityAdded").Fire(e, key)
 
-	return e, key
+	return key
 end
 
 --- removes entity `e` stored at `Cache[id]` \

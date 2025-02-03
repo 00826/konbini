@@ -18,12 +18,7 @@ local Hook = require(script.Parent.Hook)
 ---
 --- data handler
 --- intended to be used in conjunction with profileservice
-local Data = {
-	Config = require(script:WaitForChild("Config"));
-
-	LoadHook = nil :: ((Player: Player) -> {Data: types.SaveTemplate}?)?;
-	ReleaseHook = nil :: ((Player: Player) -> boolean)?;
-}
+local Data = { Config = require(script:WaitForChild("Config")); }
 
 --- returns player's save data
 function Data.get(player: Player?): types.SaveTemplate
@@ -78,14 +73,6 @@ function Data.addprofile(player: Player, saveprofile: { Data: types.SaveTemplate
 	assert(IsServer)
 
 	ServerCache[player] = saveprofile
-end
-
-function Data.releaseprofile(player: Player)
-	assert(IsServer)
-
-	if ServerCache[player] then
-		(ServerCache[player] :: any):Release()
-	end
 end
 
 --- removes player saveprofile from cache

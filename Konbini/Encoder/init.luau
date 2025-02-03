@@ -313,12 +313,15 @@ end
 
 --- writes set of values to row of `int16`-width matrix-buffer \
 --- if values are omitted, the range is filled with zeroes
-function Encoder.writerowmatrix(m: buffer, row: number, values: {number}?)
+function Encoder.writerowmatrix(m: buffer, row: number, values: ({number}|buffer)?)
 	local columns = buffer.readu8(m, 0)
 	local width = 2 * columns
 	local offset = 2 + ((row - 1) * width)
 
-	if values then
+	if type(values) == "buffer" then
+		assert(buffer.len(values) == width)
+		buffer.copy(m, offset, values, 0)
+	elseif type(values) == "table" then
 		for i = 1, columns do
 			buffer.writei16(m, offset + (2 * (i - 1)), values[i] or 0)
 		end
@@ -340,6 +343,18 @@ function Encoder.readrowmatrix(m: buffer, row: number): {number}
 	end
 
 	return r
+end
+
+--- returns a copy of row of `int16`-width matrix-buffer
+function Encoder.copyrowmatrix(m: buffer, row: number)
+	local columns = buffer.readu8(m, 0)
+	local width = 2 * columns
+	local offset = 2 + ((row - 1) * width)
+
+	local copy = buffer.create(width)
+	buffer.copy(copy, 0, m, offset, width)
+
+	return copy
 end
 
 --- reads sum of values along column of `int16`-width matrix-buffer
