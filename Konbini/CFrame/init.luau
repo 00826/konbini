@@ -49,11 +49,12 @@ end
 --- affixes numeric or vector3 volume to cframe; equvalent to: \
 --- `number`: `cframe * CFrame.new(0, 0, volume * 0.5)` \
 --- `Vector3`: `cframe * CFrame.new(0, 0, volume.Z * 0.5)`
-function CFrameK.affix(cframe: CFrame, volume: number|Vector3)
+function CFrameK.affix(cframe: CFrame, volume: number|Vector3, axis: Vector3)
 	if type(volume) == "number" then 
 		return cframe * CFrame.new(0, 0, volume * 0.5)
 	else
-		return cframe * CFrame.new(0, 0, volume.Z * 0.5)
+		volume *= axis * 0.5
+		return cframe * CFrame.new(volume)
 	end
 end
 

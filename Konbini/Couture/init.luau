@@ -3,6 +3,7 @@
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
+local HttpService = game:GetService("HttpService")
 local InsertService = game:GetService("InsertService")
 
 local Players = game:GetService("Players")
@@ -53,12 +54,12 @@ local Couture = {
 		Accessories = table.create(0);
 		Face = "rbxasset://textures/face.png";
 
-		HeadColor = Color3.fromRGB(163, 162, 165);
-		TorsoColor = Color3.fromRGB(163, 162, 165);
-		LeftArmColor = Color3.fromRGB(163, 162, 165);
-		LeftLegColor = Color3.fromRGB(163, 162, 165);
-		RightArmColor = Color3.fromRGB(163, 162, 165);
-		RightLegColor = Color3.fromRGB(163, 162, 165);
+		HeadColor = "0xa3a2a5";
+		TorsoColor = "0xa3a2a5";
+		LeftArmColor = "0xa3a2a5";
+		LeftLegColor = "0xa3a2a5";
+		RightArmColor = "0xa3a2a5";
+		RightLegColor = "0xa3a2a5";
 
 		Shirt = "rbxassetid://0";
 		Pants = "rbxassetid://0";
@@ -95,7 +96,7 @@ function Couture.create(assetid: number?)
 	assert(attachment)
 	assert(attachment:IsA("Attachment"))
 
-	handle.Name = accessory.Name
+	handle.Name = tostring(assetid)
 	handle.Locked = false
 	handle.EnableFluidForces = false
 	handle.CanCollide = false
@@ -108,11 +109,23 @@ function Couture.create(assetid: number?)
 	handle.Parent = script
 
 	handle:SetAttribute(Couture.Flag, true)
-	handle:SetAttribute("AssetId", assetid)
 
 	asset:Destroy()
 
 	return handle
+end
+
+function Couture.folder(player: Player)
+	local f = player:FindFirstChild("Couture")
+	if f then
+		return f
+	end
+
+	local folder = Instance.new("Folder")
+	folder.Name = "Couture"
+	folder.Parent = player
+
+	return folder
 end
 
 --- attaches accessorypart to rig
@@ -159,32 +172,43 @@ function Couture.load(assetids: {number}, container: Instance)
 	local result = {}
 
 	for _, assetid in assetids do
-		local s, e = pcall(function()
-			local accessorypart = Couture.create(assetid)
-			accessorypart.Parent = container
-
-			table.insert(result, accessorypart)
-		end)
-		if not s then warn(e) end
+		local s, e = pcall(Couture.create, assetid)
+		if not s then
+			warn(e)
+		else
+			e.Parent = container
+			table.insert(result, e)
+		end
 	end
 
 	return result
 end
 
---- returns array of `AccessoryParts` parented under `rig` \
---- `transform (?=nil)`: `task.defer(transform, accessorypart)`
-function Couture.get(rig: Instance, transform: ((accessorypart: BasePart) -> ())?)
-	local things = rig:GetChildren()
-	local result = table.create(#things)
+--- returns array of `AccessoryParts` parented under `container`
+function Couture.get(container: Instance, assetids: {number|string}?)
+	local result = table.create(32)
 
-	for _, thing in things do
-		if not thing:IsA("BasePart") then continue end
-		if not thing:GetAttribute(Couture.Flag) then continue end
-		
-		table.insert(result, thing)
+	if assetids then
+		for _, assetid in assetids do
+			if type(assetid) == "number" then
+				assetid = tostring(assetid)
+			end
 
-		if transform then
-			task.defer(transform, thing)
+			local thing = container:FindFirstChild(assetid::string)
+			if not thing then continue end
+			if not thing:IsA("BasePart") then continue end
+			if not thing:GetAttribute(Couture.Flag) then continue end
+
+			table.insert(result, thing)
+		end
+	else
+		local things = container:GetChildren()
+	
+		for _, thing in things do
+			if not thing:IsA("BasePart") then continue end
+			if not thing:GetAttribute(Couture.Flag) then continue end
+	
+			table.insert(result, thing)
 		end
 	end
 
@@ -254,8 +278,18 @@ function Couture.encode(t: {[string]: any} | HumanoidDescription | Player | numb
 					if (property == "Face")
 					and (value == 0)
 					then
-	
 						result[property] = Couture.DefaultFace
+						continue
+					end
+
+					if property == "Face" then
+						local insertmodel = InsertService:LoadAsset(value)
+						local thing = insertmodel:FindFirstChildOfClass("Decal")
+						if thing then
+							result[property] = thing.Texture
+							
+							insertmodel:Destroy()
+						end
 						continue
 					end
 	
@@ -266,6 +300,11 @@ function Couture.encode(t: {[string]: any} | HumanoidDescription | Player | numb
 			do --- clothing
 				for _, property in Couture.ClothingProperties do
 					local value = (t::any)[property] :: number
+					if value == 0 then
+						result[property] = Couture.AssetPrefix .. "0"
+						continue
+					end
+
 					local insertmodel = InsertService:LoadAsset(value)
 					local thing = insertmodel:FindFirstChildOfClass("Shirt") or insertmodel:FindFirstChildOfClass("Pants") or insertmodel:FindFirstChildOfClass("ShirtGraphic")
 					if thing then
@@ -322,6 +361,14 @@ function Couture.decode(t: {[string]: any})
 	end
 
 	return result
+end
+
+function Couture.tostringjson(t: {[string]: any})
+	return HttpService:JSONEncode(t)
+end
+
+function Couture.totablejson(s: string)
+	return HttpService:JSONDecode(s)
 end
 
 return Couture

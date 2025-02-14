@@ -3,8 +3,6 @@
 
 local types = require(script.Parent.types)
 
-local int8 = 1/127
-
 local function subf(x: string)
 	return #x == 1 and "0" .. x or x
 end
@@ -75,7 +73,7 @@ function Encoder.readunitvector(b: buffer, offset: number)
 		buffer.readi8(b, offset),
 		buffer.readi8(b, offset + 1),
 		buffer.readi8(b, offset + 2)
-	) * int8
+	) * 1/127
 end
 
 --- writes unit vector to buffer \
@@ -569,7 +567,8 @@ function Encoder.hourminutesecond(time: number, notation: types.Notation?): stri
 	return os.date("!%X", time)
 end
 
---- returns a timestamp of current utc time with respect to format option
+--- returns a timestamp of current utc time with respect to format option \
+--- if `type(format) == "number"`, it is interpreted as minutes
 function Encoder.timestamp(format: types.Format): types.Timestamp
 	local T0 = os.date("!*t")
 	local T1 = table.clone(T0)

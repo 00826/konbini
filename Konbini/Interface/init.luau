@@ -210,6 +210,16 @@ function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunct
 				Interface.playsound(sounds.RClick)
 			end
 		end))
+		table.insert(connections, button.TouchTap:Connect(function(array: {Vector2})
+			if #array ~= 2 then return end
+			local vec2 = array[1] + array[2]
+			vec2 *= 0.5
+			functions.RClickUp(vec2.X, vec2.Y)
+
+			if sounds.RClick then
+				Interface.playsound(sounds.RClick)
+			end
+		end))
 	end
 
 	if functions.Enter then
@@ -242,10 +252,9 @@ function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite)
 	if layout then
 		imagelabel.Image = layout.Id
 		local x, y = cartesian(sprite.Position, layout.Width)
-		local padding = layout.Padding or 0
 		local size = layout.Size
 		imagelabel.ImageRectSize = size
-		imagelabel.ImageRectOffset = Vector2.new((y * size.X) + (y * padding), (x * size.Y) + (x * padding))
+		imagelabel.ImageRectOffset = Vector2.new(y * size.X, x * size.Y)
 	else
 		imagelabel.Image = ""
 		imagelabel.ImageRectSize = Vector2.zero

@@ -1,25 +1,25 @@
 --- ### Platforms.luau
 ---
---- contains UserInputType-to-PlatformId conversions
+--- contains UserInputType-to-Platform conversions
 
 return {
-	[Enum.UserInputType.None] = 0;
+	[Enum.UserInputType.None] = "Unknown";
 
-	[Enum.UserInputType.Keyboard] = 1;
-	[Enum.UserInputType.MouseButton1] = 1;
-	[Enum.UserInputType.MouseButton2] = 1;
-	[Enum.UserInputType.MouseButton3] = 1;
-	[Enum.UserInputType.MouseMovement] = 1;
-	[Enum.UserInputType.MouseWheel] = 1;
+	[Enum.UserInputType.Keyboard] = "Keyboard";
+	[Enum.UserInputType.MouseButton1] = "Keyboard";
+	[Enum.UserInputType.MouseButton2] = "Keyboard";
+	[Enum.UserInputType.MouseButton3] = "Keyboard";
+	[Enum.UserInputType.MouseMovement] = "Keyboard";
+	[Enum.UserInputType.MouseWheel] = "Keyboard";
 
-	[Enum.UserInputType.Touch] = 2;
+	[Enum.UserInputType.Touch] = "Mobile";
 
-	[Enum.UserInputType.Gamepad1] = 3;
-	[Enum.UserInputType.Gamepad2] = 3;
-	[Enum.UserInputType.Gamepad3] = 3;
-	[Enum.UserInputType.Gamepad4] = 3;
-	[Enum.UserInputType.Gamepad5] = 3;
-	[Enum.UserInputType.Gamepad6] = 3;
-	[Enum.UserInputType.Gamepad7] = 3;
-	[Enum.UserInputType.Gamepad8] = 3;
+	[Enum.UserInputType.Gamepad1] = "Gamepad";
+	[Enum.UserInputType.Gamepad2] = "Gamepad";
+	[Enum.UserInputType.Gamepad3] = "Gamepad";
+	[Enum.UserInputType.Gamepad4] = "Gamepad";
+	[Enum.UserInputType.Gamepad5] = "Gamepad";
+	[Enum.UserInputType.Gamepad6] = "Gamepad";
+	[Enum.UserInputType.Gamepad7] = "Gamepad";
+	[Enum.UserInputType.Gamepad8] = "Gamepad";
 }

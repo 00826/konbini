@@ -207,14 +207,14 @@ function Vector3K.midpoint(vectors: { Vector3 | types.xyzType })
 	return sum / length
 end
 
---- returns points along line drawn from `v` towards `w`
+--- returns points along line drawn from `v` towards `w` and the distance from `v` towards `w` including segments
 function Vector3K.segment(v: Vector3, w: Vector3, segments: number, transform: ((u: Vector3) -> Vector3)?)
 	local partition = table.create(segments)
 	partition[1] = v
 	partition[segments] = w
 
 	if segments <= 2 then
-		return partition
+		return partition, (partition[2] - partition[1]).Magnitude
 	else
 		local step = segments - 1
 		for i = 1, segments - 2, 1 do
@@ -225,7 +225,15 @@ function Vector3K.segment(v: Vector3, w: Vector3, segments: number, transform: (
 			partition[i + 1] = u
 		end
 
-		return partition
+		local distance = 0
+		for i, seg in partition do
+			local ment = partition[i + 1]
+			if not ment then break end
+
+			distance += (seg - ment).Magnitude
+		end
+
+		return partition, distance
 	end
 end
 

@@ -65,6 +65,11 @@ function Stats.barpeek(b: buffer, x: number)
 	return buffer.readf32(b, 0) - x >= 0
 end
 
+--- returns `bar.Value >= bar.MaxValue`
+function Stats.barmax(b: buffer)
+	return buffer.readf32(b, 0) >= buffer.readf32(b, 4)
+end
+
 --- equivalent to `buffer.writef32(b, 0, buffer.readf32(b, 0) - x)`
 function Stats.barexpend(b: buffer, x: number)
 	buffer.writef32(b, 0, buffer.readf32(b, 0) - x)
@@ -95,6 +100,16 @@ function Stats.statuswrite(s: buffer, expiry: number?, stacks: number?)
 	end
 	if stacks then
 		buffer.writeu8(s, 4, stacks)
+	end
+end
+
+function Stats.statusadd(st: {[string]: buffer}, key: string, expiry: number, stacks: number?)
+	local s = st[key]
+	if not s then
+		s = Stats.createstatus(expiry, stacks)
+		st[key] = s
+	else
+		Stats.statuswrite(s, expiry, stacks)
 	end
 end
 

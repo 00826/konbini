@@ -49,15 +49,11 @@ end
 --- ### Inputs.luau
 ---
 --- `UserInputService` wrapper \
---- compatible with pc, mobile, gamepad \
---- \
---- PlatformId `0`: unknown \
---- PlatformId `1`: pc \
---- PlatformId `2`: mobile \
---- PlatformId `3`: gamepad
+--- compatible with pc, mobile, gamepad
 local Inputs = {
 	TouchEnabled = UIS.TouchEnabled;
-	PlatformId = 0;
+	Platform = "Unknown" :: types.Platform;
+	PlatformOrder = {"Unknown", "Keyboard", "Mobile", "Gamepad"};
 
 	ThumbstickDeadzone = 0.7;
 	ThumbstickDirection = "None" :: types.ThumbstickDirection;
@@ -65,7 +61,7 @@ local Inputs = {
 	InputTimes = {};
 	DoubleTapTime = 0.2;
 	
-	MobileScreenCenter = nil :: (() -> Vector2)?;
+	CursorPosition = nil :: Vector2?;
 
 	--- write externally
 	MoveVector = Vector3.zero;
@@ -74,6 +70,8 @@ local Inputs = {
 	GuiInset = Vector2.zero;
 
 	Aliases = require(script.Aliases);
+	Binds = require(script.Binds);
+	Conversions = require(script.Conversions);
 	Platforms = require(script.Platforms);
 }
 
@@ -135,94 +133,45 @@ function Inputs.cursorunpack(c: buffer)
 		Encoder.readunitvector(c, 15)
 end
 
---- returns key-value pair bound to keycode with respect to internal platform id \
---- `Enum.KeyCode.Unknown (value 0)` immediately returns nil
-function Inputs.keybind(keycode: Enum.KeyCode, k: {[string]: types.Keybind}): (string?, types.Keybind?)
-	local platformid = Inputs.PlatformId
-	if platformid == 0 then
-		return
-	elseif keycode == Enum.KeyCode.Unknown then
-		return nil, nil
-	else
-		for keyid, keybind in k do
-			local reals = k[keyid].Reals
-			local defaults = k[keyid].Defaults
+--- returns key and bind bound to `inputobject`
+function Inputs.keybindof(inputobject: InputObject, set: {string}?): (string?, any)
+	local keycode = Inputs.Conversions[inputobject.UserInputType] or inputobject.KeyCode
+	local platform = Inputs.Platform
 
-			assert(type(reals) == "table")
-			assert(type(defaults) == "table")
+	if set then
+		for _, key in set do
+			local bind = Inputs.Binds[key]::any
+			if not bind then continue end
 
-			local boundkey = reals[platformid] or defaults[platformid]
-			if boundkey == keycode.Value then
-				return keyid, keybind
+			local ovalue = bind.Overwrites[platform]
+			if (ovalue == keycode) and (ovalue ~= Enum.KeyCode.Unknown) then
+				return key, bind.Value
+			else
+				continue
 			end
 		end
+	else
+		local t = table.create(32)
+		for key in Inputs.Binds do
+			table.insert(t, key)
+		end
+
+		return Inputs.keybindof(inputobject, t::{string})
 	end
+
 	return
 end
 
---- folds saved keybinds `j` into read-write keybind table `k`
-function Inputs.keybindfold(j: {[string]: {number}}, k: {[string]: types.Keybind})
-	for keyid, keybinds in j do
-		local reals = k[keyid].Reals
-		assert(type(reals) == "table")
-		local defaults = k[keyid].Defaults
-		assert(type(defaults) == "table")
+--- overwrites keybinds
+function Inputs.keybindoverwrite(ow: {[string]: {[types.Platform]: Enum.KeyCode}})
+	for key, bind in Inputs.Binds do
+		local otable = ow[key::any]
 
-		table.move(defaults, 1, #defaults, 1, reals)
-		table.move(keybinds, 1, #keybinds, 1, reals)
-	end
-end
-
---- resets keybind of `k`
-function Inputs.keybindreset(keyid: string, k: {[string]: types.Keybind})
-	local reals = k[keyid].Reals
-	assert(type(reals) == "table")
-	local defaults = k[keyid].Defaults
-	assert(type(defaults) == "table")
-
-	table.move(defaults, 1, #defaults, 1, reals)
-end
-
---- compiles read-write keybind table `k` into a savable format
-function Inputs.keybindcompile(k: {[string]: types.Keybind}): {[string]: {number}}
-	local j = {}
-	for keyid, keybind in k do
-		local reals = k[keyid].Reals
-		assert(type(reals) == "table")
-
-		j[keyid] = table.clone(reals)
-	end
-	return j
-end
-
---- asserts keybinds `j` are of read-write keybind table `k`
-function Inputs.keybindassert(j: {[string]: {number}}, k: {[string]: types.Keybind})
-	assert(type(j) == "table")
-	for keyid, keybinds in j do
-		assert(k[keyid] ~= nil)
-		assert(type(keyid) == "string")
-		assert(type(keybinds) == "table")
-		assert(#keybinds <= #k[keyid].Defaults)
-	end
-end
-
---- returns an enumeration of keybind aliases with respect to keybind table `k`
-function Inputs.keybindenumerate(keyids: {string}, k: {[string]: types.Keybind})
-	local platformid = Inputs.PlatformId
-	if platformid ~= 0 then
-		local enumeration = table.create(#keyids)
-
-		for i, keyid in ipairs(keyids) do
-			local defaults = k[keyid].Defaults :: {number}
-			local reals = k[keyid].Reals :: {number}
-			local keycode = searchkeycodes(Keycodes, reals[platformid] or defaults[platformid])
-			table.insert(enumeration, i, Inputs.Aliases[keycode::any] or keycode and keycode.Name or keyid) --- remove ::any when solver grows a brain
+		for platform, enum in (bind::any).Defaults do
+			local ovalue = otable and otable[platform] or enum;
+			(bind::any).Overwrites[platform] = ovalue;
 		end
-
-		return enumeration
 	end
-
-	return keyids
 end
 
 --- returns associated mouse button `Enum.KeyCode` with respect to inputobject
@@ -239,13 +188,21 @@ function Inputs.inputobjecttomousekeycode(inputobject: InputObject): Enum.KeyCod
 	return
 end
 
---- returns a platform id corresponding to `inputobject.UserInputType` \
---- `0`: unknown \
---- `1`: pc \
---- `2`: mobile \
---- `3`: gamepad
+--- returns a platform id and its associated value corresponding to `inputobject.UserInputType`
 function Inputs.platform(inputobject: InputObject)
-	return Inputs.Platforms[inputobject.UserInputType] or 0
+	local platform = Inputs.Platforms[inputobject.UserInputType]
+
+	local platformvalue = table.find(Inputs.PlatformOrder, platform)
+	assert(platformvalue)
+
+	return platform::types.Platform, platformvalue
+end
+
+function Inputs.platformvalue(platform: types.Platform)
+	local platformvalue = table.find(Inputs.PlatformOrder, platform)
+	assert(platformvalue)
+
+	return platformvalue
 end
 
 --- binds function to `UserInputService.InputBegan`
@@ -268,12 +225,8 @@ function Inputs.doubletap(f: (keycode: Enum.KeyCode) -> ())
 	return Hook("k_DoubleTap").Connect(f)
 end
 
---- fires function when the input platform is changed \
---- `0`: unknown \
---- `1`: pc \
---- `2`: mobile \
---- `3`: gamepad
-function Inputs.platformchanged(f: (platformid: number) -> ())
+--- fires function when the input platform is changed
+function Inputs.platformchanged(f: (platform: types.Platform) -> ())
 	return Hook("k_PlatformChanged").Connect(f)
 end
 
@@ -305,7 +258,7 @@ end
 --- returns true if the inputobject was *not* obscured by the on-screen thumbstick
 function Inputs.sinkthumbstickcheck(inputobject: InputObject)
 	if not PlayerGui then return false end
-	if Inputs.PlatformId == 2 then
+	if Inputs.Platform == "Gamepad" then
 		local screenposition = inputobject.Position
 		local array = PlayerGui:GetGuiObjectsAtPosition(screenposition.X, screenposition.Y)
 		if #array == 0 then
@@ -350,7 +303,7 @@ end
 if IsServer then
 	
 else
-	Inputs.PlatformId = Inputs.Platforms[UIS:GetLastInputType()]
+	Inputs.Platform = Inputs.Platforms[UIS:GetLastInputType()]
 
 	LocalPlayer.CharacterAdded:Connect(function(C: Model)
 		Inputs.cursorblacklistadd(C)
@@ -362,16 +315,20 @@ else
 		Inputs.GuiInset = GuiService:GetGuiInset()
 	end)
 
-	local function updatemouse(inputobject: InputObject)
+	local function updatemouse(inputobject: InputObject?)
 		local screenposition = Vector2.zero
-		if Inputs.PlatformId == 2 then
-			local inputposition: Vector2|Vector3 = inputobject.Position
-			if Inputs.MobileScreenCenter then
-				inputposition = Inputs.MobileScreenCenter() or inputposition
-			end
-			screenposition = Vector2.new(inputposition.X, inputposition.Y)
+
+		if Inputs.CursorPosition then
+			screenposition = Inputs.CursorPosition
 		else
-			screenposition = UIS:GetMouseLocation() - Inputs.GuiInset
+			if Inputs.Platform == "Mobile" then
+				if inputobject then
+					local p = inputobject.Position
+					screenposition = Vector2.new(p.X, p.Y)
+				end
+			else
+				screenposition = UIS:GetMouseLocation() - Inputs.GuiInset
+			end
 		end
 	
 		local unitray = Camera:ScreenPointToRay(screenposition.X, screenposition.Y)
@@ -389,13 +346,14 @@ else
 		Cursor.Camera = Camera.CFrame.LookVector
 	end
 
+	local thumbstickposition = Vector3.zero
 	local function updatethumbstickdirection(inputobject: InputObject)
 		if inputobject.KeyCode ~= Enum.KeyCode.Thumbstick1 then return end
-		local inputposition = inputobject.Position
-		if inputposition.Magnitude < Inputs.ThumbstickDeadzone then
+		thumbstickposition = inputobject.Position
+		if thumbstickposition.Magnitude < Inputs.ThumbstickDeadzone then
 			Inputs.ThumbstickDirection = "None"
 		else
-			local pX, pY = inputposition.X, inputposition.Y
+			local pX, pY = thumbstickposition.X, thumbstickposition.Y
 			local real: types.ThumbstickDirection = "None"
 			
 			if math.abs(pX) > math.abs(pY) then
@@ -459,15 +417,21 @@ else
 	UIS.LastInputTypeChanged:Connect(function(userinputtype: Enum.UserInputType)
 		Inputs.TouchEnabled = UIS.TouchEnabled
 
-		local platformid = Inputs.Platforms[userinputtype] or Inputs.PlatformId
-		if Inputs.PlatformId ~= platformid then
-			Inputs.PlatformId = platformid
-			Hook("k_PlatformChanged").Fire(Inputs.PlatformId)
+		local platform = Inputs.Platforms[userinputtype] or Inputs.Platform
+		if Inputs.Platform ~= platform then
+			Inputs.Platform = platform
+			Hook("k_PlatformChanged").Fire(Inputs.Platform)
 		end
 	end)
 	GamepadService:GetPropertyChangedSignal("GamepadCursorEnabled"):Connect(function()
 		Inputs.GamepadCursorEnabled = GamepadService.GamepadCursorEnabled
 		Hook("k_GamepadCursorStateChanged").Fire(GamepadService.GamepadCursorEnabled)
+	end)
+
+	RunService.Heartbeat:Connect(function()
+		if thumbstickposition ~= Vector3.zero then
+			updatemouse()
+		end
 	end)
 end
 

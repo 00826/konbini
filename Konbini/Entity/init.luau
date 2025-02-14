@@ -20,8 +20,9 @@ local Entity = {
 	Bucket = {} :: {[string]: {string}|boolean};
 }
 
---- inserts entity `e` stored at `Cache[id]`
-function Entity.insert(e: {}): string
+--- inserts entity `e` stored at `Cache[id]` \
+--- does not automatically queue after insertion
+function Entity.insert(e: any): string
 	assert(IsServer)
 	
 	local key = TableK.insertkey(Entity.Cache, e, 4)
@@ -86,14 +87,24 @@ function Entity.tostring(e: {}): string?
 end
 
 --- returns `e` that satisfies `e = Cache[id]`
-function Entity.fromstring(id: string): {}?
+function Entity.fromstring(id: string): any?
 	return Entity.Cache[id]
+end
+
+--- returns `#Entity.Cache`
+function Entity.len()
+	local len = 0
+	for _ in Entity.Cache do
+		len += 1
+	end
+
+	return len
 end
 
 --- returns array of `e` from `4*n`-width string buffer of `id`'s \
 --- assumes that `len(b) % 4 == 0`
 @native
-function Entity.frombuffer(b: buffer): {}
+function Entity.frombuffer(b: buffer): any
 	local len = buffer.len(b)
 	local from = table.create(len // 4)
 
@@ -108,7 +119,7 @@ function Entity.frombuffer(b: buffer): {}
 end
 
 --- returns first `e` and its associated `key` that satisfies `e[scope] == value`
-function Entity.fromscope(scope: string, value: any): ({}?, string?)
+function Entity.fromscope(scope: string, value: any): (any?, string?)
 	assert(value ~= nil, "cannot scope a nil value")
 
 	for id, thisentity in Entity.Cache do
@@ -117,6 +128,24 @@ function Entity.fromscope(scope: string, value: any): ({}?, string?)
 		end
 	end
 	return
+end
+
+--- yields thread until entity that satisfies `e[scope] == value` is added
+function Entity.waitfromscope(scope: string, value: any): (any, string)
+	assert(value ~= nil, "cannot scope a nil value")
+	local a, b
+
+	repeat
+		for id, thisentity in Entity.Cache do
+			if thisentity[scope] == value then
+				a = thisentity
+				b = id
+			end
+		end
+		task.wait()
+	until a and b
+
+	return a, b
 end
 
 --- returns key-value subset of `Cache` where e in subset satisfies `comp(e) -> true`
@@ -160,7 +189,7 @@ end
 
 --- writes key-values of update `u` into `e`, such that `e` inherits all non-nil key-values of `u` \
 --- when possible, mutable data types (same-width buffers, same-type tables) have their references preserved
-function Entity.update(e: {}, u: {})
+function Entity.update(e: any, u: any)
 	local changes = table.create(32)
 
 	for k, updatevalue in u do

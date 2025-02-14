@@ -34,22 +34,6 @@ function MathK.interpolant(x: number, dt: number)
 	return 1 - (x ^ dt)
 end
 
---- linearly interpolates `x` towards `y` with respect to interpolant `a`
-function MathK.lerp(x: number, y: number, a: number)
-	return (1 - a) * x + a * y;
-end
-
---- returns `b` as an interpolant between `x` and `y`, where `b ∈ [x, y]`
-function MathK.alpha(x: number, y: number, b: number)
-	if b >= y then
-		return 1
-	elseif b <= x then
-		return 0
-	end
-
-	return (b - x) / (y - x)
-end
-
 --- returns: \
 --- where `x ∈ [a, b]`: `true` \
 --- where `x ∉ [a, b]`: `false`

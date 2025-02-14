@@ -115,6 +115,12 @@ export type Timestamp = {
 
 --- Inputs.luau
 
+export type Platform =
+	| "Unknown" --- 1
+	| "Keyboard" --- 2
+	| "Mobile" --- 3
+	| "Gamepad" --- 4
+
 export type Cursor = {
 	--- 3d position of cursor
 	Position: Vector3;
@@ -134,20 +140,9 @@ export type ThumbstickDirection =
 	| "None"
 
 export type Keybind = {
-	--- real-time values that will activate this keybind \
-	--- indices are as follows, and default to 0 when unbound: \
-	--- `1`: pc \
-	--- `2`: mobile \
-	--- `3`: gamepad
-	Reals: {number};
-	--- default values that are written to reals \
-	--- indices are as follows, and default to 0 when unbound: \
-	--- `1`: pc \
-	--- `2`: mobile \
-	--- `3`: gamepad
-	Defaults: {number};
-
-	[string]: unknown;
+	Value: any;
+	Defaults: {[Platform]: Enum.KeyCode};
+	Overwrites: {[Platform]: Enum.KeyCode};
 };
 
 --- Instance.luau
