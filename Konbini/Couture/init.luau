@@ -9,7 +9,7 @@ local InsertService = game:GetService("InsertService")
 local Players = game:GetService("Players")
 
 local AccessoryPart = script:WaitForChild("AccessoryPart")
-local Weld = script:WaitForChild("Weld")
+local RigidConstraint = script:WaitForChild("RigidConstraint")
 
 --- ### Couture.luau
 ---
@@ -138,12 +138,11 @@ function Couture.attach(rig: Instance, accessorypart: BasePart, parent: Instance
 
 	accessorypart:SetAttribute(Couture.Flag, true)
 	accessorypart.Parent = parent or rig
-	accessorypart.CFrame = rigattachment.WorldCFrame * accessoryattachment.CFrame:Inverse()
 
-	local weld = Weld:Clone()
-	weld.Part0 = accessorypart
-	weld.Part1 = rigattachment.Parent
-	weld.Parent = accessorypart
+	local constraint = RigidConstraint:Clone()
+	constraint.Parent = accessorypart
+	constraint.Attachment0 = rigattachment
+	constraint.Attachment1 = accessoryattachment
 
 	return true
 end
