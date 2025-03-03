@@ -192,7 +192,13 @@ function Stats.statuspeek(st: {[string]: buffer}, keys: {string}, now: number, l
 		local s = st[key]
 		if not s then continue end
 
-		local active = buffer.readf32(s, 0) > now ---Stats.statusinterpret(s, now)
+		local expiry = buffer.readf32(s, 0)
+		if expiry == -1 then
+			table.insert(result, key)
+			total += 1
+			continue
+		end
+		local active = expiry > now ---Stats.statusinterpret(s, now)
 		if not active then continue end
 
 		table.insert(result, key)

@@ -65,6 +65,7 @@ local Inputs = {
 
 	--- write externally
 	MoveVector = Vector3.zero;
+	Vertical = 0;
 
 	CursorBlacklist = table.create(16);
 	GuiInset = Vector2.zero;
@@ -298,6 +299,16 @@ function Inputs.togglemobileinterface(thumbstickenabled: boolean?, jumpbuttonena
 	return PlayerGui.ChildAdded:Connect(function(thing)
 		t(thing)
 	end)
+end
+
+--- fires function when the esc menu is opened
+function Inputs.menuopened(f: () -> ())
+	return GuiService.MenuOpened:Connect(f)
+end
+
+--- fires function when the esc menu is closed
+function Inputs.menuclosed(f: () -> ())
+	return GuiService.MenuClosed:Connect(f)
 end
 
 if IsServer then

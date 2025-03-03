@@ -88,8 +88,6 @@ local Interface = {
 		--- `6:13`
 		Portrait = 6/13;
 	};
-
-	suffixes = table.freeze{""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
 
 --- returns `GuiService.PreferredTextSize`
@@ -152,11 +150,12 @@ function Interface.bezier(A: number, points: {UDim2})
 end
 
 --- plays imported sound
-function Interface.playsound(ref: string)
+function Interface.playsound(ref: string, volume: number?)
 	local soundobject = Interface.ButtonSounds[ref]
 	assert(soundobject, `{ref} not an imported sound`)
 
 	local newsound = soundobject:Clone()
+	newsound.Volume = volume or newsound.Volume
 	newsound.PlayOnRemove = true
 	newsound.Parent = script
 	newsound:Destroy()
@@ -177,7 +176,7 @@ function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number
 	if text then textlabel.Text = text end
 	local n = utf8.len(textlabel.ContentText) or 0
 	local t = n / (speed or 40)
-	tween(textlabel, {MaxVisibleGraphemes = n}, t, Enum.EasingStyle.Sine)
+	tween(textlabel, {MaxVisibleGraphemes = n}, t, Enum.EasingStyle.Linear)
 
 	return t
 end
@@ -554,7 +553,7 @@ function Interface.pad(guiobject: GuiObject, value: UDim)
 	local uipadding = guiobject:FindFirstChildOfClass("UIPadding")
 	if not uipadding then
 		uipadding = Instance.new("UIPadding") ; --- this semicolon is INSANE
-		(uipadding::any).Parent = Interface.pad
+		(uipadding::any).Parent = guiobject
 	end
 	assert(uipadding)
 
@@ -590,35 +589,6 @@ function Interface.unitcircle(vertices: number, radius: number, theta: number?)
 	end
 
 	return results
-end
-
---- formats number with: \
---- `abbreviate (?=10000)`: if `x >= abbreviate`, `x` will be abbreviated \
---- `comma (?=1000)`: if `x >= comma`, `x` will be separated by commas \
---- `decimalplaces (?=1)`: *in contexts where `x` is abbreviated, # of decimal places*
-function Interface.formatnumber(x: number, abbreviate: number?, comma: number?, decimalplaces: number?)
-	if x >= (abbreviate or 10000) then
-		return Interface.abbreviatenumber(x, decimalplaces or 1)
-	elseif x >= (comma or 1000) then
-		return Interface.commanumber(x)
-	end
-	return tostring(x)
-end
-
---- formats number separated by commas
-function Interface.commanumber(x: number)
-	if math.abs(x) < 1000 then return tostring(math.floor(x)) end
-	local a = string.gsub(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)","%1,"), ",(%-?)$","%1")
-	return string.reverse(a)
-end
-
---- abbreviates number following a `"K", "M", "B", "T", "Qd"...`-esque notation
-function Interface.abbreviatenumber(n: number, decimalplaces: number?)
-	local exp = math.floor(math.log(math.max(1, math.abs(n)), 1000))
-	local suffix = Interface.suffixes[1 + exp] or ("e+" .. exp)
-	local norm = math.floor(n * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))
-
-	return string.format("%." .. (decimalplaces or 1) .. "f%s", norm, suffix)
 end
 
 --- pcall-wrapped `StarterGui:SetCoreGuiEnabled(...)`

@@ -10,7 +10,9 @@ end
 --- ### Encoder.luau
 ---
 --- buffer and string helper functions
-local Encoder = {}
+local Encoder = {
+	Suffixes = table.freeze{""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
+}
 
 --- asserts all types of table `a` against typestring-table `typetable` \
 --- values of typetable are separated such that each type is capturable by pattern `%w+` and is compared against `typeof(a[k])` \
@@ -475,9 +477,9 @@ function Encoder.string(len: number?)
 end
 
 --- replaces substrings in text matching capture pattern with respect to replacement table \
---- `capture (?=%S+)`: capture substrings separated by whitespaces
+--- `capture (?="[%w+_]+")`: capture whole words defined as alphanumerics & underscores
 function Encoder.alias(text: string, replace: {[string]: string}, pattern: string?)
-	return string.gsub(text, pattern or "%S+", function(s: string)
+	return string.gsub(text, pattern or "[%w+_]+", function(s: string)
 		return replace[s] or s
 	end)
 end
@@ -676,6 +678,35 @@ function Encoder.timestamp(format: types.Format): types.Timestamp
 	timestamp.Until = os.time(T1) - os.time(T0)
 
 	return timestamp
+end
+
+--- formats number with: \
+--- `abbreviate (?=10000)`: if `x >= abbreviate`, `x` will be abbreviated \
+--- `comma (?=1000)`: if `x >= comma`, `x` will be separated by commas \
+--- `decimalplaces (?=1)`: *in contexts where `x` is abbreviated, # of decimal places*
+function Encoder.formatnumber(x: number, abbreviate: number?, comma: number?, decimalplaces: number?)
+	if x >= (abbreviate or 10000) then
+		return Encoder.abbreviatenumber(x, decimalplaces or 1)
+	elseif x >= (comma or 1000) then
+		return Encoder.commanumber(x)
+	end
+	return tostring(x)
+end
+
+--- formats number separated by commas
+function Encoder.commanumber(x: number)
+	if math.abs(x) < 1000 then return tostring(math.floor(x)) end
+	local a = string.gsub(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)","%1,"), ",(%-?)$","%1")
+	return string.reverse(a)
+end
+
+--- abbreviates number following a `"K", "M", "B", "T", "Qd"...`-esque notation
+function Encoder.abbreviatenumber(n: number, decimalplaces: number?)
+	local exp = math.floor(math.log(math.max(1, math.abs(n)), 1000))
+	local suffix = Encoder.Suffixes[1 + exp] or ("e+" .. exp)
+	local norm = math.floor(n * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))
+
+	return string.format("%." .. (decimalplaces or 1) .. "f%s", norm, suffix)
 end
 
 return Encoder

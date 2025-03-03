@@ -33,6 +33,10 @@ local Couture = {
 		"RightArmColor";
 		"RightLegColor";
 	};
+	ClothingColorProperties = {
+		"ShirtColor";
+		"PantsColor"
+	};
 	BodyPartProperties = {
 		"Face";
 	};
@@ -171,6 +175,8 @@ function Couture.load(assetids: {number}, container: Instance)
 	local result = {}
 
 	for _, assetid in assetids do
+		if type(assetid) ~= "number" then continue end
+
 		local s, e = pcall(Couture.create, assetid)
 		if not s then
 			warn(e)
@@ -347,7 +353,7 @@ function Couture.decode(t: {[string]: any})
 
 			continue
 		end
-		if table.find(Couture.BodyColorProperties, k) then
+		if table.find(Couture.BodyColorProperties, k) or table.find(Couture.ClothingColorProperties, k) then
 			local num = tonumber(v)
 			if num and num <= 16777215 then --- 0xFFFFFF
 				result[k] = Color3.fromHex(string.gsub(v, "0x", "")::string)

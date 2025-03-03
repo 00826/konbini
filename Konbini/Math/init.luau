@@ -28,6 +28,11 @@ local MathK = {
 	random = Random.new();
 }
 
+--- returns whether `x` is `NaN` (`return x ~= x == true`)
+function MathK.isnan(x: number)
+	return (x ~= x) == true
+end
+
 --- returns interpolant with respect to deltatime (`1 - (x ^ dt)`) \
 --- `x` is ideally passed in `e-` notation form (such as `10e-11`)
 function MathK.interpolant(x: number, dt: number)
@@ -54,6 +59,15 @@ function MathK.shift(x: number, a: number, b: number)
 	local c = x % b
 
 	return c == 0 and b or c
+end
+
+--- returns `n`-th value of the fibonacci sequence
+function MathK.fibonacci(n: number)
+	local a = 1 / (5^0.5)
+	local b = (( 1 + (5^0.5) ) / 2)^n
+	local c = (( 1 - (5^0.5) ) / 2)^n
+	
+	return math.round(a*b - a*c)
 end
 
 --- returns winner of rally point game with minimum `score` given team 1 points `k` and team 2 points `k` \

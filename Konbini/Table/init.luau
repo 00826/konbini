@@ -73,8 +73,7 @@ end
 function TableK.droplist<T>(droplist: {T}, count: number?, R: Random?)
 	local len = #droplist
 	if len == 0 then
-		warn(`empty array passed, returning new empty array`)
-
+		--- warn(`empty array passed, returning new empty array`)
 		return table.create(0)
 	else
 		local B = table.clone(droplist);

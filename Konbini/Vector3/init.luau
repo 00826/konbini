@@ -45,7 +45,7 @@ function Vector3K.project(v: Vector3, w: Vector3)
 	return vector.dot(v, w) * w
 	]]
 	w = Vector3K.unit_or_zero(w)
-	return v:Dot(w) * w
+	return vector.dot(v::any, w::any) * w
 end
 
 --- returns `v` rejected from `w`
@@ -85,7 +85,7 @@ function Vector3K.stretch(v: Vector3, w: Vector3, radius: number)
 		return w
 	end
 
-	return v + ((w - v).Unit * radius)
+	return v + ((vector.normalize(w::any - v::any)::any)::Vector3 * radius)
 end
 
 --- returns point on bezier curve at interpolant `a`
@@ -137,11 +137,11 @@ function Vector3K.nextunitspread(v: Vector3, radians: number, R: Random?)
 	--- equivalent of producing the rightvector (u) and upvector (w) of v
 	local u
 	if math.abs(v.Y) < 0.999 then
-		u = v:Cross(Vector3.yAxis).Unit
+		u = vector.normalize(vector.cross(v::any, Vector3.yAxis::any))
 	else
-		u = v:Cross(Vector3.xAxis).Unit
+		u = vector.normalize(vector.cross(v::any, Vector3.xAxis::any))
 	end
-	local w = v:Cross(u)
+	local w = vector.cross(v::any, u)
 
 	--- generate a random point within the spherical cap (from unit sphere)
 	--- produces spherical coordinates
@@ -154,7 +154,7 @@ function Vector3K.nextunitspread(v: Vector3, radians: number, R: Random?)
 	local z = cosTheta
 
 	--- construct the random vector in the original coordinate system
-	return (x*u) + (y*w) + (z*v)
+	return ((x*u) + (y*w) + (z*v))::Vector3
 end
 
 --- returns random point within bounds of `[v, w]`
@@ -163,6 +163,13 @@ function Vector3K.nextpointinbounds(v: Vector3, w: Vector3, R: Random?)
 		  (Vector3.xAxis * (R or types.R):NextNumber(v.X, w.X))
 		+ (Vector3.yAxis * (R or types.R):NextNumber(v.Y, w.Y))
 		+ (Vector3.zAxis * (R or types.R):NextNumber(v.Z, w.Z))
+end
+
+function Vector3K.nextpointinradius(radius: number, R: Random?)
+	local r = radius * ((R or types.R):NextNumber()^0.5)
+	local theta = (R or types.R):NextNumber() * 2 * math.pi
+
+	return (Vector3.xAxis * r * math.cos(theta)) + (Vector3.zAxis * r * math.sin(theta))
 end
 
 --- returns vector3 representation of `variant`
@@ -187,8 +194,14 @@ end
 
 --- returns `vector.normalize(w - v)`
 function Vector3K.unit(v: Vector3, w: Vector3)
-	--- return vector.normalize(w - v)
-	return (w - v).Unit
+	--- just beat the type solver final boss
+	--- whats good
+	return (vector.normalize(w::any - v::any)::any)::Vector3
+end
+
+--- returns `vector.angle(v, w)`
+function Vector3K.angle(v: Vector3, w: Vector3)
+	return vector.angle(v::any, w::any)
 end
 
 --- returns the midpoint of `vectors`
@@ -239,14 +252,12 @@ end
 
 --- returns true if `v` and `w` are coplanar along unit vector `u`
 function Vector3K.iscoplanar(v: Vector3, w: Vector3, u: Vector3)
-	--- return math.round(vector.dot((v - w), u)) == 0
-	return math.round((v - w):Dot(u)) == 0
+	return math.round(vector.dot((v - w)::any, u::any)) == 0
 end
 
 --- returns unit vector `v` reflected against unit vector `w`
 function Vector3K.reflect(v: Vector3, w: Vector3)
-	--- return 2 * vector.dot(v, w) * w - v
-	return 2 * v:Dot(w) * w - v
+	return 2 * vector.dot(v::any, w::any) * w - v
 end
 
 --- returns rotation of unit vector `v` along `axis`

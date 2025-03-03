@@ -57,7 +57,11 @@ local function lerpnumbersequencekeypoint(initial: NumberSequenceKeypoint, goal:
 end
 
 local function getvalue(initial: any, goal: any, a: number, style: Enum.EasingStyle, direction: Enum.EasingDirection): any
-	a = TweenService:GetValue(a, style, direction)
+	if style == Enum.EasingStyle.Linear then
+		a = a
+	else
+		a = TweenService:GetValue(a, style, direction)
+	end
 
 	local h, k = type(initial), typeof(initial)
 
@@ -659,8 +663,7 @@ end
 --- `style(?=Enum.EasingDirection.Linear)`: effect easingstyle \
 --- `direction(?=Enum.EasingDirection.Out)`: effect easingdirection \
 --- `framerate(?=InstanceK.KeyframeFramerate)`: effect framerate \
---- `destruct(?=nil)`: destroy object `n` seconds after effect completion \
---- all transformations are deferred \
+--- `destruct(?=nil)`: destroy object `n` seconds after effect completion
 --- \
 --- returns a mutable `KeyframeInfo` table
 function InstanceK.keyframe(object: Instance, goal: {[string]: types.KeyframeType}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?, destruct: number?): types.KeyframeInfo
@@ -800,7 +803,8 @@ else
 		local x = 0
 		for object, keyframeinfo in KeyframeBucket do
 			if keyframeinfo.IsPaused then continue end
-			task.defer(interpolate, object, keyframeinfo, dt)
+			interpolate(object, keyframeinfo, dt)
+
 			x += 1
 		end
 		InstanceK.KeyframeActiveObjects = x

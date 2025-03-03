@@ -79,6 +79,9 @@ end
 function Data.removeprofile(player: Player)
 	assert(IsServer)
 
+	pcall(function()
+		(ServerCache[player]::any):EndSession()
+	end)
 	ServerCache[player] = nil
 end
 
