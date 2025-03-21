@@ -126,6 +126,10 @@ function Interface.reducedmotionchanged(f: (reducedmotionenabled: boolean) -> ()
 	end)
 end
 
+function Interface.guiinset()
+	return GuiService:GetGuiInset()
+end
+
 --- locally emits a TextChatService message \
 --- `channel (?="RBXGeneral")`
 function Interface.textchatmessage(message: string, channel: string?)
@@ -245,7 +249,15 @@ function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunct
 end
 
 --- applies sprite to imagelabel
-function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite)
+function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite?)
+	if not sprite then
+		imagelabel.Image = ""
+		imagelabel.ImageRectSize = Vector2.zero
+		imagelabel.ImageRectOffset = Vector2.zero
+
+		return
+	end
+
 	local layout = sprite.Layout
 
 	if layout then
@@ -262,21 +274,20 @@ function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite)
 end
 
 --- expands expands textlabel until
-function Interface.scaletextlabel(textlabel: TextLabel, settextbounds: boolean?, offsetX: number?, offsetY: number?)
-	if settextbounds then
-		local aY = textlabel.AbsoluteSize.Y
-		textlabel.Size = UDim2.new(1, 0, 0, aY)
-		textlabel.TextSize = aY
+function Interface.scaletextlabel(textlabel: TextLabel)
+	local sizeX = textlabel.AbsoluteSize.X
+
+	if textlabel.TextBounds.Y == 0 then
+		textlabel.Size = UDim2.fromOffset(sizeX, 0)
+		return
 	end
 
-	textlabel.TextWrapped = true
+	textlabel.Size = UDim2.fromOffset(sizeX, textlabel.TextBounds.Y)
 	if not textlabel.TextFits then
 		repeat
-			textlabel.Size += Interface.UDim2.yOffset
+			textlabel.Size += UDim2.fromOffset(0, 1)
 		until textlabel.TextFits
 	end
-
-	textlabel.Size += UDim2.fromOffset((offsetX or 0), (offsetY or 0))
 end
 
 --- attaches target to textlabel

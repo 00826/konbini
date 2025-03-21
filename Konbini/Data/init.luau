@@ -1,7 +1,5 @@
 --!strict
 
-local types = require(script.Parent.types)
-
 local DSS = game:GetService("DataStoreService")
 local RunService = game:GetService("RunService")
 
@@ -9,8 +7,8 @@ local IsServer = RunService:IsServer()
 
 local DataRemote = script:WaitForChild("DataRemote") :: RemoteEvent
 
-local ServerCache = {} :: {[Player]: {Data: types.SaveTemplate}}
-local ClientCache = {} :: types.SaveTemplate
+local ServerCache = {} :: {[Player]: {Data: any}}
+local ClientCache = {} :: any
 
 local Hook = require(script.Parent.Hook)
 
@@ -21,7 +19,7 @@ local Hook = require(script.Parent.Hook)
 local Data = { Config = require(script:WaitForChild("Config")); }
 
 --- returns player's save data
-function Data.get(player: Player?): types.SaveTemplate
+function Data.get(player: Player?): any
 	if IsServer then
 		assert(player)
 		return ServerCache[player].Data
@@ -46,15 +44,15 @@ function Data.sync(player: Player, keys: {string}?)
 	local savedata = ServerCache[player].Data
 	local packet = {}
 
-	for _, Key in (keys or Data.Config.SyncKeys) do
-		packet[Key] = savedata[Key]
+	for _, key in (keys or Data.Config.SyncKeys) do
+		packet[key] = savedata[key]
 	end
 
 	DataRemote:FireClient(player, packet)
 end
 
 --- is called when a sync packet is received
-function Data.recv(packet: types.SaveTemplate)
+function Data.recv(packet: any)
 	assert(not IsServer)
 
 	for k, v in packet do
@@ -69,7 +67,7 @@ function Data.changed(key: string, f: (value: any) -> ())
 end
 
 --- adds player saveprofile to cache
-function Data.addprofile(player: Player, saveprofile: { Data: types.SaveTemplate })
+function Data.addprofile(player: Player, saveprofile: { Data: any })
 	assert(IsServer)
 
 	ServerCache[player] = saveprofile

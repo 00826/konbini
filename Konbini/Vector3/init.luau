@@ -154,7 +154,7 @@ function Vector3K.nextunitspread(v: Vector3, radians: number, R: Random?)
 	local z = cosTheta
 
 	--- construct the random vector in the original coordinate system
-	return ((x*u) + (y*w) + (z*v))::Vector3
+	return (((x*u)::any + (y*w)::any + (z*v)::any)::any)::Vector3
 end
 
 --- returns random point within bounds of `[v, w]`
@@ -227,7 +227,7 @@ function Vector3K.segment(v: Vector3, w: Vector3, segments: number, transform: (
 	partition[segments] = w
 
 	if segments <= 2 then
-		return partition, (partition[2] - partition[1]).Magnitude
+		return partition, (partition[segments] - partition[1]).Magnitude
 	else
 		local step = segments - 1
 		for i = 1, segments - 2, 1 do

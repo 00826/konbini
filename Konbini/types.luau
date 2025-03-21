@@ -73,10 +73,6 @@ export type CastList =
 	| "Whitelist"
 	| "Blacklist"
 
---- Data.luau
-
-export type SaveTemplate = typeof(require(script.Parent.Data.Config).SaveTemplate)
-
 --- Encoder.luau
 
 export type intfloat = 

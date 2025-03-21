@@ -311,6 +311,12 @@ function Encoder.writematrix(m: buffer, column: number, row: number, value: numb
 	buffer.writei16(m, offset, value)
 end
 
+--- clears matrix, preserving the first two bits that contain row/column info \
+--- equivalent to `buffer.fill(m, 2, 0)`
+function Encoder.clearmatrix(m: buffer)
+	buffer.fill(m, 2, 0)
+end
+
 --- writes set of values to row of `int16`-width matrix-buffer \
 --- if values are omitted, the range is filled with zeroes
 function Encoder.writerowmatrix(m: buffer, row: number, values: ({number}|buffer)?)
@@ -708,5 +714,26 @@ function Encoder.abbreviatenumber(n: number, decimalplaces: number?)
 
 	return string.format("%." .. (decimalplaces or 1) .. "f%s", norm, suffix)
 end
+
+type thumb =
+	((type: "Asset", id: number, size: "150x150"|"420x420") -> string)
+&	((type: "Avatar", id: number, size: "48x48"|"60x60"|"100x100"|"150x150"|"180x180"|"352x352"|"420x420"|"720x720") -> string)
+&	((type: "AvatarBust", id: number, size: "50x50"|"60x60"|"75x75"|"100x100"|"150x150"|"180x180"|"352x352"|"420x420") -> string)
+&	((type: "AvatarHeadShot", id: number, size: "48x48"|"60x60"|"100x100"|"150x150"|"180x180"|"352x352"|"420x420") -> string)
+&	((type: "BadgeIcon", id: number, size: "150x150") -> string)
+&	((type: "BundleThumbnail", id: number, size: "150x150"|"420x420") -> string)
+&	((type: "FontFamily", id: number, size: "1200x80") -> string)
+&	((type: "GameIcon", id: number, size: "50x50"|"150x150") -> string)
+&	((type: "GamePass", id: number, size: "150x150") -> string)
+&	((type: "GameThumbnail", id: number, size: "256x144"|"384x216"|"480x270"|"576x324"|"768x432") -> string)
+&	((type: "GroupIcon", id: number, size: "150x150"|"420x420") -> string)
+&	((type: "Outfit", id: number, size: "150x150"|"420x420") -> string)
+
+local rbxthumb: thumb = function(type, id, size)
+	return string.format("rbxthumb://type=%s&id=%d&w=%s&h=%s", type, id, unpack(string.split(size, "x")))
+end
+
+--- returns `rbxthumb://` thumbnail
+Encoder.rbxthumb = rbxthumb
 
 return Encoder
