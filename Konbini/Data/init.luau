@@ -1,6 +1,7 @@
 --!strict
 
 local DSS = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 
 local IsServer = RunService:IsServer()
@@ -21,11 +22,15 @@ local Data = { Config = require(script:WaitForChild("Config")); }
 --- returns player's save data
 function Data.get(player: Player?): any
 	if IsServer then
-		assert(player)
-		return ServerCache[player].Data
+		--- assert(player)
+		if player and ServerCache[player] then
+			return ServerCache[player].Data
+		end
 	else
 		return ClientCache
 	end
+
+	return
 end
 
 --- reads player's data value stored at key
@@ -81,6 +86,14 @@ function Data.removeprofile(player: Player)
 		(ServerCache[player]::any):EndSession()
 	end)
 	ServerCache[player] = nil
+end
+
+function Data.tostring(data: any)
+	return HttpService:JSONEncode(data)
+end
+
+function Data.totable(string: any)
+	return HttpService:JSONDecode(string)
 end
 
 --- gdpr what i need you to do

@@ -126,6 +126,8 @@ export type Cursor = {
 	Camera: Vector3;
 	--- instance that cursor is on
 	Instance: Instance?;
+	--- screen position of cursor
+	ScreenPosition: Vector2;
 }
 
 export type ThumbstickDirection =

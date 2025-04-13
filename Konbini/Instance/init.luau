@@ -795,6 +795,18 @@ function InstanceK.preloadconvert(assetids: {string}, class: "Image"|"Sound"|"An
 	return assets
 end
 
+--- `fov(?=70)` \
+--- `name(?="Camera")`
+function InstanceK.camera(cframe: CFrame, fov: number?, name: string?)
+	local camera = Instance.new("Camera")
+	camera.CFrame = cframe
+	camera.FieldOfView = fov or 70
+	camera.Name = name or "Camera"
+	camera.Parent = script
+
+	return camera
+end
+
 if IsServer then
 else
 	MoverRemote.OnClientEvent:Connect(InstanceK.applybodymover)

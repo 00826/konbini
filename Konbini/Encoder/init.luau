@@ -1,6 +1,8 @@
 --!strict
 --!native
 
+local HttpService = game:GetService("HttpService")
+
 local types = require(script.Parent.types)
 
 local function subf(x: string)
@@ -735,5 +737,15 @@ end
 
 --- returns `rbxthumb://` thumbnail
 Encoder.rbxthumb = rbxthumb
+
+--- returns `HttpService:JSONEncode(input)`
+function Encoder.jsonencode(input: any)
+	return HttpService:JSONEncode(input)
+end
+
+--- returns `HttpService:JSONDecode(input)`
+function Encoder.jsondecode(input: string)
+	return HttpService:JSONDecode(input)
+end
 
 return Encoder

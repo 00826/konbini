@@ -55,6 +55,10 @@ local Interface = {
 		fromconstant = function(w: number)
 			return UDim2.new(w, w)
 		end;
+		--- returns UDim2.fromOffset(v.X, v.Y)
+		fromvector = function(v: Vector2|Vector3)
+			return UDim2.fromOffset(v.X, v.Y)
+		end;
 	};
 	Vector2 = table.freeze{
 		half = Vector2.new(0.5, 0.5);
@@ -365,165 +369,11 @@ function Interface.togglecontents(target: GuiObject, state: boolean, ...: string
 	end
 end
 
---- populates container with a grid of entries drawn from `template (?=Frame)`
---- ```lua
---- Interface.gridfill(container, 5, 3, template)
---- 
---- container:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
---- 	Interface.gridfill(container, 5, 3, template)
---- end)
---- ```
-function Interface.gridfill(container: Frame, width: number, height: number, template: GuiObject?)
-	local gridlayout = container:FindFirstChildOfClass("UIGridLayout")
-	assert(gridlayout)
-	gridlayout.FillDirectionMaxCells = width
+function Interface.grid(columns: number, rows: number, padding: number)
+	local cellpadding = UDim2.fromOffset(padding, padding)
+	local cellsize = UDim2.new(1/columns, -padding, 1/rows, -padding)
 
-	local units = width * height
-	for i = 1, units do
-		local name = "griditem_" .. i
-		local entry = container:FindFirstChild(name) :: any
-		if not entry then
-			entry = template and template:Clone() or Instance.new("Frame")
-			entry.Name = name
-			entry.LayoutOrder = -99999 + i
-			entry.Parent = container
-		end
-		entry:SetAttribute("gridentry", i)
-	end
-
-	for i = units + 1, #container:GetChildren(), 1 do
-		local name = "griditem_" .. i
-		local entry = container:FindFirstChild(name) :: any
-		if entry then
-			entry:Destroy()
-		end
-	end
-
-	local containersize = container.AbsoluteSize
-	local target = math.round(containersize.Y - Interface.padheight(container:FindFirstChildOfClass("UIPadding")).Offset)
-	
-	local cell = target / width
-	gridlayout.CellSize = UDim2.fromOffset(cell, cell)
-
-	if target <= 0 then
-		return
-	else
-		Interface.resizegrid(gridlayout, target, Enum.Axis.Y)
-	end
-end
-
---- returns entries created by `Interface.gridfill`
-function Interface.gridentries(container: Frame)
-	local c = container:GetChildren()
-	local entries = table.create(#c)
-
-	for _, thing in c do
-		if not thing:IsA("GuiObject") then continue end
-
-		local value = thing:GetAttribute("gridentry") :: number?
-		if value then
-			entries[value] = thing
-		end
-	end
-
-	return entries
-end
-
---- populates container with a list of entries drawn from `template (?=Frame)`
---- ```lua
---- Interface.listfill(container, 10, template)
---- 
---- container:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
---- 	Interface.listfill(container, 10, template)
---- end)
---- ```
-function Interface.listfill(container: Frame, rows: number, template: GuiObject?)
-	local gridlayout = container:FindFirstChildOfClass("UIGridLayout")
-	assert(gridlayout)
-	gridlayout.FillDirectionMaxCells = 1
-
-	for i = 1, rows do
-		local name = "listitem_" .. i
-		local entry = container:FindFirstChild(name) :: any
-		if not entry then
-			entry = template and template:Clone() or Instance.new("Frame")
-			entry.Name = name
-			entry.LayoutOrder = -99999 + i
-			entry.Parent = container
-		end
-		entry:SetAttribute("listentry", i)
-	end
-
-	for i = rows + 1, #container:GetChildren(), 1 do
-		local name = "listitem_" .. i
-		local entry = container:FindFirstChild(name) :: any
-		if entry then
-			entry:Destroy()
-		end
-	end
-
-	local padheight = Interface.padheight(container:FindFirstChildOfClass("UIPadding")).Offset
-	local height = container.AbsoluteSize.Y
-	gridlayout.CellSize = UDim2.new(1, 0, 0, height / rows)
-
-	local target = math.round(height - padheight)
-
-	if target <= 0 then
-		return
-	else
-		Interface.resizegrid(gridlayout, target, Enum.Axis.Y)
-	end
-end
-
---- returns entries created by `Interface.listfill`
-function Interface.listentries(container: Frame)
-	local c = container:GetChildren()
-	local entries = table.create(#c)
-
-	for _, thing in c do
-		if not thing:IsA("GuiObject") then continue end
-
-		local value = thing:GetAttribute("listentry") :: number?
-		if value then
-			entries[value] = thing
-		end
-	end
-
-	return entries
-end
-
-function Interface.resizegrid(gridlayout: UIGridLayout, target: number, axis: Enum.Axis)
-	if axis == Enum.Axis.X then
-		repeat
-			if gridlayout.AbsoluteContentSize.X < target then
-				gridlayout.CellSize -= Interface.UDim2.xOffset
-				if gridlayout.AbsoluteContentSize.X >= target then
-					break
-				end
-			elseif gridlayout.AbsoluteContentSize.X > target then
-				gridlayout.CellSize += Interface.UDim2.xOffset
-				if gridlayout.AbsoluteContentSize.X <= target then
-					break
-				end
-			end
-		until gridlayout.AbsoluteContentSize.X == target or gridlayout.AbsoluteContentSize.X == 0
-	elseif axis == Enum.Axis.Y then
-		repeat
-			if gridlayout.AbsoluteContentSize.Y < target then
-				gridlayout.CellSize += Interface.UDim2.yOffset
-				if gridlayout.AbsoluteContentSize.Y >= target then
-					break
-				end
-			elseif gridlayout.AbsoluteContentSize.Y > target then
-				gridlayout.CellSize -= Interface.UDim2.yOffset
-				if gridlayout.AbsoluteContentSize.Y <= target then
-					break
-				end
-			end
-		until gridlayout.AbsoluteContentSize.Y == target or gridlayout.AbsoluteContentSize.Y == 0
-	else
-		error(axis)
-	end
+	return cellpadding, cellsize
 end
 
 --- automatically scales size of target along axis with respect to uigridlayout or uilistlayout
@@ -610,6 +460,18 @@ function Interface.setcoreguienabled(coreguis: {[Enum.CoreGuiType]: boolean})
 		end
 		return true
 	end)
+end
+
+--- applies aspect ratio to gui object
+function Interface.aspectratio(guiobject: GuiObject, value: number)
+	local asr = guiobject:FindFirstChildOfClass("UIAspectRatioConstraint")
+	if not asr then
+		asr = Instance.new("UIAspectRatioConstraint")
+		;(asr::any).Parent = guiobject
+	end
+	;(asr::any).AspectRatio = value
+
+	return asr
 end
 
 return Interface

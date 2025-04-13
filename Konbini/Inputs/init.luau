@@ -86,6 +86,7 @@ local Cursor: types.Cursor = {
 	Normal = Vector3.yAxis;
 	Camera = -Vector3.zAxis;
 	Instance = nil;
+	ScreenPosition = Vector2.zero;
 }
 
 local function rayblacklist(origin: Vector3, direction: Vector3)
@@ -355,6 +356,7 @@ else
 			Cursor.Instance = nil
 		end
 		Cursor.Camera = Camera.CFrame.LookVector
+		Cursor.ScreenPosition = screenposition
 	end
 
 	local thumbstickposition = Vector3.zero

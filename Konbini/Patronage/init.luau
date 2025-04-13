@@ -165,6 +165,11 @@ function Patronage.promptpurchase(product: types.MinProduct, player: Player?)
 	end
 end
 
+--- prompts roblox premium purchase
+function Patronage.promptpremiumpurchase(player: Player?)
+	return MarketplaceService:PromptPremiumPurchase(player or LocalPlayer)
+end
+
 --- connects: \
 --- `MarketplaceService.ProcessReceipt` -> `productpurchased` \
 --- `MarketplaceService.PromptGamePassPurchaseFinished` -> `productpurchased` \
