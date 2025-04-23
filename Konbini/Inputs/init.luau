@@ -73,7 +73,7 @@ local Inputs = {
 	Aliases = require(script.Aliases);
 	Binds = require(script.Binds);
 	Conversions = require(script.Conversions);
-	Platforms = require(script.Platforms);
+	Platforms = require(script.Platforms) :: {[Enum.UserInputType]: types.Platform};
 }
 
 local BlacklistParams = RaycastParams.new()
@@ -245,6 +245,10 @@ end
 --- sets visibility of mouse icon
 function Inputs.setmouseiconenabled(state: boolean)
 	UIS.MouseIconEnabled = state
+end
+
+function Inputs.setmousebehavior(mousebehavior: Enum.MouseBehavior)
+	UIS.MouseBehavior = mousebehavior
 end
 
 --- returns `UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter`
@@ -432,7 +436,7 @@ else
 
 		local platform = Inputs.Platforms[userinputtype] or Inputs.Platform
 		if Inputs.Platform ~= platform then
-			Inputs.Platform = platform
+			Inputs.Platform = platform::any
 			Hook("k_PlatformChanged").Fire(Inputs.Platform)
 		end
 	end)
@@ -441,11 +445,7 @@ else
 		Hook("k_GamepadCursorStateChanged").Fire(GamepadService.GamepadCursorEnabled)
 	end)
 
-	RunService.Heartbeat:Connect(function()
-		if thumbstickposition ~= Vector3.zero then
-			updatemouse()
-		end
-	end)
+	RunService.Heartbeat:Connect(updatemouse)
 end
 
 return Inputs
