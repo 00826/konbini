@@ -324,7 +324,7 @@ function InstanceK.findhighestancestorofclass(instance: Instance, classname: str
 end
 
 --- emits sound at optional position or instance
-function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?)
+function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspeed: number?)
 	if typeof(at) == "Instance" then
 		local real: BasePart? = nil
 		if at:IsA("BasePart") then
@@ -338,6 +338,7 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?)
 
 		local newsound = sound:Clone()
 		newsound.Parent = real
+		newsound.PlaybackSpeed = playbackspeed or 1
 		newsound.PlayOnRemove = false
 
 		newsound.Stopped:Once(function()
@@ -350,16 +351,19 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?)
 		newsound:Play()
 	elseif typeof(at) == "Vector3" then
 		local newpart = SoundPart:Clone()
+		newpart.Position = at
 		newpart.Parent = workspace
 
 		local newsound = sound:Clone()
 		newsound.Parent = newpart
+		newsound.PlaybackSpeed = playbackspeed or 1
 		newsound.PlayOnRemove = true
 		
 		newpart:Destroy()
 	else
 		local newsound = sound:Clone()
 		newsound.Parent = script
+		newsound.PlaybackSpeed = playbackspeed or 1
 		newsound.PlayOnRemove = true
 
 		newsound:Destroy()

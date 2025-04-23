@@ -21,8 +21,6 @@ end
 --- quality-of-life interface functions \
 --- includes `UDim`, `UDim2`, `Vector2`, `Color3` constants & constructors
 local Interface = {
-	ButtonSounds = {} :: {[string]: Sound};
-
 	UDim = table.freeze{
 		zero = UDim.new(0, 0);
 
@@ -157,25 +155,6 @@ function Interface.bezier(A: number, points: {UDim2})
 	return points[1]
 end
 
---- plays imported sound
-function Interface.playsound(ref: string, volume: number?)
-	local soundobject = Interface.ButtonSounds[ref]
-	assert(soundobject, `{ref} not an imported sound`)
-
-	local newsound = soundobject:Clone()
-	newsound.Volume = volume or newsound.Volume
-	newsound.PlayOnRemove = true
-	newsound.Parent = script
-	newsound:Destroy()
-end
-
---- imports sounds
-function Interface.importsounds(sounds: {Sound})
-	for _, Sound in sounds do
-		Interface.ButtonSounds[Sound.Name] = Sound
-	end
-end
-
 --- scrolls textlabel text \
 --- `speed (?=40)` scrolling speed \
 --- returns scroll text time for convenience
@@ -190,7 +169,7 @@ function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number
 end
 
 --- connects button events to guibutton
-function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunctions, sounds: types.ButtonSounds)
+function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunctions)
 	local connections = table.create(9)
 
 	if functions.ClickDown then
@@ -199,10 +178,6 @@ function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunct
 	if functions.ClickUp then
 		table.insert(connections, button.MouseButton1Up:Connect(function(...)
 			functions.ClickUp(...)
-
-			if sounds.Click then
-				Interface.playsound(sounds.Click)
-			end
 		end))
 	end
 
@@ -212,30 +187,18 @@ function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunct
 	if functions.RClickUp then
 		table.insert(connections, button.MouseButton2Up:Connect(function(...)
 			functions.RClickUp(...)
-
-			if sounds.RClick then
-				Interface.playsound(sounds.RClick)
-			end
 		end))
 		table.insert(connections, button.TouchTap:Connect(function(array: {Vector2})
 			if #array ~= 2 then return end
 			local vec2 = array[1] + array[2]
 			vec2 *= 0.5
 			functions.RClickUp(vec2.X, vec2.Y)
-
-			if sounds.RClick then
-				Interface.playsound(sounds.RClick)
-			end
 		end))
 	end
 
 	if functions.Enter then
 		local function e(...)
 			functions.Enter(...)
-
-			if sounds.Enter then
-				Interface.playsound(sounds.Enter)
-			end
 		end
 
 		table.insert(connections, button.MouseEnter:Connect(e))
