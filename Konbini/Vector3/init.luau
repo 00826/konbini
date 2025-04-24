@@ -2,7 +2,9 @@
 --!native
 --!optimize 2
 
-local types = require(script.Parent.types)
+export type xyzType = Vector3 | Vector3int16 | PVInstance | CFrame
+
+local Rand = Random.new()
 
 --- ### Vector3.luau
 ---
@@ -103,7 +105,7 @@ end
 
 --- returns random unit vector
 function Vector3K.nextunitvector(R: Random?)
-	return (R or types.R):NextUnitVector()
+	return (R or Rand):NextUnitVector()
 end
 
 --- returns random unit vector within bounds of cone \
@@ -122,9 +124,9 @@ function Vector3K.nextunitspread(v: Vector3, radians: number, R: Random?)
 
 	--- generate a random point within the spherical cap (from unit sphere)
 	--- produces spherical coordinates
-	local cosTheta = (R or types.R):NextNumber(math.cos(radians), 1)
+	local cosTheta = (R or Rand):NextNumber(math.cos(radians), 1)
 	local sinTheta = (1 - cosTheta * cosTheta)^0.5
-	local phi = (R or types.R):NextNumber(0, 2*math.pi)
+	local phi = (R or Rand):NextNumber(0, 2*math.pi)
 
 	local x = sinTheta * math.cos(phi)
 	local y = sinTheta * math.sin(phi)
@@ -145,9 +147,9 @@ function Vector3K.nextunitspread(v: Vector3, radians: number, R: Random?)
 
 	--- generate a random point within the spherical cap (from unit sphere)
 	--- produces spherical coordinates
-	local cosTheta = (R or types.R):NextNumber(math.cos(radians), 1)
+	local cosTheta = (R or Rand):NextNumber(math.cos(radians), 1)
 	local sinTheta = (1 - cosTheta * cosTheta)^0.5
-	local phi = (R or types.R):NextNumber(0, 2*math.pi)
+	local phi = (R or Rand):NextNumber(0, 2*math.pi)
 
 	local x = sinTheta * math.cos(phi)
 	local y = sinTheta * math.sin(phi)
@@ -160,20 +162,20 @@ end
 --- returns random point within bounds of `[v, w]`
 function Vector3K.nextpointinbounds(v: Vector3, w: Vector3, R: Random?)
 	return
-		  (Vector3.xAxis * (R or types.R):NextNumber(v.X, w.X))
-		+ (Vector3.yAxis * (R or types.R):NextNumber(v.Y, w.Y))
-		+ (Vector3.zAxis * (R or types.R):NextNumber(v.Z, w.Z))
+		  (Vector3.xAxis * (R or Rand):NextNumber(v.X, w.X))
+		+ (Vector3.yAxis * (R or Rand):NextNumber(v.Y, w.Y))
+		+ (Vector3.zAxis * (R or Rand):NextNumber(v.Z, w.Z))
 end
 
 function Vector3K.nextpointinradius(radius: number, R: Random?)
-	local r = radius * ((R or types.R):NextNumber()^0.5)
-	local theta = (R or types.R):NextNumber() * 2 * math.pi
+	local r = radius * ((R or Rand):NextNumber()^0.5)
+	local theta = (R or Rand):NextNumber() * 2 * math.pi
 
 	return (Vector3.xAxis * r * math.cos(theta)) + (Vector3.zAxis * r * math.sin(theta))
 end
 
 --- returns vector3 representation of `variant`
-function Vector3K.tovector(variant: types.xyzType?)
+function Vector3K.tovector(variant: xyzType?)
 	if typeof(variant) == "Vector3" then
 		return variant
 	elseif typeof(variant) == "Vector3int16" then
@@ -205,7 +207,7 @@ function Vector3K.angle(v: Vector3, w: Vector3)
 end
 
 --- returns the midpoint of `vectors`
-function Vector3K.midpoint(vectors: { Vector3 | types.xyzType })
+function Vector3K.midpoint(vectors: { Vector3 | xyzType })
 	local length = #vectors
 
 	local sum = Vector3.zero

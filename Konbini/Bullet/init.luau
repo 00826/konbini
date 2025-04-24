@@ -1,10 +1,87 @@
 --!strict
 --!native
 
-local types = require(script.Parent.types)
+local Rand = Random.new()
 
-local Encoder = require(script.Parent.Encoder)
-local Time = require(script.Parent.Time)
+local function rstring(len: number)
+	local str = string.rep("0", len)
+	for i = 1, len do
+		local value = Rand:NextInteger(1, 36)
+		if value <= 26 then
+			local coinflip = Rand:NextInteger(0, 1) == 0
+			if coinflip then
+				str ..= string.char(value + 64) --- [A-Z]
+			else
+				str ..= string.char(value + 96) --- [a-z]
+			end
+		else
+			str ..= tostring(36 - value) --- [0-9]
+		end
+	end
+
+	return str
+end
+
+--- reads Vector3 from buffer
+local function readvector3(b: buffer, offset: number)
+	return Vector3.new(
+		buffer.readf32(b, offset),
+		buffer.readf32(b, offset + 4),
+		buffer.readf32(b, offset + 8)
+	)
+end
+
+--- writes Vector3 to buffer
+local function writevector3(b: buffer, offset: number, value: Vector3)
+	buffer.writef32(b, offset, value.X)
+	buffer.writef32(b, offset + 4, value.Y)
+	buffer.writef32(b, offset + 8, value.Z)
+end
+
+export type BaseOptions = {
+	--- [*Bullet*] \
+	--- bullet id
+	Id: string?;
+	--- [*Bullet*] \
+	--- bullet update every nth frame
+	Cycle: number?;
+	--- [*Bullet*] \
+	--- bullet time
+	Time: number?;
+	--- [*Bullet*] \
+	--- bullet position
+	Position: Vector3?;
+	--- [*Bullet*] \
+	--- bullet vector
+	Vector: Vector3?;
+}
+
+export type TypeOptions = {
+	--- [*Ballistic*] \
+	--- gravity acting upon a ballistic bullet
+	Gravity: number?;
+	--- [*Ballistic*] \
+	--- y-limit of a ballistic bullet
+	Ylimit: number?;
+	--- [*Ballistic, Beam, Bezier*] \
+	--- speed of any non-hitscan bullet
+	Speed: number?;
+	--- [*Bezier*] \
+	--- control point of a bezier bullet
+	Start: Vector3?;
+	--- [*Bezier*] \
+	--- control point of a bezier bullet
+	Control: Vector3?;
+	--- [*Bezier*] \
+	--- goal point of a bezier bullet
+	Goal: Vector3?;
+}
+
+export type Bullet =
+	| "Hitscan" --- 1
+	| "Ballistic" --- 2
+	| "Beam" --- 3
+	| "Bezier" --- 4
 
 --- ### Bullet.luau
 ---
@@ -14,8 +91,7 @@ local Time = require(script.Parent.Time)
 --- `1`: hitscan \
 --- `2`: ballistic \
 --- `3`: beam \
---- `4`: bezier \
---- `5`: track
+--- `4`: bezier
 local Bullet = {
 	Gravity = 196;
 	Framerate = 1/30;
@@ -26,37 +102,34 @@ local Bullet = {
 		Ballistic = 34 + 3;
 		Beam = 34 + 2;
 		Bezier = 34 + 14;
-		Track = 34 + 6;
 	};
 	Types = table.freeze{
 		"Hitscan";
 		"Ballistic";
 		"Beam";
 		"Bezier";
-		"Track";
 	};
 
 	Coefficient = 0.5 * Vector3.yAxis; --- the 0.5 of 0.5*g*t*t
 }
 
---- returns a type-wide bullet \
---- `Time (?=Konbini.Time.now())` bullet spawn time
-function Bullet.create(type: types.Bullet, time: number?)
+--- returns a type-wide bullet
+function Bullet.create(type: Bullet, time: number)
 	local length = Bullet.Widths[type]
 	local index = table.find(Bullet.Types, type)
 	assert(index, `{type} is not a bullet type`)
 
 	local b = buffer.create(length)
-	buffer.writestring(b, 0, Encoder.string(4))
+	buffer.writestring(b, 0, rstring(4))
 	buffer.writeu8(b, 4, 1)
 	buffer.writeu8(b, 5, index)
-	buffer.writef32(b, 6, time or Time.now())
+	buffer.writef32(b, 6, time)
 
 	return b
 end
 
 --- writes properties to base bullet range
-function Bullet.write(b: buffer, type: types.Bullet, options: types.BaseOptions & types.TypeOptions)
+function Bullet.write(b: buffer, type: Bullet, options: BaseOptions & TypeOptions)
 	if options.Id then
 		buffer.writestring(b, 0, string.sub(options.Id, 1, 4))
 	end
@@ -67,10 +140,10 @@ function Bullet.write(b: buffer, type: types.Bullet, options: types.BaseOptions 
 		buffer.writef32(b, 6, options.Time)
 	end
 	if options.Position then
-		Encoder.writevector3(b, 10, options.Position)
+		writevector3(b, 10, options.Position)
 	end
 	if options.Vector then
-		Encoder.writevector3(b, 22, options.Vector)
+		writevector3(b, 22, options.Vector)
 	end
 
 	if type == "Ballistic" then
@@ -89,30 +162,23 @@ function Bullet.write(b: buffer, type: types.Bullet, options: types.BaseOptions 
 			buffer.writeu16(b, 46, options.Speed)
 		end
 		if options.Goal then
-			Encoder.writevector3(b, 22, options.Goal)
+			writevector3(b, 22, options.Goal)
 		end
 		if options.Control then
-			Encoder.writevector3(b, 34, options.Control)
-		end
-	elseif type == "Track" then
-		if options.Target then
-			buffer.writestring(b, 34, options.Target, 4)
-		end
-		if options.Speed then
-			buffer.writeu16(b, 38, options.Speed)
+			writevector3(b, 34, options.Control)
 		end
 	end
 end
 
 --- returns base components of bullet
-function Bullet.unpack(b: buffer): types.BaseOptions
+function Bullet.unpack(b: buffer): BaseOptions
 	return {
 		Id = buffer.readstring(b, 0, 4);
 		Cycle = buffer.readu8(b, 4);
 		Type = buffer.readu8(b, 5);
 		Time = buffer.readf32(b, 6);
-		Position = Encoder.readvector3(b, 10);
-		Vector = Encoder.readvector3(b, 22);
+		Position = readvector3(b, 10);
+		Vector = readvector3(b, 22);
 	}
 end
 
@@ -121,8 +187,8 @@ function Bullet.hitscansolve(b: buffer)
 	local type = buffer.readu8(b, 5)
 	assert(type == 1, string.format("mismatching bullet (%d) and solve function (1)", type))
 
-	local position = Encoder.readvector3(b, 10)
-	local direction = Encoder.readvector3(b, 22)
+	local position = readvector3(b, 10)
+	local direction = readvector3(b, 22)
 	local sumvector = position + direction
 
 	return {
@@ -133,12 +199,12 @@ function Bullet.hitscansolve(b: buffer)
 end
 
 --- solves ballistic bullet
-function Bullet.ballisticsolve(b: buffer, dt: number?)
+function Bullet.ballisticsolve(b: buffer, now: number, dt: number?)
 	local type = buffer.readu8(b, 5)
 	assert(type == 2, string.format("mismatching bullet (%d) and solve function (2)", type))
 
-	local position = Encoder.readvector3(b, 10)
-	local direction = Encoder.readvector3(b, 22)
+	local position = readvector3(b, 10)
+	local direction = readvector3(b, 22)
 	local gravity = buffer.readi16(b, 34)
 	local ylimit = buffer.readi8(b, 36)
 
@@ -146,7 +212,6 @@ function Bullet.ballisticsolve(b: buffer, dt: number?)
 	local velocity = direction.Magnitude
 
 	local start = buffer.readf32(b, 6)
-	local now = Time.now()
 	local elapsed = now - start
 
 	local thisframe = position + Bullet._solveballistic(unitvector, velocity, elapsed, gravity)
@@ -162,12 +227,12 @@ function Bullet.ballisticsolve(b: buffer, dt: number?)
 end
 
 --- solves beam bullet
-function Bullet.beamsolve(b: buffer)
+function Bullet.beamsolve(b: buffer, now: number)
 	local type = buffer.readu8(b, 5)
 	assert(type == 3, string.format("mismatching bullet (%d) and solve function (3)", type))
 
-	local position = Encoder.readvector3(b, 10)
-	local direction = Encoder.readvector3(b, 22)
+	local position = readvector3(b, 10)
+	local direction = readvector3(b, 22)
 
 	local unitvector = direction.Unit
 	local distance = direction.Magnitude
@@ -175,7 +240,6 @@ function Bullet.beamsolve(b: buffer)
 	local velocity = buffer.readu16(b, 34)
 
 	local start = buffer.readf32(b, 6)
-	local now = Time.now()
 	local elapsed = now - start
 
 	return {
@@ -187,17 +251,16 @@ function Bullet.beamsolve(b: buffer)
 end
 
 --- solves bezier bullet
-function Bullet.beziersolve(b: buffer, dt: number?)
+function Bullet.beziersolve(b: buffer, now: number, dt: number?)
 	local type = buffer.readu8(b, 5)
 	assert(type == 4, string.format("mismatching bullet (%d) and solve function (4)", type))
 
-	local startpoint = Encoder.readvector3(b, 10)
-	local goalpoint = Encoder.readvector3(b, 22)
-	local controlpoint = Encoder.readvector3(b, 34)
+	local startpoint = readvector3(b, 10)
+	local goalpoint = readvector3(b, 22)
+	local controlpoint = readvector3(b, 34)
 	local speed = buffer.readu16(b, 46)
 
 	local start = buffer.readf32(b, 6)
-	local now = Time.now()
 	local elapsed = now - start
 
 	local thisframe, a = Bullet._solvebezier(startpoint, controlpoint, goalpoint, speed, elapsed)
@@ -207,36 +270,6 @@ function Bullet.beziersolve(b: buffer, dt: number?)
 		Position = thisframe;
 		StepPosition = stepframe;
 		Delta = stepframe - thisframe;
-		Interpolant = a;
-		Elapsed = elapsed;
-	}
-end
-
---- solves track bullet \
---- interpolant is clamped within bounds of `[0, 1]` such that this bullet will never overshoot its target
-function Bullet.tracksolve(b: buffer, solve: (target: string, relativeposition: Vector3) -> Vector3, dt: number?)
-	local type = buffer.readu8(b, 5)
-	assert(type == 5, string.format("mismatching bullet (%d) and solve function (5)", type))
-
-	local position = Encoder.readvector3(b, 10)
-	local targetposition = solve(buffer.readstring(b, 34, 4), Encoder.readvector3(b, 22))
-	local speed = buffer.readu16(b, 38)
-
-	local start = buffer.readf32(b, 6)
-	local now = Time.now()
-	local elapsed = now - start
-
-	local delta = targetposition - position
-	local distance = speed * elapsed
-	local stepdistance = speed * (elapsed + (dt or Bullet.Framerate))
-
-	local a = math.clamp(distance / delta.Magnitude, 0, 1)
-	local thisframe = position:Lerp(targetposition, a)
-
-	return {
-		Position = thisframe;
-		StepPosition = position:Lerp(targetposition, math.clamp(stepdistance / delta.Magnitude, 0, 1));
-		Delta = thisframe - targetposition;
 		Interpolant = a;
 		Elapsed = elapsed;
 	}

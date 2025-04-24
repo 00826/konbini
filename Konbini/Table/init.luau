@@ -1,9 +1,26 @@
 --!strict
 --!native
 
-local types = require(script.Parent.types)
+local Rand = Random.new()
 
-local Encoder = require(script.Parent.Encoder)
+local function rstring(len: number)
+	local str = string.rep("0", len)
+	for i = 1, len do
+		local value = Rand:NextInteger(1, 36)
+		if value <= 26 then
+			local coinflip = Rand:NextInteger(0, 1) == 0
+			if coinflip then
+				str ..= string.char(value + 64) --- [A-Z]
+			else
+				str ..= string.char(value + 96) --- [a-z]
+			end
+		else
+			str ..= tostring(36 - value) --- [0-9]
+		end
+	end
+
+	return str
+end
 
 --- ### Table.luau
 ---
@@ -24,7 +41,7 @@ end
 --- `len (?=4)`: key length
 function TableK.insertkey(t: {[string]: any}, value: any, len: number?)
 	local key = string.rep("0", len or 4)
-	repeat key = Encoder.string(len or 4)
+	repeat key = rstring(len or 4)
 	until t[key] == nil
 
 	t[key] = value
@@ -61,7 +78,7 @@ function TableK.droptable<T>(droptable: {[string]: T}, count: number?, R: Random
 	end
 
 	for _ = 1, count or 1 do
-		local roll, passed = (R or types.R):NextNumber(0, weightsum), 0
+		local roll, passed = (R or Rand):NextNumber(0, weightsum), 0
 		for key, value in droptable do
 			if comp then
 				passed += comp(value)
@@ -89,14 +106,26 @@ function TableK.droplist<T>(droplist: {T}, count: number?, R: Random?)
 		return table.create(0)
 	else
 		local B = table.clone(droplist);
-		(R or types.R):Shuffle(B)
+		(R or Rand):Shuffle(B)
 	
 		local offset = (count or 1) - 1
-		local start = (R or types.R):NextInteger(1, len - offset)
+		local start = (R or Rand):NextInteger(1, len - offset)
 		local range = math.clamp(start + offset, 1, #B)
 
 		return table.move(B, start, range, 1, table.create(count or 1))
 	end
+end
+
+--- returns list of keys contained in `t` \
+--- `allocate (?=32)`: array portions allocated
+function TableK.listkeys<T>(t: {[T]: any}, allocate: number?)
+	local list = table.create(allocate or 32)
+
+	for k in t do
+		table.insert(list, k)
+	end
+
+	return list
 end
 
 --- rotates array `A` `x` times such that:
@@ -122,7 +151,7 @@ function TableK.rotate(A: {any}, x: number?)
 	end
 end
 
---- returns elements of array as a page
+--- returns elements of array as a page and the max # of pages that can be displayed with respect to size
 --- ```
 --- t = {} --- [1, ..., 25]
 --- page(t, 10, 1) --- [1, ..., 10]
@@ -131,26 +160,28 @@ end
 --- page(t, 10, 4) --- []
 --- ```
 function TableK.page<T>(A: {T}, size: number, offset: number)
-	local max = #A
+	local len = #A
 
-	return table.move(
-		A,
-		1 + math.clamp((offset - 1) * size, 0, max),
-		math.clamp(offset * size, 0, max),
-		1,
-		table.create(max)
-	)
+	return
+		table.move(
+			A,
+			1 + math.clamp((offset - 1) * size, 0, len),
+			math.clamp(offset * size, 0, len),
+			1,
+			table.create(len)
+		),
+		math.clamp(math.ceil(len / size), 1, math.huge)
 end
 
---- returns true if table contains value and its associated key
-function TableK.contains(t: {[any]: any}, value: any): (boolean, string?)
+--- returns key-value should `value` exist in `t`
+function TableK.fromvalue(t: {[any]: any}, value: any): (any, any)
 	for k, v in t do
-		if value == v then
-			return true, k
+		if v == value then
+			return k, v
 		end
 	end
 
-	return false
+	return nil, nil
 end
 
 --- returns a deep-copy of table

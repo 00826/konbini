@@ -1,7 +1,5 @@
 --!strict
 
-local types = require(script.Parent.types)
-
 local GuiService = game:GetService("GuiService")
 local StarterGui = game:GetService("StarterGui")
 local TextChatService = game:GetService("TextChatService")
@@ -15,6 +13,20 @@ local function cartesian(p: number, w: number)
 	p -= 1
 	return p // w, p % w
 end
+
+export type Sprite = {
+	--- position of sprite (L -> R, T -> B)
+	Position: number;
+	--- sprite layout
+	Layout: {
+		--- rbxassetid://
+		Id: string;
+		--- sprite size
+		Size: Vector2;
+		--- sheet dimensions
+		Width: number;
+	};
+}
 
 --- ### Interface.luau
 ---
@@ -49,14 +61,27 @@ local Interface = {
 		bottomLeft = UDim2.fromScale(0, 1);
 		bottomRight = UDim2.fromScale(1, 1);
 
-		--- returns `UDim2.new(w, w)`
-		fromconstant = function(w: number)
-			return UDim2.new(w, w)
-		end;
 		--- returns UDim2.fromOffset(v.X, v.Y)
-		fromvector = function(v: Vector2|Vector3)
+		fromVector2 = function(v: Vector2|Vector3)
 			return UDim2.fromOffset(v.X, v.Y)
 		end;
+		--- returns unit circle with initial rotation `initialradians (?=0)`
+		unitcircle = function(vertices: number, radius: number, initialradians: number?)
+			local results = table.create(vertices)
+
+			local start = initialradians or 0
+			local step = (2 * math.pi) / vertices
+
+			for i = 1, vertices do
+				i -= 1
+				local a = (i * step) + start
+				local udim = UDim2.fromScale(radius * math.cos(a), radius * math.sin(a)) + UDim2.fromScale(0.5, 0.5)
+				table.insert(results, udim)
+			end
+
+			return results
+		end;
+		
 	};
 	Vector2 = table.freeze{
 		half = Vector2.new(0.5, 0.5);
@@ -70,8 +95,18 @@ local Interface = {
 		bottomRight = Vector2.new(1, 1);
 
 		--- returns `Vector2.new(w, w)`
-		fromconstant = function(w: number)
+		fromConstant = function(w: number)
 			return Vector2.new(w, w)
+		end;
+		--- returns `UDim2.fromOffset(v.X, v.Y)`
+		fromUDim2 = function(v: Vector2)
+			return UDim2.fromOffset(v.X, v.Y)
+		end;
+		--- returns `vec` clamped within bounds defined by `absoluteposition` and `absolutesize`
+		clamp = function(vec: Vector2, absoluteposition: Vector2, absolutesize: Vector2, guiinset: Vector2?)
+			local relativeposition = vec - absoluteposition - (guiinset or Vector2.zero)
+
+			return relativeposition - Vector2.new(0, math.abs(math.clamp(absolutesize.Y - (relativeposition.Y + absolutesize.Y), -math.huge, 0)))
 		end;
 	};
 	AspectRatios = table.freeze{
@@ -91,6 +126,21 @@ local Interface = {
 		Portrait = 6/13;
 	};
 }
+
+--- returns point along bezier `curve` at interpolant `a`
+Interface.UDim2.bezier = function(curve: {UDim2}, a: number)
+	local len = #curve
+	if len > 1 then
+		local newpoints = table.create(len)
+		for i = 1, len - 1 do
+			table.insert(newpoints, curve[i]:Lerp(curve[i + 1], a))
+		end
+
+		return Interface.UDim2.bezier(newpoints, a)
+	end
+
+	return curve[1]
+end;
 
 --- returns `GuiService.PreferredTextSize`
 function Interface.preferredtextsize()
@@ -143,51 +193,39 @@ function Interface.textchatmessage(message: string, channel: string?)
 	error(`"{channel}" is not a text channel of TextChatService.TextChannels`)
 end
 
---- returns point on bezier curve at interpolant `A`
-function Interface.bezier(A: number, points: {UDim2})
-	if #points > 1 then
-		local newpoints = {}
-		for i = 1, #points - 1 do
-			table.insert(newpoints, points[i]:Lerp(points[i + 1], A))
-		end
-		return Interface.bezier(A, newpoints)
-	end
-	return points[1]
-end
-
---- scrolls textlabel text \
---- `speed (?=40)` scrolling speed \
---- returns scroll text time for convenience
-function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?)
-	textlabel.MaxVisibleGraphemes = 0
-	if text then textlabel.Text = text end
-	local n = utf8.len(textlabel.ContentText) or 0
-	local t = n / (speed or 40)
-	tween(textlabel, {MaxVisibleGraphemes = n}, t, Enum.EasingStyle.Linear)
-
-	return t
-end
-
---- connects button events to guibutton
-function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunctions)
-	local connections = table.create(9)
+--- connects button events to `guibutton`
+function Interface.connectbutton(button: GuiButton, functions: {
+	--- `MouseButton1Down`
+	ClickDown: ((x: number?, y: number?) -> ())?;
+	--- `MouseButton1Up`
+	ClickUp: ((x: number?, y: number?) -> ())?;
+	--- `MouseButton2Down`
+	RClickDown: ((x: number?, y: number?) -> ())?;
+	--- `MouseButton2Up`
+	RClickUp: ((x: number?, y: number?) -> ())?;
+	--- `MouseEnter` \
+	--- `SelectionGained`
+	Enter: ((x: number?, y: number?) -> ())?;
+	--- `MouseLeave` \
+	--- `SelectionLost`
+	Leave: ((x: number?, y: number?) -> ())?;
+	--- `MouseMoved`
+	Move: ((x: number?, y: number?) -> ())?;
+})
+	local connections = table.create(10)
 
 	if functions.ClickDown then
 		table.insert(connections, button.MouseButton1Down:Connect(functions.ClickDown))
 	end
 	if functions.ClickUp then
-		table.insert(connections, button.MouseButton1Up:Connect(function(...)
-			functions.ClickUp(...)
-		end))
+		table.insert(connections, button.MouseButton1Up:Connect(functions.ClickUp))
 	end
 
 	if functions.RClickDown then
 		table.insert(connections, button.MouseButton2Down:Connect(functions.RClickDown))
 	end
 	if functions.RClickUp then
-		table.insert(connections, button.MouseButton2Up:Connect(function(...)
-			functions.RClickUp(...)
-		end))
+		table.insert(connections, button.MouseButton2Up:Connect(functions.RClickUp))
 		table.insert(connections, button.TouchTap:Connect(function(array: {Vector2})
 			if #array ~= 2 then return end
 			local vec2 = array[1] + array[2]
@@ -197,12 +235,8 @@ function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunct
 	end
 
 	if functions.Enter then
-		local function e(...)
-			functions.Enter(...)
-		end
-
-		table.insert(connections, button.MouseEnter:Connect(e))
-		table.insert(connections, button.SelectionGained:Connect(e))
+		table.insert(connections, button.MouseEnter:Connect(functions.Enter))
+		table.insert(connections, button.SelectionGained:Connect(functions.Enter))
 	end
 	if functions.Leave then
 		table.insert(connections, button.MouseLeave:Connect(functions.Leave))
@@ -215,8 +249,8 @@ function Interface.connectbutton(button: GuiButton, functions: types.ButtonFunct
 	return connections
 end
 
---- applies sprite to imagelabel
-function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite?)
+--- applies `sprite` to `imagelabel`
+function Interface.sprite(imagelabel: ImageLabel, sprite: Sprite?)
 	if not sprite then
 		imagelabel.Image = ""
 		imagelabel.ImageRectSize = Vector2.zero
@@ -240,8 +274,8 @@ function Interface.applysprite(imagelabel: ImageLabel, sprite: types.Sprite?)
 	end
 end
 
---- expands expands textlabel until
-function Interface.scaletextlabel(textlabel: TextLabel)
+--- scales `textlabel` along `TextBounds.Y`
+function Interface.scaletext(textlabel: TextLabel)
 	local sizeX = textlabel.AbsoluteSize.X
 
 	if textlabel.TextBounds.Y == 0 then
@@ -257,8 +291,22 @@ function Interface.scaletextlabel(textlabel: TextLabel)
 	end
 end
 
+--- scrolls textlabel text \
+--- `speed (?=40)` scrolling speed
+function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?)
+	textlabel.MaxVisibleGraphemes = 0
+	if text then
+		textlabel.Text = text
+	end
+
+	local len = (utf8.len(textlabel.ContentText) or 0)
+	local time = len / (speed or 40)
+
+	tween(textlabel, {MaxVisibleGraphemes = len}, time, Enum.EasingStyle.Linear)
+end
+
 --- attaches target to textlabel
-function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alignment: types.LeftOrRight, padding: number?)
+function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alignment: "Left" | "Right", padding: number?)
 	local textboundsx = textlabel.TextBounds.X
 
 	if textlabel.TextXAlignment == Enum.TextXAlignment.Left then
@@ -290,48 +338,28 @@ function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alig
 	end
 end
 
---- returns position of target @ x,y constrained within bounds of container
+--[[--- returns position of target @ x,y constrained within bounds of container
 function Interface.clampposition(x: number, y: number, target: GuiObject, container: GuiObject)
 	local pX, pY = (x - container.AbsolutePosition.X), (y - container.AbsolutePosition.Y - 36)
 
 	local dY = math.abs(math.clamp(container.AbsoluteSize.Y - (pY + target.AbsoluteSize.Y), -math.huge, 0))
 	return UDim2.fromOffset(pX, pY - dY)
-end
+end]]
+--- ^ superseded by vector2.clamp but vector2.clamp is untested so keeping this until vector2.clamp is confirmed to work
+local _
 
---- creates a quick clone of template
-function Interface.quickclone<T>(template: T & GuiObject, name: string?, layoutorder: number?): T
+--- returns a clone of `template`
+function Interface.clone<T>(template: T & GuiObject, name: string?, layoutorder: number?): T
 	local clone = template:Clone()
-	clone.Name = name or "quickclone"
+	clone.Name = name or "_clone"
 	clone.Parent = template.Parent
 	clone.LayoutOrder = layoutorder or 0
 	clone.Visible = true
+
 	return clone
 end
 
---- sets visibility of all guiobject descendants of target
-function Interface.toggledescendants(target: GuiObject, state: boolean, ...: string)
-	local names = {...}
-
-	for _, thing in target:GetDescendants() do
-		if not thing:IsA("GuiObject") then continue end
-		if not table.find(names, thing.Name) then continue end
-		
-		thing.Visible = state
-	end
-end
-
---- sets visibility of all guiobject children of target
-function Interface.togglecontents(target: GuiObject, state: boolean, ...: string)
-	local names = {...}
-
-	for _, thing in target:GetChildren() do
-		if not thing:IsA("GuiObject") then continue end
-		if not table.find(names, thing.Name) then continue end
-		
-		thing.Visible = state
-	end
-end
-
+--- returns `UIGridLayout` `CellPadding` and `CellSize` properties with respect to `columns`, `rows`, and `padding`
 function Interface.grid(columns: number, rows: number, padding: number)
 	local cellpadding = UDim2.fromOffset(padding, padding)
 	local cellsize = UDim2.new(1/columns, -padding, 1/rows, -padding)
@@ -339,80 +367,39 @@ function Interface.grid(columns: number, rows: number, padding: number)
 	return cellpadding, cellsize
 end
 
---- automatically scales size of target along axis with respect to uigridlayout or uilistlayout
-function Interface.scaleto(target: Frame, gridorlist: UIGridLayout | UIListLayout, Axis: "X" | "Y"): RBXScriptConnection
-	assert(gridorlist.Parent)
-
-	local sum = 0
-	if Axis == "X" then
-		sum += Interface.padwidth(target:FindFirstChildOfClass("UIPadding")).Offset
-	elseif Axis == "Y" then
-		sum += Interface.padheight(target:FindFirstChildOfClass("UIPadding")).Offset
-	end
-
-	local function updatesize()
-		local stretch = (gridorlist :: any).AbsoluteContentSize[Axis] :: number
-		local real = stretch > 1 and math.ceil(stretch + sum) or 0
-		local x, y = 0, 0
-		if gridorlist:IsA("UIGridLayout") then
-			x += gridorlist.CellPadding.X.Offset
-			y += gridorlist.CellPadding.Y.Offset
-		elseif gridorlist:IsA("UIListLayout") then
-			x += gridorlist.Padding.Offset
-			y += x -- gridorlist.Padding.Offset
-		end
-		if Axis == "X" then
-			target.Size = UDim2.new(0, real + x, 1, 0)
-		elseif Axis == "Y" then
-			target.Size = UDim2.new(1, 0, 0, real + y)
-		end
-	end
-
-	updatesize()
-	return gridorlist:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updatesize)
-end
-
---- applies `UIPadding` instance with padding values to guiobject, instantiating one if it has not been created already
-function Interface.pad(guiobject: GuiObject, value: UDim)
+--- applies `UIPadding` to guiobject, instantiating one if it doesn't already exist
+function Interface.uipadding(guiobject: GuiObject, value: UDim?)
+	--- type solver umad?
 	local uipadding = guiobject:FindFirstChildOfClass("UIPadding")
 	if not uipadding then
-		uipadding = Instance.new("UIPadding") ; --- this semicolon is INSANE
-		(uipadding::any).Parent = guiobject
-	end
-	assert(uipadding)
-
-	uipadding.PaddingTop = value
-	uipadding.PaddingLeft = value
-	uipadding.PaddingRight = value
-	uipadding.PaddingBottom = value
-end
-
---- returns padding width (`left + right`)
-function Interface.padwidth(uipadding: UIPadding?)
-	return uipadding and uipadding.PaddingLeft + uipadding.PaddingRight or UDim.new(0, 0)
-end
-
---- returns padding height (`left + right`)
-function Interface.padheight(uipadding: UIPadding?)
-	return uipadding and uipadding.PaddingTop + uipadding.PaddingBottom or UDim.new(0, 0)
-end
-
---- creates a unit circle \
---- optional initial offset theta
-function Interface.unitcircle(vertices: number, radius: number, theta: number?)
-	local results = table.create(vertices)
-
-	local start = math.rad(theta or 0)
-	local step = (2 * math.pi) / vertices
-
-	for i = 1, vertices do
-		i -= 1
-		local a = (i * step) + start
-		local udim = UDim2.fromScale(radius * math.cos(a), radius * math.sin(a)) + Interface.UDim2.half
-		table.insert(results, udim)
+		uipadding = Instance.new("UIPadding")
+		;(uipadding::any).Parent = guiobject
 	end
 
-	return results
+	if value then
+		(uipadding::any).PaddingTop = value
+		;(uipadding::any).PaddingLeft = value
+		;(uipadding::any).PaddingRight = value
+		;(uipadding::any).PaddingBottom = value
+	end
+
+	return uipadding::UIPadding
+end
+
+--- applies `UIAspectRatioConstraint` to guiobject, instantiating one if it doesn't already exist
+function Interface.aspectratio(guiobject: GuiObject, value: number?)
+	--- type solver umad?
+	local aspectratio = guiobject:FindFirstChildOfClass("UIAspectRatioConstraint")
+	if not aspectratio then
+		aspectratio = Instance.new("UIAspectRatioConstraint")
+		;(aspectratio::any).Parent = guiobject
+	end
+
+	if value then
+		(aspectratio::any).AspectRatio = value
+	end
+
+	return aspectratio::UIAspectRatioConstraint
 end
 
 --- pcall-wrapped `StarterGui:SetCoreGuiEnabled(...)`
@@ -423,18 +410,6 @@ function Interface.setcoreguienabled(coreguis: {[Enum.CoreGuiType]: boolean})
 		end
 		return true
 	end)
-end
-
---- applies aspect ratio to gui object
-function Interface.aspectratio(guiobject: GuiObject, value: number)
-	local asr = guiobject:FindFirstChildOfClass("UIAspectRatioConstraint")
-	if not asr then
-		asr = Instance.new("UIAspectRatioConstraint")
-		;(asr::any).Parent = guiobject
-	end
-	;(asr::any).AspectRatio = value
-
-	return asr
 end
 
 return Interface

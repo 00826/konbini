@@ -1,7 +1,5 @@
 --!strict
 
-export type types = typeof(require(script.types))
-
 --- ### Konbini.luau
 ---
 --- a shelf of roblox-luau convenience modules \
@@ -29,5 +27,4 @@ return table.freeze{
 	Table = require(script:WaitForChild("Table"));
 	Time = require(script:WaitForChild("Time"));
 	Vector3 = require(script:WaitForChild("Vector3"));
-	Zone = require(script:WaitForChild("Zone"));
 }

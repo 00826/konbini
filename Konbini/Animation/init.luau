@@ -1,18 +1,32 @@
 --!strict
 
-local types = require(script.Parent:WaitForChild("types"))
+export type AnimLibraryEntry = {
+	Id: string;
+	Priority: Enum.AnimationPriority?;
+	Animation: Animation?;
+	[string]: unknown;
+}
+
+export type AnimController = {
+	Rig: Model;
+	AnimPlayer: AnimationController|Humanoid;
+	Animator: Animator;
+
+	ActionTrack: AnimationTrack?;
+	LoopTrack: AnimationTrack?;
+}
 
 --- ### Animation.luau
 ---
 --- animation player/controller
 local Animation = {
-	Library = {} :: {[string]: types.AnimLibraryEntry};
+	Library = {} :: {[string]: AnimLibraryEntry};
 
 	FadeTime = 1/24;
 }
 
 --- returns animation controller table
-function Animation.createcontroller(rig: Model): types.AnimController
+function Animation.createcontroller(rig: Model): AnimController
 	local animplayer = rig:FindFirstChildOfClass("AnimationController") or rig:FindFirstChildOfClass("Humanoid")
 	assert(animplayer, "no AnimationController or Humanoid found in rig")
 	local animator = animplayer:FindFirstChildOfClass("Animator")
@@ -49,7 +63,7 @@ end
 --- sets and plays action track of animation controller \
 --- `priority (?=Library[name].Priority|Enum.AnimationPriority.Action)`: animation priority \
 --- returns `controller.ActionTrack` for convenience
-function Animation.playactiontrack(controller: types.AnimController, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+function Animation.playactiontrack(controller: AnimController, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
 	if controller.ActionTrack then
 		controller.ActionTrack:Stop(fadetime or Animation.FadeTime)
 		controller.ActionTrack = nil
@@ -70,7 +84,7 @@ end
 --- sets and plays loop track of animation controller \
 --- `priority (?=Library[name].Priority|Enum.AnimationPriority.Idle)`: animation priority \
 --- returns `controller.LoopTrack` for convenience
-function Animation.playlooptrack(controller: types.AnimController, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+function Animation.playlooptrack(controller: AnimController, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
 	if controller.LoopTrack then
 		controller.LoopTrack:Stop(fadetime or Animation.FadeTime)
 		controller.LoopTrack = nil
@@ -110,7 +124,7 @@ function Animation.evaluate(animtrack: AnimationTrack?, name: string?)
 end
 
 --- defines animation library
-function Animation.define(library: {[string]: types.AnimLibraryEntry})
+function Animation.define(library: {[string]: AnimLibraryEntry})
 	for name, entry in library do
 		if Animation.Library[name] then
 			warn(`overwrote preexisting animation "{name}" to {entry.Id}`)

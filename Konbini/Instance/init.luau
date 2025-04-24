@@ -1,7 +1,5 @@
 --!strict
 
-local types = require(script.Parent.types)
-
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
@@ -14,7 +12,7 @@ local MoverRemote = script:WaitForChild("MoverRemote")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
-local KeyframeBucket = {} :: {[Instance]: types.KeyframeInfo}
+local KeyframeBucket = {} :: {[Instance]: KeyframeInfo}
 local Keyframable = table.freeze{
 	"number";
 	"boolean";
@@ -122,7 +120,7 @@ local function getvalue(initial: any, goal: any, a: number, style: Enum.EasingSt
 	error(`untweenable property (this should not happen) type({h}) typeof({k})`)
 end
 
-local function interpolate(object: Instance, keyframeinfo: types.KeyframeInfo, dt: number)
+local function interpolate(object: Instance, keyframeinfo: KeyframeInfo, dt: number)
 	local framerate = keyframeinfo.Framerate
 	keyframeinfo.Framerule += dt
 	keyframeinfo.Elapsed += dt
@@ -153,6 +151,68 @@ local function interpolate(object: Instance, keyframeinfo: types.KeyframeInfo, d
 	end
 end
 
+export type TransparencyController = {
+	Rig: any;
+
+	TargetTransparency: number;
+	RealTransparency: number;
+
+	Cache: {Instance}; --- BasePart | Decal
+	DescendantAdded: RBXScriptConnection?;
+	DescendantRemoving: RBXScriptConnection?;
+
+	Disconnected: boolean;
+	Disconnect: () -> ();
+}
+
+export type Tree = {
+	ClassName: string;
+	Children: { Tree }?;
+	Parent: Instance?;
+
+	[string]: unknown;
+}
+
+export type MoverClass =
+	| "BodyGyro"
+	| "BodyVelocity"
+	| "BodyPosition"
+	| "VectorForce"
+
+export type KeyframeInfo = {
+	Framerate: number;
+	Framerule: number;
+
+	Time: number;
+	Elapsed: number;
+	IsPaused: boolean;
+
+	Style: Enum.EasingStyle;
+	Direction: Enum.EasingDirection;
+
+	Initial: {[string]: any};
+	Goal: {[string]: any};
+	Destruct: number?;
+
+	Pause: () -> ();
+	Resume: () -> ();
+	Stop: () -> ();
+}
+
+export type KeyframeType =
+	| number
+	| boolean
+	| Vector2
+	| Vector3
+	| CFrame
+	| Color3
+	| ColorSequence
+	| EnumItem
+	| NumberRange
+	| NumberSequence
+	| UDim
+	| UDim2
+
 --- ### Instance.luau
 ---
 --- extension of Instance library & instance-related functions
@@ -165,7 +225,7 @@ local InstanceK = {
 }
 
 --- recursive `Instance.new()` using instance tree
-function InstanceK.new(tree: types.Tree): Instance
+function InstanceK.new(tree: Tree): Instance
 	local newinstance: any = Instance.new(tree.ClassName)
 
 	for property, value in pairs(tree) do
@@ -524,7 +584,7 @@ end
 
 --- applies bodymover to primarypart of target \
 --- *in contexts where `time` is omitted, the bodymover will remain indefinitely*
-function InstanceK.applybodymover(target: Model|BasePart, class: types.MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
+function InstanceK.applybodymover(target: Model|BasePart, class: MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
 	local rootpart
 	if target:IsA("Model") then
 		rootpart = target.PrimaryPart
@@ -561,7 +621,7 @@ function InstanceK.applybodymover(target: Model|BasePart, class: types.MoverClas
 end
 
 --- clears bodymovers from primarypart of target
-function InstanceK.clearbodymovers(target: Model|BasePart, class: types.MoverClass)
+function InstanceK.clearbodymovers(target: Model|BasePart, class: MoverClass)
 	local rootpart
 	if target:IsA("Model") then
 		rootpart = target.PrimaryPart
@@ -590,7 +650,7 @@ function InstanceK.istransparencymodifiable(thing: Instance)
 end
 
 --- returns `TransparencyController` table
-function InstanceK.createtransparencycontroller(rig: Instance): types.TransparencyController
+function InstanceK.createtransparencycontroller(rig: Instance): TransparencyController
 	local things = rig:GetDescendants()
 	local controller = {
 		Rig = rig;
@@ -638,7 +698,7 @@ function InstanceK.createtransparencycontroller(rig: Instance): types.Transparen
 end
 
 --- refreshes `LocalTransparencyModifier` of instances associated with `TransparencyController`
-function InstanceK.refreshtransparencycontroller(tc: types.TransparencyController)
+function InstanceK.refreshtransparencycontroller(tc: TransparencyController)
 	if tc.Disconnected then return false end
 
 	local target = tc.TargetTransparency
@@ -670,7 +730,7 @@ end
 --- `destruct(?=nil)`: destroy object `n` seconds after effect completion
 --- \
 --- returns a mutable `KeyframeInfo` table
-function InstanceK.keyframe(object: Instance, goal: {[string]: types.KeyframeType}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?, destruct: number?): types.KeyframeInfo
+function InstanceK.keyframe(object: Instance, goal: {[string]: KeyframeType}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?, destruct: number?): KeyframeInfo
 	assert(not IsServer, "InstanceK.keyframe() can only be called on client")
 
 	if KeyframeBucket[object] then

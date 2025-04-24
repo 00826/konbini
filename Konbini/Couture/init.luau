@@ -3,7 +3,6 @@
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
-local HttpService = game:GetService("HttpService")
 local InsertService = game:GetService("InsertService")
 
 local Players = game:GetService("Players")
@@ -366,14 +365,6 @@ function Couture.decode(t: {[string]: any})
 	end
 
 	return result
-end
-
-function Couture.tostringjson(t: {[string]: any})
-	return HttpService:JSONEncode(t)
-end
-
-function Couture.totablejson(s: string)
-	return HttpService:JSONDecode(s)
 end
 
 return Couture

@@ -8,13 +8,9 @@
 
 ## aisles
 
-> [!NOTE]
-> because exported types can't be accessed more than a file deep, types are housed in `types.luau`, and are exported directly from `require(path.to.Konbini)`
-
 |module|why it exists|dependencies|unit tested?|
 |-|-|-|:-:|
 |[Konbini](./Konbini/init.luau)|main module|-|❌|
-|[types](./Konbini/types.luau)|export types|-|-|
 |-|-|-|-|
 |[Animation.luau](./Konbini/Animation/init.luau)|aio animation handler|-|❌|
 |*[await.luau](./Konbini/await/init.luau)*|`task.await()`|-|❌|
@@ -38,7 +34,6 @@
 |**[Table.luau](./Konbini/Table/init.luau)**|`table` library extension|-|❌|
 |[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|❌|
 |**[Vector3.luau](./Konbini/Vector3/init.luau)**|`Vector3` library extension|-|❌|
-|[Zone.luau](./Konbini/Zone/init.luau)|server-defined, client-authoritative load zones|-|❌|
 
 ## design language
 
@@ -49,11 +44,11 @@
 --- --- side commentary
 
 --- directives
---- types
 
 --- services
 --- variables
 --- private functions
+--- export types
 
 --- header
 local module = {}
@@ -68,6 +63,8 @@ local module = {}
 --- ... | return definition -- "scope closer"
 
 --- x::y -- "kick rocks"
+--- ;(x::any) = y -- "kick rocks"
+--- ;(x::any).y = z -- "kick rocks"
 
 --- runtime-sensitive work
 return module

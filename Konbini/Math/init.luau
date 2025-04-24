@@ -171,9 +171,10 @@ function MathK.coneradius(h: number, r: number)
 	return h * math.tan(r)
 end
 
---- returns `-1|1`, chosen randomly
+--- returns the equivalent of `Random.new():NextNumber(-1, 1) > 0 and 1 or -1` \
+--- non-zero `math.sign()`
 function MathK.rsign(R: Random?)
-	return ((R or MathK.random):NextInteger(0, 255) / 255) > 0.5 and 1 or -1
+	return (R or MathK.random):NextNumber(-1, 1) > 0 and 1 or -1
 end
 
 --- returns the equivalent of `Random.new():NextNumber(x, y)`
@@ -184,6 +185,16 @@ end
 --- returns the equivalent of `Random.new():NextInteger(x, y)`
 function MathK.nextinteger(x: number, y: number, R: Random?)
 	return (R or MathK.random):NextInteger(x, y)
+end
+
+--- returns the equivalent of `Random.new():NextInteger(0, y) / y <= odds`
+function MathK.nextintegeroutcome(y: number, odds: number, R: Random?)
+	return (R or MathK.random):NextInteger(0, y) / y <= odds
+end
+
+--- returns the equivalent of `Random.new():NextInteger(0, y) / y <= odds`
+function MathK.nextnumberoutcome(y: number, odds: number, R: Random?)
+	return (R or MathK.random):NextNumber(0, y) / y <= odds
 end
 
 --- scales numbersequence by `x`

@@ -3,17 +3,54 @@
 
 local HttpService = game:GetService("HttpService")
 
-local types = require(script.Parent.types)
+local Rand = Random.new()
 
 local function subf(x: string)
 	return #x == 1 and "0" .. x or x
 end
 
+export type intfloat = 
+	| "i8"
+	| "u8"
+	| "i16"
+	| "u16"
+	| "i24"
+	| "u24"
+	| "i32"
+	| "u32"
+	| "f32"
+	| "f64"
+
+export type Notation = 
+	| "DD:HH:MM:SS"
+	| "HH:MM:SS"
+	| "MM:SS"
+	| "M:SS"
+
+export type Format =
+	| number
+	| "Hour"
+	| "Biphase"
+	| "Day"
+	| "Week"
+	| "Season"
+	| "Biseason"
+	| "Year"
+
+export type Timestamp = {
+	--- unique, non-recurring string describing format time
+	Id: string;
+	--- unique, non-recurring number describing format time
+	Seed: number;
+	--- time until format changes
+	Until: number;
+}
+
 --- ### Encoder.luau
 ---
 --- buffer and string helper functions
 local Encoder = {
-	Suffixes = table.freeze{""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
+	Abbreviations = {""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
 
 --- asserts all types of table `a` against typestring-table `typetable` \
@@ -467,11 +504,11 @@ end
 --- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
 --- `len (?=4, P(62,4)=677040)`: string length
 function Encoder.string(len: number?)
-	local str = ""
+	local str = string.rep("0", len or 4)
 	for i = 1, len or 4 do
-		local value = types.R:NextInteger(1, 36)
+		local value = Rand:NextInteger(1, 36)
 		if value <= 26 then
-			local coinflip = types.R:NextInteger(0, 1) == 0
+			local coinflip = Rand:NextInteger(0, 1) == 0
 			if coinflip then
 				str ..= string.char(value + 64) --- [A-Z]
 			else
@@ -535,7 +572,7 @@ function Encoder.codepoint(offset: number|string)
 end
 
 --- formats time into a hour-minute-second-esque notation
-function Encoder.hourminutesecond(time: number, notation: types.Notation?): string
+function Encoder.hourminutesecond(time: number, notation: Notation?): string
 	--[[
 		os.date("!%X", time) is the fastest for all inputs below 86400, because any input at or above 86400 breaks the formatting
 		string.gsub(string.format(), time, subf) is the second fastest for all inputs, never has a formatting break, but is ~10% slower than os.date("!%X", time)
@@ -579,7 +616,7 @@ end
 
 --- returns a timestamp of current utc time with respect to format option \
 --- if `type(format) == "number"`, it is interpreted as minutes
-function Encoder.timestamp(format: types.Format): types.Timestamp
+function Encoder.timestamp(format: Format): Timestamp
 	local T0 = os.date("!*t")
 	local T1 = table.clone(T0)
 
@@ -711,7 +748,7 @@ end
 --- abbreviates number following a `"K", "M", "B", "T", "Qd"...`-esque notation
 function Encoder.abbreviatenumber(n: number, decimalplaces: number?)
 	local exp = math.floor(math.log(math.max(1, math.abs(n)), 1000))
-	local suffix = Encoder.Suffixes[1 + exp] or ("e+" .. exp)
+	local suffix = Encoder.Abbreviations[1 + exp] or ("e+" .. exp)
 	local norm = math.floor(n * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))
 
 	return string.format("%." .. (decimalplaces or 1) .. "f%s", norm, suffix)

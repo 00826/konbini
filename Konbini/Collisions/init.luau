@@ -1,7 +1,5 @@
 --!strict
 
-local types = require(script.Parent.types)
-
 local WhitelistParams = RaycastParams.new()
 WhitelistParams.FilterType = Enum.RaycastFilterType.Include
 WhitelistParams.IgnoreWater = true
@@ -24,7 +22,7 @@ OverlapBlack.RespectCanCollide = false
 local Collisions = {}
 
 --- `workspace:GetPartBoundsInBox()`
-function Collisions.box(type: types.CastList, search: {Instance}, at: CFrame, size: Vector3)
+function Collisions.box(type: "Whitelist" | "Blacklist", search: {Instance}, at: CFrame, size: Vector3)
 	local overlap:any = (type == "Whitelist" and OverlapWhite) or (type == "Blacklist" and OverlapBlack)
 	overlap.FilterDescendantsInstances = search
 
@@ -32,7 +30,7 @@ function Collisions.box(type: types.CastList, search: {Instance}, at: CFrame, si
 end
 
 --- `workspace:GetPartBoundsInRadius()`
-function Collisions.ball(type: types.CastList, search: {Instance}, at: Vector3, radius: number)
+function Collisions.ball(type: "Whitelist" | "Blacklist", search: {Instance}, at: Vector3, radius: number)
 	local overlap:any = (type == "Whitelist" and OverlapWhite) or (type == "Blacklist" and OverlapBlack)
 	overlap.FilterDescendantsInstances = search
 
@@ -52,7 +50,7 @@ end
 
 --- `workspace:Raycast()` \
 --- `collisiongroup (?="Default")`
-function Collisions.raycast(type: types.CastList, at: Vector3, direction: Vector3, search: {Instance}, collisiongroup: string?)
+function Collisions.raycast(type: "Whitelist" | "Blacklist", at: Vector3, direction: Vector3, search: {Instance}, collisiongroup: string?)
 	local list:any = (type == "Whitelist" and WhitelistParams) or (type == "Blacklist" and BlacklistParams)
 	list.FilterDescendantsInstances = search
 	list.CollisionGroup = collisiongroup or "Default"
@@ -63,7 +61,7 @@ end
 --- `workspace:Fancast()` \
 --- `resolution (?=3, minimum)`: # of rays that the fancast is composed of \
 --- `collisiongroup (?="Default")`
-function Collisions.fancast(type: types.CastList, at: Vector3, direction: Vector3, radians: number, search: {Instance}, resolution: number?, collisiongroup: string?)
+function Collisions.fancast(type: "Whitelist" | "Blacklist", at: Vector3, direction: Vector3, radians: number, search: {Instance}, resolution: number?, collisiongroup: string?)
 	resolution = math.clamp(resolution or 3, 3, math.huge)
 	assert(resolution)
 

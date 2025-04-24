@@ -24,8 +24,6 @@ export type Entry = {
 	Data: {[string]: any};
 }
 
-local Hook = require(script.Parent:WaitForChild("Hook"))
-
 --- ### Memory.luau
 ---
 --- memorystoreservice wrapper for the rate limit lovers \
@@ -274,9 +272,10 @@ function Memory.concurrentplayers()
 	return x
 end
 
---- connects function to whenever the global memory store is updated
-function Memory.globalmemoryupdated(f: (global: typeof(Memory.Global)) -> ())
-	return Hook("k_GlobalMemoryUpdate").Connect(f)
+--- deferred whenever the global memory store is updated \
+--- left blank to be overwritten externally
+function Memory.globalmemoryupdated(global: typeof(Memory.Global))
+	
 end
 
 if RunService:IsServer() then
@@ -353,7 +352,7 @@ if RunService:IsServer() then
 				end
 			end
 	
-			Hook("k_GlobalMemoryUpdate").Fire(Memory.Global)
+			task.defer(Memory.globalmemoryupdated, Memory.Global)
 		end
 	
 		ispulling = false

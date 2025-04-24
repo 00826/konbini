@@ -6,14 +6,42 @@ local IsServer = RunService:IsServer()
 
 local EntityRemote = script:WaitForChild("EntityRemote")
 
-local Hook = require(script.Parent.Hook)
-local TableK = require(script.Parent.Table)
+local Rand = Random.new()
+
+local function rstring(len: number)
+	local str = string.rep("0", len)
+	for i = 1, len do
+		local value = Rand:NextInteger(1, 36)
+		if value <= 26 then
+			local coinflip = Rand:NextInteger(0, 1) == 0
+			if coinflip then
+				str ..= string.char(value + 64) --- [A-Z]
+			else
+				str ..= string.char(value + 96) --- [a-z]
+			end
+		else
+			str ..= tostring(36 - value) --- [0-9]
+		end
+	end
+
+	return str
+end
+
+local function insertkey(t: {[string]: any}, value: any)
+	local key = string.rep("0", 4)
+	repeat key = rstring(4)
+	until t[key] == nil
+
+	t[key] = value
+
+	return key
+end
 
 --- ### Entity.luau
 ---
 --- entity handler, belongs as a standalone
 local Entity = {
-	Cache = {};
+	Cache = {} :: {[string]: any};
 	ListeningTo = {};
 	
 	Rate = 1/40;
@@ -25,8 +53,8 @@ local Entity = {
 function Entity.insert(e: any): string
 	assert(IsServer)
 	
-	local key = TableK.insertkey(Entity.Cache, e, 4)
-	Hook("k_EntityAdded").Fire(e, key)
+	local key = insertkey(Entity.Cache, e)
+	task.defer(Entity.added, e, key)
 
 	return key
 end
@@ -36,7 +64,7 @@ end
 --- fires bind `k_EntityRemoved` *prior* to removal \
 --- does not automatically queue after removal
 function Entity.remove(id: string)
-	Hook("k_EntityRemoved").Fire(Entity.Cache[id], id)
+	task.defer(Entity.removed, Entity.Cache[id], id)
 
 	--[[if Entity.Cache[id] then
 		table.clear(Entity.Cache[id])
@@ -160,11 +188,6 @@ function Entity.subset(scope: string, comp: (e: {}) -> boolean): {[string]: {}}
 	return subset
 end
 
---- fires function when an entity is added
-function Entity.added(f: (e: any, id: string) -> ())
-	return Hook("k_EntityAdded").Connect(f)
-end
-
 --- listens to key changes for this entity
 function Entity.listento(id: string)
 	if not table.find(Entity.ListeningTo, id) then
@@ -172,14 +195,22 @@ function Entity.listento(id: string)
 	end
 end
 
---- fires function when an entity, added by `Entity.listento`, has any of its keys changed
-function Entity.changed(f: (e: any, id: string, changes: {unknown}) -> ())
-	return Hook("k_EntityChanged").Connect(f)
+--- deferred when an entity is added \
+--- left blank to be overwritten externally
+function Entity.added(e: any, id: string)
+	
 end
 
---- fires function when an entity is removed
-function Entity.removed(f: (e: any, id: string) -> ())
-	return Hook("k_EntityRemoved").Connect(f)
+--- deferred when an entity, added by `Entity.listento`, has any of its keys changed \
+--- left blank to be overwritten externally
+function Entity.changed(e: any, id: string, changes: {unknown})
+	
+end
+
+--- deferred when an entity is removed \
+--- left blank to be overwritten externally
+function Entity.removed(e: any, id: string)
+	
 end
 
 --- sends full entity cache to player(kbps disaster)
@@ -275,7 +306,7 @@ else
 				else
 					local changes = Entity.update(Entity.Cache[id], update)
 					if (#changes > 0) and (table.find(Entity.ListeningTo, id)) then
-						Hook("k_EntityChanged").Fire(Entity.Cache[id], id, changes)
+						task.defer(Entity.changed, Entity.Cache[id], id, changes)
 					end
 				end
 			elseif type(update) == "boolean" then
@@ -288,11 +319,11 @@ else
 		end
 
 		for k, v in added do
-			Hook("k_EntityAdded").Fire(v, k)
+			task.defer(Entity.added, v, k)
 		end
 
 		for k, v in removed do
-			Hook("k_EntityRemoved").Fire(v, k)
+			task.defer(Entity.removed, v, k)
 		end
 	end)
 end

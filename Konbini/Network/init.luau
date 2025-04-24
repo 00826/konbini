@@ -1,7 +1,5 @@
 --!strict
 
-local types = require(script.Parent.types)
-
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
@@ -50,6 +48,13 @@ local function vlq(initialsize: number, length: number)
 	return math.max(math.ceil(math.log(length + initialsize, 128)), initialsize)
 end
 
+export type ClientArg = 
+	| nil
+	| number
+	| Player
+	| { number|Player }
+	| (Player) -> boolean
+
 --- ### Network.luau
 ---
 --- remote wrapper \
@@ -62,7 +67,7 @@ local Network = {
 }
 
 --- sends packet related to this scope
-function Network.send(scope: string, packet: { }, unreliable: boolean?, client: types.ClientArg?)
+function Network.send(scope: string, packet: { }, unreliable: boolean?, client: ClientArg?)
 	local remote = unreliable and Network.UnreliableRemoteEvent or Network.RemoteEvent
 	if IsServer then
 		if type(client) == "nil" then --- fire all

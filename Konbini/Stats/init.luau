@@ -1,27 +1,12 @@
 --!strict
 --!native
 
-local types = require(script.Parent.types)
-
 --- ### Stats.luau
 ---
 --- general stat solver \
 --- \
 --- bars, status effects, stats
-local Stats = {
-	R = Random.new();
-}
-
---- returns a random integer within `[0, upperlimit]` \
---- `R (?=Stats.R)`
-function Stats.roll(upperlimit: number, R: Random?)
-	return (R or Stats.R):NextInteger(0, upperlimit)
-end
-
---- returns `roll / upperlimit <= odds`
-function Stats.outcome(roll: number, upperlimit: number, odds: number)
-	return roll / upperlimit <= odds
-end
+local Stats = {}
 
 --- returns a bar buffer \
 --- \
@@ -144,7 +129,18 @@ end
 --- optional scoped keys to only read from a specific set of status effects \
 --- *expiries of `-1` are indefinite* \
 --- *zero-stack status buffers are interpreted as expired*
-function Stats.statusmanifest(st: {[string]: buffer}, manifesttable: types.StatusManifestTable, now: number, scope: {string}?)
+function Stats.statusmanifest(st: {[string]: buffer}, manifesttable: {
+	[string]: {
+		Values: {
+			[string]: {
+				--- additive
+				Add: number?;
+				--- multiplicative
+				Mul: number?;
+			};
+		};
+	} & {[string]: unknown};
+}, now: number, scope: {string}?)
 	local manifest, expiries = {}, table.create(16)
 
 	if scope then
@@ -168,7 +164,7 @@ function Stats.statusmanifest(st: {[string]: buffer}, manifesttable: types.Statu
 				continue
 			end
 	
-			for key, addmul in entry.Values::{[string]: types.StatusAddMul} do
+			for key, addmul in entry.Values::any do
 				if not manifest[key] then
 					manifest[key] = {Add = 0; Mul = 0;}
 				end
@@ -288,7 +284,7 @@ end
 --- returns sorted arrays representing rows (sources) and columns (values) of stat matrix with respect to matrix entry table `et` and matrix source table `st` \
 --- `et_dst:` matrix column destination table/cache \
 --- `st_dst:` matrix row destination table/cache
-function Stats.matrixcolumnsrows(et: types.MatrixEntryTable, st: types.MatrixSourceTable, et_dst: {}?, st_dst: {}?)
+function Stats.matrixcolumnsrows(et: { [string]: {} & {[string]: unknown}; }, st: { string }, et_dst: {}?, st_dst: {}?)
 	local columns, rows = table.create(8), table.create(8)
 
 	for key in et do
