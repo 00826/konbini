@@ -13,8 +13,7 @@ local function rstring(len: number)
 	for i = 1, len do
 		local value = Rand:NextInteger(1, 36)
 		if value <= 26 then
-			local coinflip = Rand:NextInteger(0, 1) == 0
-			if coinflip then
+			if Rand:NextInteger(0, 1) == 0 then
 				str ..= string.char(value + 64) --- [A-Z]
 			else
 				str ..= string.char(value + 96) --- [a-z]
@@ -41,11 +40,11 @@ end
 ---
 --- entity handler, belongs as a standalone
 local Entity = {
-	Cache = {} :: {[string]: any};
+	Cache = {} :: { [string]: any };
 	ListeningTo = {};
 	
 	Rate = 1/40;
-	Bucket = {} :: {[string]: {string}|boolean};
+	Bucket = {} :: { [string]: {string}|boolean };
 }
 
 --- inserts entity `e` stored at `Cache[id]` \
@@ -155,13 +154,16 @@ function Entity.fromscope(scope: string, value: any): (any?, string?)
 			return thisentity, id
 		end
 	end
+
 	return
 end
 
 --- yields thread until entity that satisfies `e[scope] == value` is added
-function Entity.waitfromscope(scope: string, value: any): (any, string)
+function Entity.waitfromscope(scope: string, value: any, timeout: number?): (any, string)
 	assert(value ~= nil, "cannot scope a nil value")
 	local a, b
+	local elapsed = 0
+	timeout = timeout or math.huge
 
 	repeat
 		for id, thisentity in Entity.Cache do
@@ -170,8 +172,8 @@ function Entity.waitfromscope(scope: string, value: any): (any, string)
 				b = id
 			end
 		end
-		task.wait()
-	until a and b
+		elapsed += task.wait()
+	until (a and b) or (elapsed >= timeout::any)
 
 	return a, b
 end
@@ -185,6 +187,7 @@ function Entity.subset(scope: string, comp: (e: {}) -> boolean): {[string]: {}}
 			subset[id] = thisentity
 		end
 	end
+
 	return subset
 end
 

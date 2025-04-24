@@ -90,7 +90,7 @@ local Patronage = {
 		DatastoreRate = 600;
 	
 		--- string array of policyservice keys \
-		--- unknown keys identified by Patronage.policystring() are appended to the end of this array
+		--- unknown keys identified by Patronage.policystring() toss a warning and are appended to the end of this array
 		PolicyMap = {
 			"AreAdsAllowed";
 			"ArePaidRandomItemsRestricted";
@@ -102,8 +102,6 @@ local Patronage = {
 			"IsSubjectToChinaPolicies";
 		} :: {string};
 	};
-
-	Cache = {};
 
 	Lists = {};
 	__listsloaded = false;
@@ -130,14 +128,7 @@ function Patronage.createprofile(player: Player, producttable: {[string]: MinPro
 	Patronage.refreshgamepasses(profile.Gamepasses, userid, producttable or {})
 	Patronage.refreshlists(profile.Lists, userid)
 
-	Patronage.Cache[player] = profile
-
 	return profile
-end
-
---- returns player patronage profile
-function Patronage.get(player: Player): PatronageProfile?
-	return Patronage.Cache[player]
 end
 
 --- returns player policyservice restrictions as a binary string \
@@ -345,10 +336,6 @@ Patronage.listsupdated = function(lists: typeof(Patronage.Lists))
 end
 
 if IsServer then
-	Players.PlayerRemoving:Connect(function(player: Player)
-		Patronage.Cache[player] = nil
-	end)
-
 	local datastorename = Patronage.Config.Datastore
 	if datastorename == "" then
 		--- print(`[Patronage]: VIP list disabled`)

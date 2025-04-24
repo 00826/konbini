@@ -182,8 +182,7 @@ function Interface.guiinset()
 	return GuiService:GetGuiInset()
 end
 
---- locally emits a TextChatService message \
---- `channel (?="RBXGeneral")`
+--- locally emits a TextChatService message in `channel (?="RBXGeneral")`
 function Interface.textchatmessage(message: string, channel: string?)
 	local textchannel = TextChatService:FindFirstChild("TextChannels"):FindFirstChild(channel or "RBXGeneral")
 	if textchannel and textchannel:IsA("TextChannel") then
@@ -291,8 +290,7 @@ function Interface.scaletext(textlabel: TextLabel)
 	end
 end
 
---- scrolls textlabel text \
---- `speed (?=40)` scrolling speed
+--- scrolls textlabel text with `speed (?=40)`
 function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?)
 	textlabel.MaxVisibleGraphemes = 0
 	if text then

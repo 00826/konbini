@@ -13,20 +13,15 @@ local TimeRemote = script:WaitForChild("Remote")
 ---
 --- server-authoritative global time
 local Time = {
-	rate = 1/60;
-	buffer = buffer.create(4);
+	Framerate = 1/60;
+	ElapsedBuffer = buffer.create(4);
 
-	incomingreplicationlag = 80;
+	IncomingReplicationLag = 80;
 }
 
 --- returns konbini time
 function Time.now(latency: number?)
-	return buffer.readf32(Time.buffer, 0) + (latency or 0)
-end
-
---- extends expiry `x` by `time` seconds, where `x`, if behind konbini time, is set to current konbini time
-function Time.extend(x: number, time: number)
-	return math.max(x or 0, buffer.readf32(Time.buffer, 0)) + time
+	return buffer.readf32(Time.ElapsedBuffer, 0) + (latency or 0)
 end
 
 --- runs function for `x` seconds
@@ -81,14 +76,13 @@ function Time.backoff(x: number, base: number, limit: number, f: (...any) -> boo
 	end)
 end
 
---- returns latency, in seconds: \
+--- returns latency, in seconds, with optional `roundtrip (?=false)`: \
 --- `in-studio, regardless of calling environment`: `Time.incomingreplicationlag` \
 --- `server`: `client:GetNetworkPing()` or `0` \
---- `client`: `localplayer:GetNetworkPing()` \
---- `roundtrip (?=false)`: apply cost of network roundtrip? `(latency * 2)`
+--- `client`: `localplayer:GetNetworkPing()`
 function Time.latency(client: Player?, roundtrip: boolean?)
 	if RunService:IsStudio() then
-		return (Time.incomingreplicationlag / 1000) * (roundtrip and 2 or 1)
+		return (Time.IncomingReplicationLag / 1000) * (roundtrip and 2 or 1)
 	else
 		if IsServer then
 			return (client and client:GetNetworkPing() or 0) * (roundtrip and 2 or 1)
@@ -98,29 +92,22 @@ function Time.latency(client: Player?, roundtrip: boolean?)
 	end
 end
 
---- calls function `n` times, with `x` seconds between each call
-function Time.stagger<A...>(n: number, x: number, f: (A...) -> (), ...: A...)
-	for i = 0, n - 1, 1 do
-		task.delay(x * i, f, ...)
-	end
-end
-
 if IsServer then
 	local elapsed = 0
 	local function updatetime(t, dt)
-		buffer.writef32(Time.buffer, 0, t)
+		buffer.writef32(Time.ElapsedBuffer, 0, t)
 
 		elapsed += dt
-		if elapsed < Time.rate then return end
-		elapsed -= Time.rate
+		if elapsed < Time.Framerate then return end
+		elapsed -= Time.Framerate
 
-		TimeRemote:FireAllClients(Time.buffer)
+		TimeRemote:FireAllClients(Time.ElapsedBuffer)
 	end
-	updatetime(0, Time.rate)
+	updatetime(0, Time.Framerate)
 	RunService.Stepped:Connect(updatetime)
 else
-	TimeRemote.OnClientEvent:Connect(function(tBuffer: buffer)
-		buffer.writef32(Time.buffer, 0, buffer.readf32(tBuffer, 0))
+	TimeRemote.OnClientEvent:Connect(function(eb: buffer)
+		buffer.writef32(Time.ElapsedBuffer, 0, buffer.readf32(eb, 0))
 	end)
 end
 

@@ -9,46 +9,9 @@ local function subf(x: string)
 	return #x == 1 and "0" .. x or x
 end
 
-export type intfloat = 
-	| "i8"
-	| "u8"
-	| "i16"
-	| "u16"
-	| "i24"
-	| "u24"
-	| "i32"
-	| "u32"
-	| "f32"
-	| "f64"
-
-export type Notation = 
-	| "DD:HH:MM:SS"
-	| "HH:MM:SS"
-	| "MM:SS"
-	| "M:SS"
-
-export type Format =
-	| number
-	| "Hour"
-	| "Biphase"
-	| "Day"
-	| "Week"
-	| "Season"
-	| "Biseason"
-	| "Year"
-
-export type Timestamp = {
-	--- unique, non-recurring string describing format time
-	Id: string;
-	--- unique, non-recurring number describing format time
-	Seed: number;
-	--- time until format changes
-	Until: number;
-}
-
 --- ### Encoder.luau
 ---
---- buffer and string helper functions
+--- helper functions for strings, buffers, vectors, numbers
 local Encoder = {
 	Abbreviations = {""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
@@ -56,10 +19,10 @@ local Encoder = {
 --- asserts all types of table `a` against typestring-table `typetable` \
 --- values of typetable are separated such that each type is capturable by pattern `%w+` and is compared against `typeof(a[k])` \
 --- returns table `c` of all truthful asserted values with respect to `typetable`
---- ```lua
---- e_assert({cats = 5}, {cats = "number"}) --- ok
---- e_assert({}, {cats = "number|nil"}) --- ok
---- e_assert({cats = Vector3.one}, {cats = "number|nil"}) --- error: expected typeof(a["cats"]) (Vector3) to be in set number|nil
+--- ```luau
+--- Encoder.assert({cats = 5}, {cats = "number"}) --- ok
+--- Encoder.assert({}, {cats = "number|nil"}) --- ok
+--- Encoder.assert({cats = Vector3.one}, {cats = "number|nil"}) --- error: expected typeof(a["cats"]) (Vector3) to be in set number|nil
 --- ```
 function Encoder.assert<T>(a: T & {[string]: unknown}, typetable: {[string]: string}): T & {[string]: unknown}
 	assert(type(a) == "table", string.format("expected type(a) (%s) to be table", type(a)))
@@ -474,6 +437,153 @@ function Encoder.readflagu32(b: buffer, offset: number, field: number, width: nu
 	return bit32.extract(buffer.readu32(b, offset), field, width)
 end
 
+--- returns a `[f32 value (?=maxvalue), f32 maxvalue]` bar buffer
+function Encoder.createbar(maxvalue: number, value: number?)
+	local b = buffer.create(4 + 4)
+
+	buffer.writef32(b, 0, value or maxvalue)
+	buffer.writef32(b, 4, maxvalue)
+
+	return b
+end
+
+--- writes to bar buffer \
+--- `maxvalue~=nil`: attempts to scale stored value to fit `maxvalue`
+function Encoder.barwrite(b: buffer, value: number?, maxvalue: number?)
+	if maxvalue then
+		buffer.writef32(b, 0, buffer.readf32(b, 4) * math.clamp(buffer.readf32(b, 0) / maxvalue, 0, 1))
+		buffer.writef32(b, 4, maxvalue)
+	end
+	if value then
+		buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
+	end
+end
+
+--- applies deltas to bar buffer \
+--- `maxvalue~=nil`: attempts to scale stored value to fit `maxvalue`
+function Encoder.bardelta(b: buffer, value: number?, maxvalue: number?)
+	if maxvalue then
+		maxvalue += buffer.readf32(b, 4)
+		buffer.writef32(b, 0, buffer.readf32(b, 4) * math.clamp(buffer.readf32(b, 0) / maxvalue, 0, 1))
+		buffer.writef32(b, 4, maxvalue)
+	end
+	if value then
+		value += buffer.readf32(b, 0)
+		buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
+	end
+end
+
+--- equivalent to `buffer.writef32(b, 0, buffer.readf32(b, 0) - x)`
+function Encoder.barexpend(b: buffer, x: number)
+	buffer.writef32(b, 0, buffer.readf32(b, 0) - x)
+end
+
+--- returns bar buffer `value, maxvalue`
+function Encoder.barunpack(b: buffer)
+	return buffer.readf32(b, 0), buffer.readf32(b, 4)
+end
+
+--- returns a `[f32 expiry, u8 stacks (?=1)]` state buffer 
+function Encoder.createstate(expiry: number, stacks: number?)
+	local s = buffer.create(4 + 1)
+
+	buffer.writef32(s, 0, expiry)
+	buffer.writeu8(s, 4, stacks or 1)
+
+	return s
+end
+
+--- directly writes to state buffer
+function Encoder.statewrite(s: buffer, expiry: number?, stacks: number?)
+	if expiry then
+		buffer.writef32(s, 0, expiry)
+	end
+	if stacks then
+		buffer.writeu8(s, 4, stacks)
+	end
+end
+
+--- adds state, if it doesn't already exist, to state table `st`, passing `key, expiry, stacks` into `Encoder.createstate()` or `Encoder.statewrite()`
+function Encoder.stateadd(st: {[string]: buffer}, key: string, expiry: number, stacks: number?)
+	local s = st[key]
+	if not s then
+		s = Encoder.createstate(expiry, stacks)
+		st[key] = s
+	else
+		Encoder.statewrite(s, expiry, stacks)
+	end
+end
+
+--- applies deltas to state buffer \
+--- if bounds are passed, values are clamped within `value = [bounds[1], bounds[2]]`
+function Encoder.statedelta(s: buffer, expiry: number?, stacks: number?, expirybounds: {number}?, stackbounds: {number}?)
+	if expiry then
+		expiry += buffer.readf32(s, 0)
+		if expirybounds then
+			expiry = math.clamp(expiry, expirybounds[1], expirybounds[2])
+		end
+		buffer.writef32(s, 0, expiry)
+	end
+	if stacks then
+		stacks += buffer.readu8(s, 4)
+		if stackbounds then
+			stacks = math.clamp(stacks, stackbounds[1], stackbounds[2])
+		end
+		buffer.writeu8(s, 4, stacks)
+	end
+end
+
+--- returns array of active states \
+--- `limit` active effect peek limit
+function Encoder.statepeek(st: {[string]: buffer}, keys: {string}, now: number, limit: number?)
+	local result, total = table.create(#keys), 0
+
+	for _, key in keys do
+		local s = st[key]
+		if not s then continue end
+
+		local expiry = buffer.readf32(s, 0)
+		if expiry == -1 then
+			table.insert(result, key)
+			total += 1
+			continue
+		end
+		local active = expiry > now
+		if not active then continue end
+
+		table.insert(result, key)
+		total += 1
+
+		if limit and total >= limit then
+			return result
+		end
+	end
+
+	return result
+end
+--- returns: \
+--- `true` if state buffer is "active" \
+--- `number` state buffer time until expiry \
+--- `number` state buffer stacks \
+--- \
+--- zero-stacks takes precedence over expiry time. meaning that an indefinite state effect can be force-expired by setting stacks to 0
+function Encoder.stateinterpret(s: buffer, now)
+	local expiry, stacks = buffer.readf32(s, 0), buffer.readu8(s, 4)
+
+	if stacks <= 0 then
+		return false, 0, stacks
+	elseif expiry == -1 then
+		return true, -1, stacks
+	end
+
+	return expiry > now, expiry - now, stacks
+end
+
+--- returns state buffer `expiry, stacks`
+function Encoder.stateunpack(s: buffer)
+	return buffer.readf32(s, 0), buffer.readu8(s, 4)
+end
+
 --- equivalent to `bit32.replace(x, value, field, width)`
 function Encoder.writebits(x: number, field: number, width: number, value: number)
 	return bit32.replace(x, value, field, width)
@@ -508,8 +618,7 @@ function Encoder.string(len: number?)
 	for i = 1, len or 4 do
 		local value = Rand:NextInteger(1, 36)
 		if value <= 26 then
-			local coinflip = Rand:NextInteger(0, 1) == 0
-			if coinflip then
+			if Rand:NextInteger(0, 1) == 0 then
 				str ..= string.char(value + 64) --- [A-Z]
 			else
 				str ..= string.char(value + 96) --- [a-z]
@@ -521,8 +630,7 @@ function Encoder.string(len: number?)
 	return str
 end
 
---- replaces substrings in text matching capture pattern with respect to replacement table \
---- `capture (?="[%w+_]+")`: capture whole words defined as alphanumerics & underscores
+--- replaces substrings in text matching capture `pattern (?="[%w+_]+")` with respect to replacement table
 function Encoder.alias(text: string, replace: {[string]: string}, pattern: string?)
 	return string.gsub(text, pattern or "[%w+_]+", function(s: string)
 		return replace[s] or s
@@ -543,36 +651,14 @@ function Encoder.richformat(text: string, prefix: string)
 	return "<" .. prefix .. ">" .. text .. "</" .. closure .. ">"
 end
 
---- applies richtext color to substrings in text matching capture pattern with respect to Color3/hex code palette \
---- `capture (?=%S+)`: capture substrings separated by whitespaces
-function Encoder.richcolor(text: string, palette: {[string]: Color3|string}, pattern: string?)
-	return string.gsub(text, pattern or "%S+", function(s: string)
-		local color = palette[s]
-		if color then
-			if typeof(color) == "Color3" then
-				color = color:ToHex()
-			end
-
-			assert(typeof(color) == "string")
-			return [[<font color="#]] .. color .. [[">]] .. s .. [[</font>]]
-		end
-		return s
-	end)
-end
-
---- returns unicode offset formatted as luau string `"\u{CODEPOINT}"`
-function Encoder.codepoint(offset: number|string)
-	if type(offset) == "string" then
-		return "\\u{" .. offset .. "}"
-	elseif type(offset) == "number" then
-		return "\\u{" .. string.format("%04d", offset) .. "}"
-	else
-		error(`expected number or string, got {type(offset)} "{offset}"`)
-	end
-end
-
 --- formats time into a hour-minute-second-esque notation
-function Encoder.hourminutesecond(time: number, notation: Notation?): string
+function Encoder.hourminutesecond(time: number, notation: 
+	| "DD:HH:MM:SS"
+	| "HH:MM:SS"
+	| "MM:SS"
+	| "M:SS"
+	?
+): string
 	--[[
 		os.date("!%X", time) is the fastest for all inputs below 86400, because any input at or above 86400 breaks the formatting
 		string.gsub(string.format(), time, subf) is the second fastest for all inputs, never has a formatting break, but is ~10% slower than os.date("!%X", time)
@@ -614,15 +700,26 @@ function Encoder.hourminutesecond(time: number, notation: Notation?): string
 	return os.date("!%X", time)
 end
 
---- returns a timestamp of current utc time with respect to format option \
---- if `type(format) == "number"`, it is interpreted as minutes
-function Encoder.timestamp(format: Format): Timestamp
+--- returns a timestamp of current utc time with respect to format option or time in minutes
+function Encoder.timestamp(format:
+	| number
+	| "Hour"
+	| "Biphase"
+	| "Day"
+	| "Week"
+	| "Season"
+	| "Biseason"
+	| "Year"
+)
 	local T0 = os.date("!*t")
 	local T1 = table.clone(T0)
 
 	local timestamp = {
+		--- unique, non-recurring string describing format time
 		Id = "";
+		--- unique, non-recurring number describing format time
 		Seed = 0;
+		--- time until format changes
 		Until = 0;
 	}
 	if type(format) == "number" then
@@ -735,21 +832,24 @@ function Encoder.formatnumber(x: number, abbreviate: number?, comma: number?, de
 	elseif x >= (comma or 1000) then
 		return Encoder.commanumber(x)
 	end
+
 	return tostring(x)
 end
 
 --- formats number separated by commas
 function Encoder.commanumber(x: number)
-	if math.abs(x) < 1000 then return tostring(math.floor(x)) end
-	local a = string.gsub(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)","%1,"), ",(%-?)$","%1")
-	return string.reverse(a)
+	if math.abs(x) < 1000 then
+		return tostring(math.floor(x))
+	else
+		return string.reverse(string.gsub(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)","%1,"), ",(%-?)$","%1")::any)
+	end
 end
 
 --- abbreviates number following a `"K", "M", "B", "T", "Qd"...`-esque notation
-function Encoder.abbreviatenumber(n: number, decimalplaces: number?)
-	local exp = math.floor(math.log(math.max(1, math.abs(n)), 1000))
+function Encoder.abbreviatenumber(x: number, decimalplaces: number?)
+	local exp = math.floor(math.log(math.max(1, math.abs(x)), 1000))
 	local suffix = Encoder.Abbreviations[1 + exp] or ("e+" .. exp)
-	local norm = math.floor(n * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))
+	local norm = math.floor(x * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))
 
 	return string.format("%." .. (decimalplaces or 1) .. "f%s", norm, suffix)
 end

@@ -8,8 +8,7 @@ local function rstring(len: number)
 	for i = 1, len do
 		local value = Rand:NextInteger(1, 36)
 		if value <= 26 then
-			local coinflip = Rand:NextInteger(0, 1) == 0
-			if coinflip then
+			if Rand:NextInteger(0, 1) == 0 then
 				str ..= string.char(value + 64) --- [A-Z]
 			else
 				str ..= string.char(value + 96) --- [a-z]
@@ -36,11 +35,11 @@ function TableK.ipairsr<T>(t: {T}): (({T}, number) -> (number?, T), {T}, number)
 	end), t, 0
 end
 
---- similar to `table.insert`, where `T[random alphanumeric key] = value` \
---- returns `random alphanumeric key` for convenience \
---- `len (?=4)`: key length
+--- similar to `table.insert`, where `T[random alphanumeric key (len ?=4)] = value` \
+--- returns `random alphanumeric key` for convenience
 function TableK.insertkey(t: {[string]: any}, value: any, len: number?)
 	local key = string.rep("0", len or 4)
+
 	repeat key = rstring(len or 4)
 	until t[key] == nil
 
@@ -117,7 +116,7 @@ function TableK.droplist<T>(droplist: {T}, count: number?, R: Random?)
 end
 
 --- returns list of keys contained in `t` \
---- `allocate (?=32)`: array portions allocated
+--- `allocate (?=32)`: array portion allocated
 function TableK.listkeys<T>(t: {[T]: any}, allocate: number?)
 	local list = table.create(allocate or 32)
 

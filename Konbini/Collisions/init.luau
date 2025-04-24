@@ -48,8 +48,7 @@ function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart)
 	return distance, look:Angle((point - at).Unit), point
 end
 
---- `workspace:Raycast()` \
---- `collisiongroup (?="Default")`
+--- `workspace:Raycast()` against `search` list & `collisiongroup (?="Default")`
 function Collisions.raycast(type: "Whitelist" | "Blacklist", at: Vector3, direction: Vector3, search: {Instance}, collisiongroup: string?)
 	local list:any = (type == "Whitelist" and WhitelistParams) or (type == "Blacklist" and BlacklistParams)
 	list.FilterDescendantsInstances = search
@@ -58,9 +57,7 @@ function Collisions.raycast(type: "Whitelist" | "Blacklist", at: Vector3, direct
 	return workspace:Raycast(at, direction, list)
 end
 
---- `workspace:Fancast()` \
---- `resolution (?=3, minimum)`: # of rays that the fancast is composed of \
---- `collisiongroup (?="Default")`
+--- `workspace:Fancast()` with `resolution (?=3, minimum)` casts against `search` list & `collisiongroup (?="Default")`
 function Collisions.fancast(type: "Whitelist" | "Blacklist", at: Vector3, direction: Vector3, radians: number, search: {Instance}, resolution: number?, collisiongroup: string?)
 	resolution = math.clamp(resolution or 3, 3, math.huge)
 	assert(resolution)

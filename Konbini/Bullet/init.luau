@@ -8,8 +8,7 @@ local function rstring(len: number)
 	for i = 1, len do
 		local value = Rand:NextInteger(1, 36)
 		if value <= 26 then
-			local coinflip = Rand:NextInteger(0, 1) == 0
-			if coinflip then
+			if Rand:NextInteger(0, 1) == 0 then
 				str ..= string.char(value + 64) --- [A-Z]
 			else
 				str ..= string.char(value + 96) --- [a-z]

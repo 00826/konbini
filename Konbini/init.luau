@@ -23,7 +23,6 @@ return table.freeze{
 	Memory = require(script:WaitForChild("Memory"));
 	Network = require(script:WaitForChild("Network"));
 	Patronage = require(script:WaitForChild("Patronage"));
-	Stats = require(script:WaitForChild("Stats"));
 	Table = require(script:WaitForChild("Table"));
 	Time = require(script:WaitForChild("Time"));
 	Vector3 = require(script:WaitForChild("Vector3"));

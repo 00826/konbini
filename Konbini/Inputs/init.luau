@@ -180,6 +180,7 @@ function Inputs.touchguiadded(playergui: PlayerGui, callback: (touchgui: GuiObje
 	end)
 end
 
+--- returns `Enum.Keycode` associated with enum value `ev` from optional range `keycodes (?=Enum.KeyCode:GetEnumItems())`
 function Inputs.keycodefromenumvalue(ev: number, keycodes: {Enum.KeyCode}?): Enum.KeyCode?
 	keycodes = keycodes or Keycodes
 	assert(keycodes)

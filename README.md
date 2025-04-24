@@ -29,10 +29,9 @@
 |**[Instance.luau](./Konbini/Instance/init.luau)**|`Instance` library extension|-|⭕|
 |[Interface.luau](./Konbini/Interface/init.luau)|user-interface helper functions|-|⭕|
 |**[Math.luau](./Konbini/Math/init.luau)**|`math` library extension|-|⭕|
-|[Network.luau](./Konbini/Network/init.luau)|straightforward two-function networking interface|-|⭕|
 |[Memory.luau](./Konbini/Memory/init.luau)|`MemoryStoreService` wrapper|-|⭕|
+|[Network.luau](./Konbini/Network/init.luau)|straightforward two-function networking interface|-|⭕|
 |[Patronage.luau](./Konbini/Patronage/init.luau)|easily handle devproducts, gamepasses, group membership, etc|-|⭕|
-|[Stats.luau](./Konbini/Stats/init.luau)|bars, status effects, stats|-|⭕|
 |**[Table.luau](./Konbini/Table/init.luau)**|`table` library extension|-|⭕|
 |[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|⭕|
 |**[Vector3.luau](./Konbini/Vector3/init.luau)**|`Vector3` library extension|-|⭕|

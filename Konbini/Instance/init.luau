@@ -240,7 +240,7 @@ function InstanceK.new(tree: Tree): Instance
 			continue
 		end
 		if (newinstance[property] ~= nil) and (typeof(value) ~= typeof(newinstance[property])) then
-			warn(`{debug.traceback()}Attempt to write {typeof(value)} to {tree.ClassName} "{tree.Name or tree.ClassName}" property {property} ({typeof(newinstance[property])})`)
+			warn(`{debug.traceback()} Attempt to write {typeof(value)} to {tree.ClassName} "{tree.Name or tree.ClassName}" property {property} ({typeof(newinstance[property])})`)
 			continue
 		end
 

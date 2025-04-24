@@ -7,7 +7,7 @@ local IsServer = RunService:IsServer()
 
 local DataRemote = script:WaitForChild("Remote")
 
-local ServerCache = {} :: { [Player]: {Data: any} }
+local ServerCache = {} :: { [Player]: { Data: any } }
 local ClientCache = {} :: any
 
 --- ### Data.luau
@@ -22,11 +22,11 @@ local Data = {
 		Suffix = "_1a";
 
 		--- string-array containing keys that are replicated via `Data.sync`
-		SyncKeys = { } :: {string};
+		SyncKeys = { } :: { string };
 	};
 }
 
---- returns player's save data
+--- returns cached save data associated with `player` or `Players.LocalPlayer` if called locally
 function Data.get(player: Player?): any
 	if IsServer then
 		--- assert(player)
@@ -38,15 +38,6 @@ function Data.get(player: Player?): any
 	end
 
 	return
-end
-
---- reads player's data value stored at key
-function Data.read(player: Player, key: string): unknown
-	if IsServer then
-		return ServerCache[player].Data[key]
-	else
-		return ClientCache[key]
-	end
 end
 
 --- sends select keys and their associated value to player
@@ -63,40 +54,31 @@ function Data.sync(player: Player, keys: {string}?)
 	DataRemote:FireClient(player, packet)
 end
 
---- is called when a sync packet is received
-function Data.recv(packet: any)
-	assert(not IsServer)
-
-	for k, v in packet do
-		ClientCache[k] = v
-		task.defer(Data.changed, k, v)
-	end
-end
-
---- deferred whenever a value is written to key \
+--- deferred *after* all key-values of a sync packet are applied to the local cache \
 --- left blank to be overwritten externally
 Data.changed = function(key: any, value: any)
 	
 end
 
---- adds player saveprofile to cache
+--- adds player saveprofile to server cache
 function Data.insert(player: Player, saveprofile: { Data: any })
 	assert(IsServer)
 
 	ServerCache[player] = saveprofile
 end
 
---- removes player saveprofile from cache
+--- removes player saveprofile from server cache
 function Data.remove(player: Player)
 	assert(IsServer)
 
 	ServerCache[player] = nil
 end
 
---- gdpr what i need you to do
+--- gdpr what i need you to do \
+--- capture pattern: `%d+`
 --- ```
---- "24103210 12345 67890"
---- "24103210, 12345, 67890"
+--- "12345 67890"
+--- "12345, 67890"
 --- ```
 function Data.wipe(gameid: number, lazystring: string)
 	local datastore = DSS:GetDataStore(Data.Config.Datastore)
@@ -129,8 +111,19 @@ function Data.wipe(gameid: number, lazystring: string)
 end
 
 if IsServer then
+
 else
-	DataRemote.OnClientEvent:Connect(Data.recv)
+	DataRemote.OnClientEvent:Connect(function(packet: {})
+		local changes = table.create(8)
+		for k, v in packet do
+			ClientCache[k] = v
+			table.insert(changes, k)
+		end
+
+		for _, k in changes do
+			task.defer(Data.changed, k, ClientCache[k])
+		end
+	end)
 end
 
 return Data

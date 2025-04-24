@@ -57,8 +57,7 @@ export type ClientArg =
 
 --- ### Network.luau
 ---
---- remote wrapper \
---- thank you pyseph for remote packet size counter
+--- remote wrapper
 local Network = {
 	Queue = {};
 
@@ -165,6 +164,7 @@ function Network.wait(scope: string, timeout: number?)
 	return response
 end
 
+--- returns size, in bytes, of `packet`
 function Network.measurepacket(packet: {any}, clienttoserver: boolean)
 	local total = ByteSizes._remoteoverhead + ByteSizes._type
 
@@ -175,6 +175,8 @@ function Network.measurepacket(packet: {any}, clienttoserver: boolean)
 	return total
 end
 
+--- returns size, in bytes, of `data`
+--- derived from `/Pyseph/RemotePacketSizeCounter`
 function Network.sizeof(data: any)
 	local total = 0
 	if data ~= nil then
@@ -223,11 +225,6 @@ function Network.sizeof(data: any)
 	end
 
 	return total
-end
-
-if IsServer then
-else
-
 end
 
 return Network
