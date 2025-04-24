@@ -4,7 +4,7 @@ local RunService = game:GetService("RunService")
 
 local IsServer = RunService:IsServer()
 
-local EntityRemote = script:WaitForChild("EntityRemote")
+local EntityRemote = script:WaitForChild("Remote")
 
 local Rand = Random.new()
 

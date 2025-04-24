@@ -7,7 +7,7 @@ local IsServer = RunService:IsServer()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local TimeRemote = script:WaitForChild("TimeRemote")
+local TimeRemote = script:WaitForChild("Remote")
 
 --- ### Time.luau
 ---

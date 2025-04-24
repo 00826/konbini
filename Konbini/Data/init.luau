@@ -5,7 +5,7 @@ local RunService = game:GetService("RunService")
 
 local IsServer = RunService:IsServer()
 
-local DataRemote = script:WaitForChild("DataRemote") :: RemoteEvent
+local DataRemote = script:WaitForChild("Remote")
 
 local ServerCache = {} :: { [Player]: {Data: any} }
 local ClientCache = {} :: any

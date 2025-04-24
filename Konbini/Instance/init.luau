@@ -8,7 +8,6 @@ local TweenService = game:GetService("TweenService")
 
 local Ball = script:WaitForChild("BallSocketConstraint")
 local Motor = script:WaitForChild("Motor6D")
-local MoverRemote = script:WaitForChild("MoverRemote")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
@@ -593,15 +592,6 @@ function InstanceK.applybodymover(target: Model|BasePart, class: MoverClass, tim
 	end
 	assert(rootpart, `{target} has no PrimaryPart`)
 
-	if IsServer then
-		local player = Players:GetPlayerFromCharacter(target) or rootpart:GetNetworkOwner()
-
-		if player then
-			MoverRemote:FireClient(player, target, class, time, properties)
-			return
-		end
-	end
-
 	local newmover = InstanceK.Movers:FindFirstChildOfClass(class):Clone()
 
 	if properties then
@@ -873,8 +863,6 @@ end
 
 if IsServer then
 else
-	MoverRemote.OnClientEvent:Connect(InstanceK.applybodymover)
-
 	RunService.Heartbeat:Connect(function(dt)
 		local x = 0
 		for object, keyframeinfo in KeyframeBucket do
