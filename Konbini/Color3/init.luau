@@ -29,7 +29,7 @@ local Color3K = {
 	glow750 = Color3.fromRGB(750, 750, 750);
 	glow1000 = Color3.fromRGB(1000, 1000, 1000);
 
-	PlayerColors = table.freeze{
+	PlayerColors = {
 		[1] = Color3.fromRGB(253, 41, 67); --- Color3.new(253/255, 41/255, 67/255);
 		[2] = Color3.fromRGB(1, 162, 255); --- Color3.new(1/255, 162/255, 255/255);
 		[3] = Color3.fromRGB(2, 184, 87); --- Color3.new(2/255, 184/255, 87/255);
@@ -40,7 +40,7 @@ local Color3K = {
 		[8] = Color3.fromRGB(215, 197, 154); --- BrickColor.new("Brick yellow").Color;
 	};
 
-	BrickColors = table.freeze{
+	BrickColors = {
 		["Alder"] = Color3.new(0.705882, 0.501961, 1);
 		["Artichoke"] = Color3.new(0.541176, 0.670588, 0.521569);
 		["Baby blue"] = Color3.new(0.596078, 0.760784, 0.858824);
@@ -250,7 +250,7 @@ local Color3K = {
 	--- ### Color3K.ColorSequence
 	---
 	--- extension of ColorSequence library
-	ColorSequence = table.freeze{
+	ColorSequence = {
 		white = ColorSequence.new(Color3.fromRGB(255, 255, 255));
 		gray = ColorSequence.new(Color3.fromRGB(148, 148, 148));
 		black = ColorSequence.new(Color3.fromRGB(0, 0, 0));

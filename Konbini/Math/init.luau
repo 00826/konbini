@@ -12,11 +12,11 @@ local MathK = {
 	tau = math.pi*2;
 	radian = math.rad(1);
 
-	NumberSequence = table.freeze{
+	NumberSequence = {
 		zero = NumberSequence.new(0);
 		one = NumberSequence.new(1);
 	};
-	NumberRange = table.freeze{
+	NumberRange = {
 		zero = NumberRange.new(0);
 		one = NumberRange.new(1);
 
@@ -248,4 +248,4 @@ function MathK.unitcircle(vertices: number, radius: number)
 	return unitcircle
 end
 
-return table.freeze(MathK)
+return (MathK)

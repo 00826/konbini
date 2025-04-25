@@ -33,7 +33,7 @@ export type Sprite = {
 --- quality-of-life interface functions \
 --- includes `UDim`, `UDim2`, `Vector2`, `Color3` constants & constructors
 local Interface = {
-	UDim = table.freeze{
+	UDim = {
 		zero = UDim.new(0, 0);
 
 		--- returns `UDim.new(w, w)`
@@ -41,7 +41,7 @@ local Interface = {
 			return UDim.new(w, w)
 		end;
 	};
-	UDim2 = table.freeze{
+	UDim2 = {
 		zero = UDim2.fromScale(0, 0);
 
 		oneOffset = UDim2.fromOffset(1, 1);
@@ -83,7 +83,7 @@ local Interface = {
 		end;
 		
 	};
-	Vector2 = table.freeze{
+	Vector2 = {
 		half = Vector2.new(0.5, 0.5);
 		top = Vector2.new(0.5, 0);
 		bottom = Vector2.new(0.5, 1);
@@ -109,7 +109,7 @@ local Interface = {
 			return relativeposition - Vector2.new(0, math.abs(math.clamp(absolutesize.Y - (relativeposition.Y + absolutesize.Y), -math.huge, 0)))
 		end;
 	};
-	AspectRatios = table.freeze{
+	AspectRatios = {
 		--- `1:1`
 		Square = 1/1;
 		--- `4:3`

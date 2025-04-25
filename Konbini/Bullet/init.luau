@@ -96,13 +96,13 @@ local Bullet = {
 	Framerate = 1/30;
 
 	--- base width 34 + typewidth x
-	Widths = table.freeze{
+	Widths = {
 		Hitscan = 34 + 0;
 		Ballistic = 34 + 3;
 		Beam = 34 + 2;
 		Bezier = 34 + 14;
 	};
-	Types = table.freeze{
+	Types = {
 		"Hitscan";
 		"Ballistic";
 		"Beam";

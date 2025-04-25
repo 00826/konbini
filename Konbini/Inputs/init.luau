@@ -256,7 +256,7 @@ else
 			cursor.Normal = Vector3.yAxis
 			cursor.Distance = cursor.RaycastDistance
 			cursor.Instance = nil
-			cursor.Material = result.Material
+			cursor.Material = nil
 		end
 
 		cursor.CameraDirection = currentcamera.CFrame.LookVector
