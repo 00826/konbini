@@ -4,7 +4,7 @@
 local Rand = Random.new()
 
 local function rstring(len: number)
-	local str = string.rep("0", len)
+	local str = ""
 	for i = 1, len do
 		local value = Rand:NextInteger(1, 36)
 		if value <= 26 then

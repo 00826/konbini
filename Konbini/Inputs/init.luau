@@ -38,7 +38,6 @@ local Inputs = {
 		Material = nil;
 
 		MouseBehavior = Enum.MouseBehavior.Default;
-		TargetMouseBehavior = Enum.MouseBehavior.Default;
 	};
 
 	--- used by `Inputs.keybindof()` \
@@ -73,17 +72,22 @@ local Inputs = {
 	} :: {[Enum.UserInputType]: "Unknown"|"Keyboard"|"Mobile"|"Gamepad"};
 }
 
---- returns key bound to `Inputs.InputTypesToKeyCodes[inputobject.UserInputType]` or `inputObject.KeyCode`
-function Inputs.keybindof(inputobject: InputObject, keybinds: {value: Enum.KeyCode} & {[string]: any}): (number?, ({value: Enum.KeyCode} & {[string]: any})?)
+--- returns key bound to `Inputs.InputTypesToKeyCodes[inputobject.UserInputType]` or `inputObject.KeyCode` \
+--- `Enum.KeyCode.Unknown` returns `nil, nil`
+function Inputs.keybindof(inputobject: InputObject, keybinds: {{value: Enum.KeyCode} & {[string]: any}}): (number?, ({value: Enum.KeyCode} & {[string]: any})?)
 	local keycode = Inputs.InputTypesToKeyCodes[inputobject.UserInputType] or inputobject.KeyCode
 
-	for i, bind in ipairs(keybinds) do
-		if bind.Value == keycode then
-			return i, bind
+	if keycode == Enum.KeyCode.Unknown then
+		return nil, nil
+	else
+		for i, bind in ipairs(keybinds) do
+			if bind.value == keycode then
+				return i, bind
+			end
 		end
 	end
 
-	return nil, nil
+	return
 end
 
 --- adds thing to cursor raycast blacklist, if it does not exist already
@@ -162,6 +166,16 @@ function Inputs.menuclosed()
 	return GuiService.MenuClosed
 end
 
+--- equivalent to `UserInputService.MouseBehavior = mousebehavior`
+function Inputs.setmousebehavior(mousebehavior: Enum.MouseBehavior)
+	UserInputService.MouseBehavior = mousebehavior
+end
+
+--- equivalent to `UserInputService.MouseIcon = icon or ""`
+function Inputs.setmouseicon(icon: string?)
+	UserInputService.MouseIcon = icon or ""
+end
+
 --- defers `callback` when a guiobject matching name "TouchGui" is added or already exists in `playergui` \
 --- \
 --- *recommended to displace `TouchGui/TouchControlFrame/JumpButton` and `TouchGui/TouchControlFrame/DynamicThumbstickFrame`* \
@@ -221,10 +235,7 @@ else
 	end)
 
 	local function updatemouse(inputobject: InputObject?)
-		if cursor.TargetMouseBehavior ~= UserInputService.MouseBehavior then
-			UserInputService.MouseBehavior = cursor.TargetMouseBehavior
-			cursor.MouseBehavior = UserInputService.MouseBehavior
-		end
+		cursor.MouseBehavior = UserInputService.MouseBehavior
 
 		local currentcamera = workspace.CurrentCamera
 		local screenposition = Vector2.zero
