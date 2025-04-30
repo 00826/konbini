@@ -21,6 +21,9 @@ local function rstring(len: number)
 	return str
 end
 
+--- `Item = {[1] = key::string; [2...] = value::any}`
+export type Item = { string|any }
+
 --- ### Table.luau
 ---
 --- extension of table library
@@ -235,4 +238,44 @@ function TableK.limit(A: {any}, size: number)
 	end
 end
 
-return table.freeze(TableK)
+--- returns an item \
+--- equivalent to `return {id, value}`
+function TableK.itemcreate(id: string, value: any): Item
+	return {id, value}
+end
+
+--- inserts item, by its associated `id`, to list \
+--- *does not account for duplicates*
+function TableK.iteminsert(list: {Item}, id: string, value: any)
+	table.insert(list, TableK.itemcreate(id, value))
+end
+
+--- returns:
+--- `id (i[1])` item id \
+--- `value (i[2...])` item value(s)
+function TableK.itemunpack(i: Item): (string, ...any)
+	return unpack(i)
+end
+
+--- removes all items associated with `id`, from list \
+--- *starts at `i = #list`, ends at `i = 1`, accounting for duplicates*
+function TableK.itemremove(list: {Item}, id: string)
+	for i = #list, 1, -1 do
+		if list[i][1] == id then
+			table.remove(list, i)
+		end
+	end
+end
+
+--- returns item, from its associated `id`, stored in list
+function TableK.itemfind(list: {Item}, id: string): Item?
+	for _, thing in list do
+		if thing[1] == id then
+			return thing
+		end
+	end
+
+	return nil
+end
+
+return TableK

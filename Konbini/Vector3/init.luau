@@ -357,4 +357,4 @@ function Vector3K.tostring(v: Vector3, precision: number?)
 	return string.sub(string.format(string.rep("%." .. (precision or 2) .. "f ", 3), v.X, v.Y, v.Z), 1, -2)
 end
 
-return table.freeze(Vector3K)
+return Vector3K

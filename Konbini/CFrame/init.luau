@@ -58,4 +58,4 @@ function CFrameK.affix(cframe: CFrame, volume: number|Vector3, axis: Vector3)
 	end
 end
 
-return table.freeze(CFrameK)
+return CFrameK

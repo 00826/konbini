@@ -12,7 +12,7 @@ local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
 local KeyframeBucket = {} :: {[Instance]: KeyframeInfo}
-local Keyframable = table.freeze{
+local Keyframable = {
 	"number";
 	"boolean";
 
