@@ -70,6 +70,12 @@ local Inputs = {
 		[Enum.UserInputType.Gamepad7] = "Gamepad";
 		[Enum.UserInputType.Gamepad8] = "Gamepad";
 	} :: {[Enum.UserInputType]: "Unknown"|"Keyboard"|"Mobile"|"Gamepad"};
+
+	ThumbstickL = Vector3.zero;
+	ThumbstickR = Vector3.zero;
+	SignedThumbstickL = Vector3.zero;
+	SignedThumbstickR = Vector3.zero;
+	SignedThumbstickDeadzone = 1/3;
 }
 
 --- returns key bound to `Inputs.InputTypesToKeyCodes[inputobject.UserInputType]` or `inputObject.KeyCode` \
@@ -244,7 +250,7 @@ else
 			screenposition = cursor.ForceScreenPosition
 		else
 			if Inputs.CurrentInputDevice == "Mobile" then
-				if inputobject then
+				if inputobject and typeof(inputobject) == "InputObject" then
 					local p = inputobject.Position
 					screenposition = Vector2.new(p.X, p.Y)
 				end
@@ -279,6 +285,30 @@ else
 	UserInputService.InputEnded:Connect(updatemouse)
 	
 	RunService.Heartbeat:Connect(updatemouse)
+
+	local function updatethumbstickdirection(inputobject: InputObject)
+		if inputobject.KeyCode == Enum.KeyCode.Thumbstick1 then
+			Inputs.ThumbstickL = inputobject.Position
+
+			local x, y = Inputs.ThumbstickL.X, Inputs.ThumbstickL.Y
+			Inputs.SignedThumbstickL = Vector3.new(
+				math.abs(x) > Inputs.SignedThumbstickDeadzone and math.sign(x) or 0,
+				math.abs(y) > Inputs.SignedThumbstickDeadzone and math.sign(y) or 0,
+				0
+			)
+		elseif inputobject.KeyCode == Enum.KeyCode.Thumbstick2 then
+			Inputs.ThumbstickR = inputobject.Position
+
+			local x, y = Inputs.ThumbstickR.X, Inputs.ThumbstickR.Y
+			Inputs.SignedThumbstickR = Vector3.new(
+				math.abs(x) > Inputs.SignedThumbstickDeadzone and math.sign(x) or 0,
+				math.abs(y) > Inputs.SignedThumbstickDeadzone and math.sign(y) or 0,
+				0
+			)
+		end
+	end
+
+	UserInputService.InputChanged:Connect(updatethumbstickdirection)
 end
 
 return Inputs

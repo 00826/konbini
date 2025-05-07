@@ -290,17 +290,16 @@ function Interface.scaletext(textlabel: TextLabel)
 	end
 end
 
---- scrolls textlabel text with `speed (?=40)`
-function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?)
-	textlabel.MaxVisibleGraphemes = 0
+--- scrolls textlabel text with `speed (?=40)` and initially-visible `graphemes (?=0)`
+function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?, graphemes: number?)
+	textlabel.MaxVisibleGraphemes = graphemes or 0
 	if text then
 		textlabel.Text = text
 	end
 
-	local len = (utf8.len(textlabel.ContentText) or 0)
-	local time = len / (speed or 40)
+	local len = math.clamp((utf8.len(textlabel.ContentText) or 0) - (graphemes or 0), 0, math.huge)
 
-	tween(textlabel, {MaxVisibleGraphemes = len}, time, Enum.EasingStyle.Linear)
+	tween(textlabel, {MaxVisibleGraphemes = len}, len / (speed or 40), Enum.EasingStyle.Linear)
 end
 
 --- attaches target to textlabel
@@ -382,6 +381,22 @@ function Interface.uipadding(guiobject: GuiObject, value: UDim?)
 	end
 
 	return uipadding::UIPadding
+end
+
+--- applies `UITextSizeConstraint` to guiobject, instantiating one if it doesn't already exist
+function Interface.textsizeconstraint(guiobject: GuiObject, max: number?, min: number?)
+	local textsizeconstraint = guiobject:FindFirstChildOfClass("UITextSizeConstraint")
+	if not textsizeconstraint then
+		textsizeconstraint = Instance.new("UITextSizeConstraint")
+		;(textsizeconstraint::any).Parent = guiobject
+	end
+
+	if max then
+		(textsizeconstraint::any).MaxTextSize = max
+		;(textsizeconstraint::any).MinTextSize = min or 1
+	end
+
+	return textsizeconstraint::UITextSizeConstraint
 end
 
 --- applies `UIAspectRatioConstraint` to guiobject, instantiating one if it doesn't already exist

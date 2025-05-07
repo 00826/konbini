@@ -8,6 +8,7 @@ local Color3K = {
 	lightgray = Color3.fromRGB(222, 222, 222);
 	gray = Color3.fromRGB(148, 148, 148);
 	darkgray = Color3.fromRGB(74, 74, 74);
+	offblack = Color3.fromRGB(68, 68, 68);
 	black = Color3.fromRGB(0, 0, 0);
 
 	red = Color3.fromRGB(255, 85, 85);
