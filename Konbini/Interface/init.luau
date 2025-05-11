@@ -425,4 +425,45 @@ function Interface.setcoreguienabled(coreguis: {[Enum.CoreGuiType]: boolean})
 	end)
 end
 
+function Interface.nextguiobject(guiobjects: {GuiObject}, direction: Vector3, current: GuiObject?): GuiObject?
+	current = current or guiobjects[1]
+	if not current then
+		return nil
+	end
+
+	if not (direction.Magnitude > 0) then
+		return current
+	end
+
+	local point = current.AbsolutePosition + (current.AbsoluteSize * 0.5)
+
+	local guiobjectswithinangle = table.create(#guiobjects)
+
+	for _, guiobject in guiobjects do
+		if guiobject == current then continue end
+
+		local thispoint = guiobject.AbsolutePosition + (guiobject.AbsoluteSize * 0.5)
+		thispoint -= point
+
+		local dot = direction:Dot(-Vector3.new(thispoint.X, thispoint.Y, 0).Unit)
+		if dot <= 0 then continue end
+
+		table.insert(guiobjectswithinangle, guiobject)
+	end
+
+	table.sort(guiobjectswithinangle, function(a: GuiObject, b: GuiObject): boolean
+		local apos = a.AbsolutePosition + (a.AbsoluteSize * 0.5)
+		local bpos = b.AbsolutePosition + (b.AbsoluteSize * 0.5)
+
+		--[[local avec = Vector3.new(apos.X, apos.Y, 0)
+		local bvec = Vector3.new(bpos.X, bpos.Y, 0)]]
+		local adis = (apos - point).Magnitude
+		local bdis = (bpos - point).Magnitude
+
+		return adis < bdis
+	end)
+
+	return guiobjectswithinangle[1] or current
+end
+
 return Interface
