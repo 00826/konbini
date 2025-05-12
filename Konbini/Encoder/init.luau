@@ -483,7 +483,9 @@ function Encoder.barunpack(b: buffer)
 	return buffer.readf32(b, 0), buffer.readf32(b, 4)
 end
 
---- returns a `[f32 expiry, u8 stacks (?=1)]` state buffer 
+--- returns a `[f32 expiry, u8 stacks (?=1)]` state buffer \
+--- a state is considered "expired" if `stacks == 0` or `expiry < time` \
+--- a state is considrered "indefinite" if `expiry == -1`
 function Encoder.createstate(expiry: number, stacks: number?)
 	local s = buffer.create(4 + 1)
 
@@ -493,50 +495,37 @@ function Encoder.createstate(expiry: number, stacks: number?)
 	return s
 end
 
---- directly writes to state buffer
-function Encoder.statewrite(s: buffer, expiry: number?, stacks: number?)
-	if expiry then
-		buffer.writef32(s, 0, expiry)
-	end
-	if stacks then
-		buffer.writeu8(s, 4, stacks)
-	end
+--- writes value to state buffer expiry portion
+function Encoder.stateexpiry(s: buffer, value: number)
+	buffer.writef32(s, 0, value)
 end
 
---- adds state, if it doesn't already exist, to state table `st`, passing `key, expiry, stacks` into `Encoder.createstate()` or `Encoder.statewrite()`
-function Encoder.stateadd(st: {[string]: buffer}, key: string, expiry: number, stacks: number?)
-	local s = st[key]
-	if not s then
-		s = Encoder.createstate(expiry, stacks)
-		st[key] = s
+--- writes value to state buffer stacks portion
+function Encoder.statestacks(s: buffer, value: number)
+	buffer.writeu8(s, 4, value)
+end
+
+--- adds value to state buffer stacks portion
+function Encoder.statestacksdelta(s: buffer, value: number)
+	buffer.writeu8(s, 4, buffer.readu8(s, 4) + value)
+end
+
+--- sets or creates (if it doesn't exist already) a state at `st[key]`
+function Encoder.stateset(st: {[string]: buffer}, key: string, expiry: number, stacks: number?)
+	local state = st[key]
+	if not state then
+		st[key] = Encoder.createstate(expiry, stacks)
 	else
-		Encoder.statewrite(s, expiry, stacks)
+		buffer.writef32(state, 0, expiry)
+		if stacks then
+			buffer.writeu8(state, 4, stacks)
+		end
 	end
 end
 
---- applies deltas to state buffer \
---- if bounds are passed, values are clamped within `value = [bounds[1], bounds[2]]`
-function Encoder.statedelta(s: buffer, expiry: number?, stacks: number?, expirybounds: {number}?, stackbounds: {number}?)
-	if expiry then
-		expiry += buffer.readf32(s, 0)
-		if expirybounds then
-			expiry = math.clamp(expiry, expirybounds[1], expirybounds[2])
-		end
-		buffer.writef32(s, 0, expiry)
-	end
-	if stacks then
-		stacks += buffer.readu8(s, 4)
-		if stackbounds then
-			stacks = math.clamp(stacks, stackbounds[1], stackbounds[2])
-		end
-		buffer.writeu8(s, 4, stacks)
-	end
-end
-
---- returns array of active states \
---- `limit` active effect peek limit
-function Encoder.statepeek(st: {[string]: buffer}, keys: {string}, now: number, limit: number?)
-	local result, total = table.create(#keys), 0
+--- returns list of active states contained in state table `st`
+function Encoder.statefind(st: {[string]: buffer}, keys: {string}, now: number)
+	local result = table.create(#keys)
 
 	for _, key in keys do
 		local s = st[key]
@@ -545,43 +534,63 @@ function Encoder.statepeek(st: {[string]: buffer}, keys: {string}, now: number, 
 		local expiry = buffer.readf32(s, 0)
 		if expiry == -1 then
 			table.insert(result, key)
-			total += 1
 			continue
 		end
 		local active = expiry > now
 		if not active then continue end
 
 		table.insert(result, key)
-		total += 1
-
-		if limit and total >= limit then
-			return result
-		end
 	end
 
 	return result
-end
---- returns: \
---- `true` if state buffer is "active" \
---- `number` state buffer time until expiry \
---- `number` state buffer stacks \
---- \
---- zero-stacks takes precedence over expiry time. meaning that an indefinite state effect can be force-expired by setting stacks to 0
-function Encoder.stateinterpret(s: buffer, now)
-	local expiry, stacks = buffer.readf32(s, 0), buffer.readu8(s, 4)
-
-	if stacks <= 0 then
-		return false, 0, stacks
-	elseif expiry == -1 then
-		return true, -1, stacks
-	end
-
-	return expiry > now, expiry - now, stacks
 end
 
 --- returns state buffer `expiry, stacks`
 function Encoder.stateunpack(s: buffer)
 	return buffer.readf32(s, 0), buffer.readu8(s, 4)
+end
+
+--- returns numeric stage `base / base` \
+--- `base (?=2)`: stage base value
+function Encoder.createstage(base: number?)
+	local s = buffer.create(1)
+	buffer.writebits(s, 0, 4, base or 2)
+	buffer.writebits(s, 4, 4, base or 2)
+
+	return s
+end
+
+--- writes value to signed portion of numeric stage
+--- ```luau
+--- createstage(2) --- 2/2
+--- stagewrite(s, 3) --- 3/2
+--- stagewrite(s, -4) --- 3/4
+--- ```
+function Encoder.stagewrite(s: buffer, value: number)
+	if math.sign(value) == 1 then
+		buffer.writebits(s, 0, 4, math.clamp(value, 0, 16))
+	else
+		buffer.writebits(s, 0, 4, math.clamp(math.abs(value), 0, 16))
+	end
+end
+
+--- adds value to signed portion of numeric stage
+--- ```luau
+--- createstage(2) --- 2/2
+--- stagedelta(s, 1) --- 3/2
+--- stagedelta(s, -2) --- 3/4
+--- ```
+function Encoder.stagedelta(s: buffer, value: number)
+	if math.sign(value) == 1 then
+		buffer.writebits(s, 0, 4, math.clamp(value + buffer.readbits(s, 0, 4), 0, 16))
+	else
+		buffer.writebits(s, 0, 4, math.clamp(math.abs(value) + buffer.readbits(s, 4, 4), 0, 16))
+	end
+end
+
+--- returns numeric stage `x / y`
+function Encoder.stageread(s: buffer)
+	return buffer.readbits(s, 0, 4) / buffer.readbits(s, 4, 4)
 end
 
 --- equivalent to `bit32.replace(x, value, field, width)`
@@ -822,36 +831,40 @@ function Encoder.timestamp(format:
 	return timestamp
 end
 
---- formats number with: \
---- `abbreviate (?=10000)`: if `x >= abbreviate`, `x` will be abbreviated \
---- `comma (?=1000)`: if `x >= comma`, `x` will be separated by commas \
---- `decimalplaces (?=1)`: *in contexts where `x` is abbreviated, # of decimal places*
-function Encoder.formatnumber(x: number, abbreviate: number?, comma: number?, decimalplaces: number?)
-	if x >= (abbreviate or 10000) then
-		return Encoder.abbreviatenumber(x, decimalplaces or 1)
-	elseif x >= (comma or 1000) then
-		return Encoder.commanumber(x)
+--- formats number: \
+--- thousands separated by `tsep (?=".")` \
+--- decimals separated by `dsep (?=".")`, truncated by `places (?=1)`
+function Encoder.formatnumber(x: number, tsep: string?, dsep: string?, places: number?)
+	if places == 0 then
+		return Encoder.commanumber(x, tsep)
+	else
+		local num = tostring(x)
+		local i = string.find(num, "%.")
+		
+		if i then
+			return Encoder.commanumber(x, tsep) .. (dsep or ".") .. string.sub(num, 1 + i, i + (places or 1))
+		else
+			return Encoder.commanumber(x, tsep)
+		end
 	end
-
-	return tostring(x)
 end
 
---- formats number separated by commas
-function Encoder.commanumber(x: number)
+--- formats number, thousands separated by `tsep (?=",")`
+function Encoder.commanumber(x: number, tsep: string?)
 	if math.abs(x) < 1000 then
 		return tostring(math.floor(x))
 	else
-		return string.reverse(string.gsub(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)","%1,"), ",(%-?)$","%1")::any)
+		local str = string.reverse(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)", "%1" .. (tsep or ","))::any)
+		return string.sub(str, string.find(str, "%d")::any, -1)
 	end
 end
 
---- abbreviates number following a `"K", "M", "B", "T", "Qd"...`-esque notation
-function Encoder.abbreviatenumber(x: number, decimalplaces: number?)
+--- abbreviates number, decimals separated by `dsep (?=".")`, truncated by `places (?=1)`
+function Encoder.abbreviatenumber(x: number, places: number?, dsep: string?)
 	local exp = math.floor(math.log(math.max(1, math.abs(x)), 1000))
 	local suffix = Encoder.Abbreviations[1 + exp] or ("e+" .. exp)
-	local norm = math.floor(x * ((10 ^ (decimalplaces or 1)) / (1000 ^ exp))) / (10 ^ (decimalplaces or 1))
-
-	return string.format("%." .. (decimalplaces or 1) .. "f%s", norm, suffix)
+	
+	return string.gsub(tostring(math.floor(x * ((10 ^ (places or 1)) / (1000 ^ exp))) / (10 ^ (places or 1))), "[.]", dsep or ".") .. suffix
 end
 
 type thumb =
