@@ -275,7 +275,7 @@ function Patronage.listinsert(scope: string, userids: {number})
 
 	local datastorename = Patronage.Config.Datastore
 	local datastore = DataStoreService:GetDataStore(datastorename)
-	assert(datastore, `[Patronage]: error fetching Datastore "{datastorename}"`)
+	assert(datastore, string.format("[Patronage]: error fetching Datastore '%s'", datastorename))
 
 	local s, e = pcall(function()
 		datastore:UpdateAsync(scope, function(list: {number}?, datastorekeyinfo: DataStoreKeyInfo)
@@ -306,7 +306,7 @@ function Patronage.listremove(scope: string, userids: {number})
 
 	local datastorename = Patronage.Config.Datastore
 	local datastore = DataStoreService:GetDataStore(datastorename)
-	assert(datastore, `[Patronage]: error fetching Datastore "{datastorename}"`)
+	assert(datastore, string.format("[Patronage]: error fetching Datastore '%s'", datastorename))
 
 	local s, e = pcall(function()
 		datastore:UpdateAsync(scope, function(list: {number}?, datastorekeyinfo: DataStoreKeyInfo)
@@ -341,7 +341,7 @@ if IsServer then
 		--- print(`[Patronage]: VIP list disabled`)
 	else
 		local datastore = DataStoreService:GetDataStore(datastorename)
-		assert(datastore, `[Patronage]: error fetching Datastore "{datastorename}"`)
+		assert(datastore, string.format("[Patronage]: error fetching Datastore '%s'", datastorename))
 
 		print(`[Patronage]: Using Datastore "{datastorename}"`)
 

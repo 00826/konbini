@@ -50,7 +50,7 @@ end
 --- `priority (?=Library[name].Priority|Enum.AnimationPriority.Action)`: animation priority
 function Animation.play(animator: Animator, name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
 	local entry = Animation.Library[name]
-	assert(entry, `animation "{name}" not defined`)
+	assert(entry, string.format("animation '%s' not defined", name))
 	local animobject = entry.Animation
 	assert(animobject)
 	local animtrack = animator:LoadAnimation(animobject)
@@ -70,7 +70,7 @@ function Animation.playactiontrack(controller: AnimController, name: string, pri
 	end
 
 	local entry = Animation.Library[name]
-	assert(entry, `animation "{name}" not defined`)
+	assert(entry, string.format("animation '%s' not defined", name))
 	local animobject = entry.Animation
 	assert(animobject)
 	controller.ActionTrack = controller.Animator:LoadAnimation(animobject)
@@ -91,7 +91,7 @@ function Animation.playlooptrack(controller: AnimController, name: string, prior
 	end
 
 	local entry = Animation.Library[name]
-	assert(entry, `animation "{name}" not defined`)
+	assert(entry, string.format("animation '%s' not defined", name))
 	local animobject = entry.Animation
 	assert(animobject)
 	controller.LoopTrack = controller.Animator:LoadAnimation(animobject)

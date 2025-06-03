@@ -437,12 +437,21 @@ function Encoder.readflagu32(b: buffer, offset: number, field: number, width: nu
 	return bit32.extract(buffer.readu32(b, offset), field, width)
 end
 
---- returns a `[f32 value (?=maxvalue), f32 maxvalue]` bar buffer
-function Encoder.createbar(maxvalue: number, value: number?)
-	local b = buffer.create(4 + 4)
+--- returns a width`(?=4(f32))`-wide bar buffer \
+--- `width: 2 -> u16` `[u16 value (?=maxvalue), u16 maxvalue]` \
+--- `width: 4 -> f32` `[f32 value (?=maxvalue), f32 maxvalue]`
+function Encoder.createbar(width: number, maxvalue: number, value: number?)
+	local b = buffer.create(width + width)
 
-	buffer.writef32(b, 0, value or maxvalue)
-	buffer.writef32(b, 4, maxvalue)
+	if width == 2 then
+		buffer.writeu16(b, 0, value or maxvalue)
+		buffer.writeu16(b, 2, maxvalue)
+	elseif width == 4 then
+		buffer.writef32(b, 0, value or maxvalue)
+		buffer.writef32(b, 4, maxvalue)
+	else
+		error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+	end
 
 	return b
 end
@@ -450,46 +459,94 @@ end
 --- writes to bar buffer \
 --- `maxvalue~=nil`: attempts to scale stored value to fit `maxvalue`
 function Encoder.barwrite(b: buffer, value: number?, maxvalue: number?)
+	local width = buffer.len(b)
+
 	if maxvalue then
-		buffer.writef32(b, 0, buffer.readf32(b, 4) * math.clamp(buffer.readf32(b, 0) / maxvalue, 0, 1))
-		buffer.writef32(b, 4, maxvalue)
+		if width == 4 then
+			buffer.writeu16(b, 0, buffer.readu16(b, 2) * math.clamp(buffer.readu16(b, 0) / maxvalue, 0, 1))
+			buffer.writeu16(b, 2, maxvalue)
+		elseif width == 8 then
+			buffer.writef32(b, 0, buffer.readf32(b, 4) * math.clamp(buffer.readf32(b, 0) / maxvalue, 0, 1))
+			buffer.writef32(b, 4, maxvalue)
+		else
+			error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+		end
 	end
 	if value then
-		buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
+		if width == 4 then
+			buffer.writeu16(b, 0, math.clamp(value, 0, buffer.readu16(b, 2)))
+		elseif width == 8 then
+			buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
+		else
+			error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+		end
 	end
 end
 
 --- applies deltas to bar buffer \
 --- `maxvalue~=nil`: attempts to scale stored value to fit `maxvalue`
 function Encoder.bardelta(b: buffer, value: number?, maxvalue: number?)
+	local width = buffer.len(b)
+
 	if maxvalue then
-		maxvalue += buffer.readf32(b, 4)
-		buffer.writef32(b, 0, buffer.readf32(b, 4) * math.clamp(buffer.readf32(b, 0) / maxvalue, 0, 1))
-		buffer.writef32(b, 4, maxvalue)
+		if width == 4 then
+			maxvalue += buffer.readu16(b, 2)
+			buffer.writeu16(b, 0, buffer.readu16(b, 2) * math.clamp(buffer.readu16(b, 0) / maxvalue, 0, 1))
+			buffer.writeu16(b, 2, maxvalue)
+		elseif width == 8 then
+			maxvalue += buffer.readf32(b, 4)
+			buffer.writef32(b, 0, buffer.readf32(b, 4) * math.clamp(buffer.readf32(b, 0) / maxvalue, 0, 1))
+			buffer.writef32(b, 4, maxvalue)
+		else
+			error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+		end
 	end
 	if value then
-		value += buffer.readf32(b, 0)
-		buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
+		if width == 4 then
+			value += buffer.readu16(b, 0)
+			buffer.writeu16(b, 0, math.clamp(value, 0, buffer.readu16(b, 2)))
+		elseif width == 8 then
+			value += buffer.readf32(b, 0)
+			buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
+		else
+			error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+		end
 	end
 end
 
 --- equivalent to `buffer.writef32(b, 0, buffer.readf32(b, 0) - x)`
 function Encoder.barexpend(b: buffer, x: number)
-	buffer.writef32(b, 0, buffer.readf32(b, 0) - x)
+	local width = buffer.len(b)
+
+	if width == 4 then
+		buffer.writeu16(b, 0, math.clamp(buffer.readu16(b, 0) - x, 0, 65535))
+	elseif width == 8 then
+		buffer.writef32(b, 0, buffer.readf32(b, 0) - x)
+	else
+		error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+	end
 end
 
 --- returns bar buffer `value, maxvalue`
 function Encoder.barunpack(b: buffer)
-	return buffer.readf32(b, 0), buffer.readf32(b, 4)
+	local width = buffer.len(b)
+
+	if width == 4 then
+		return buffer.readu16(b, 0), buffer.readu16(b, 2)
+	elseif width == 8 then
+		return buffer.readf32(b, 0), buffer.readf32(b, 4)
+	else
+		error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+	end
 end
 
---- returns a `[f32 expiry, u8 stacks (?=1)]` state buffer \
+--- returns a `[f64 expiry, u8 stacks (?=1)]` state buffer \
 --- a state is considered "expired" if `stacks == 0` or `expiry < time` \
 --- a state is considrered "indefinite" if `expiry == -1`
 function Encoder.createstate(expiry: number, stacks: number?)
 	local s = buffer.create(4 + 1)
 
-	buffer.writef32(s, 0, expiry)
+	buffer.writef64(s, 0, expiry)
 	buffer.writeu8(s, 4, stacks or 1)
 
 	return s
@@ -497,7 +554,7 @@ end
 
 --- writes value to state buffer expiry portion
 function Encoder.stateexpiry(s: buffer, value: number)
-	buffer.writef32(s, 0, value)
+	buffer.writef64(s, 0, value)
 end
 
 --- writes value to state buffer stacks portion
@@ -516,7 +573,7 @@ function Encoder.stateset(st: {[string]: buffer}, key: string, expiry: number, s
 	if not state then
 		st[key] = Encoder.createstate(expiry, stacks)
 	else
-		buffer.writef32(state, 0, expiry)
+		buffer.writef64(state, 0, expiry)
 		if stacks then
 			buffer.writeu8(state, 4, stacks)
 		end
@@ -531,7 +588,7 @@ function Encoder.statefind(st: {[string]: buffer}, keys: {string}, now: number)
 		local s = st[key]
 		if not s then continue end
 
-		local expiry = buffer.readf32(s, 0)
+		local expiry = buffer.readf64(s, 0)
 		if expiry == -1 then
 			table.insert(result, key)
 			continue
@@ -547,7 +604,7 @@ end
 
 --- returns state buffer `expiry, stacks`
 function Encoder.stateunpack(s: buffer)
-	return buffer.readf32(s, 0), buffer.readu8(s, 4)
+	return buffer.readf64(s, 0), buffer.readu8(s, 4)
 end
 
 --- returns numeric stage `base / base` \

@@ -61,6 +61,14 @@ local Interface = {
 		bottomLeft = UDim2.fromScale(0, 1);
 		bottomRight = UDim2.fromScale(1, 1);
 
+		--- returns UDim2.fromScale(v, v)
+		fromScale = function(v: number)
+			return UDim2.fromScale(v, v)
+		end;
+		--- returns UDim2.fromOffset(v, v)
+		fromOffset = function(v: number)
+			return UDim2.fromOffset(v, v)
+		end;
 		--- returns UDim2.fromOffset(v.X, v.Y)
 		fromVector2 = function(v: Vector2|Vector3)
 			return UDim2.fromOffset(v.X, v.Y)
@@ -147,11 +155,9 @@ function Interface.preferredtextsize()
 	return GuiService.PreferredTextSize
 end
 
---- connects function to `GuiService:GetPropertyChangedSignal("PreferredTextSize")`
-function Interface.preferredtextsizechanged(f: (preferredtextsize: Enum.PreferredTextSize) -> ())
-	return GuiService:GetPropertyChangedSignal("PreferredTextSize"):Connect(function()
-		f(GuiService.PreferredTextSize)
-	end)
+--- returns `GuiService:GetPropertyChangedSignal("PreferredTextSize")`
+function Interface.preferredtextsizechanged()
+	return GuiService:GetPropertyChangedSignal("PreferredTextSize")
 end
 
 --- returns `GuiService.PreferredTransparency`
@@ -159,11 +165,9 @@ function Interface.preferredtransparency()
 	return GuiService.PreferredTransparency
 end
 
---- connects function to `GuiService:GetPropertyChangedSignal("PreferredTransparency")`
-function Interface.preferredtransparencychanged(f: (preferredtransparency: number) -> ())
-	return GuiService:GetPropertyChangedSignal("PreferredTransparency"):Connect(function()
-		f(GuiService.PreferredTransparency)
-	end)
+--- returns `GuiService:GetPropertyChangedSignal("PreferredTransparency")`
+function Interface.preferredtransparencychanged()
+	return GuiService:GetPropertyChangedSignal("PreferredTransparency")
 end
 
 --- returns `GuiService.ReducedMotionEnabled`
@@ -171,11 +175,9 @@ function Interface.reducedmotionenabled()
 	return GuiService.ReducedMotionEnabled
 end
 
---- connects function to `GuiService:GetPropertyChangedSignal("ReducedMotionEnabled")`
-function Interface.reducedmotionchanged(f: (reducedmotionenabled: boolean) -> ())
-	return GuiService:GetPropertyChangedSignal("ReducedMotionEnabled"):Connect(function()
-		f(GuiService.ReducedMotionEnabled)
-	end)
+--- returns `GuiService:GetPropertyChangedSignal("ReducedMotionEnabled")`
+function Interface.reducedmotionchanged()
+	return GuiService:GetPropertyChangedSignal("ReducedMotionEnabled")
 end
 
 function Interface.guiinset()
@@ -299,7 +301,7 @@ function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number
 
 	local len = math.clamp((utf8.len(textlabel.ContentText) or 0) - (graphemes or 0), 0, math.huge)
 
-	tween(textlabel, {MaxVisibleGraphemes = len}, len / (speed or 40), Enum.EasingStyle.Linear)
+	tween(textlabel, {MaxVisibleGraphemes = len}, len / (speed or 100), Enum.EasingStyle.Linear)
 end
 
 --- attaches target to textlabel

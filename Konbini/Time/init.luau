@@ -4,9 +4,6 @@
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
 local TimeRemote = script:WaitForChild("Remote")
 
 --- ### Time.luau
@@ -14,14 +11,12 @@ local TimeRemote = script:WaitForChild("Remote")
 --- server-authoritative global time
 local Time = {
 	Framerate = 1/60;
-	ElapsedBuffer = buffer.create(4);
-
-	IncomingReplicationLag = 80;
+	ElapsedBuffer = buffer.create(8);
 }
 
 --- returns konbini time
 function Time.now(latency: number?)
-	return buffer.readf32(Time.ElapsedBuffer, 0) + (latency or 0)
+	return buffer.readf64(Time.ElapsedBuffer, 0) + (latency or 0)
 end
 
 --- runs function for `x` seconds
@@ -76,26 +71,10 @@ function Time.backoff(x: number, base: number, limit: number, f: (...any) -> boo
 	end)
 end
 
---- returns latency, in seconds, with optional `roundtrip (?=false)`: \
---- `in-studio, regardless of calling environment`: `Time.incomingreplicationlag` \
---- `server`: `client:GetNetworkPing()` or `0` \
---- `client`: `localplayer:GetNetworkPing()`
-function Time.latency(client: Player?, roundtrip: boolean?)
-	if RunService:IsStudio() then
-		return (Time.IncomingReplicationLag / 1000) * (roundtrip and 2 or 1)
-	else
-		if IsServer then
-			return (client and client:GetNetworkPing() or 0) * (roundtrip and 2 or 1)
-		end
-
-		return (LocalPlayer:GetNetworkPing()) * (roundtrip and 2 or 1)
-	end
-end
-
 if IsServer then
 	local elapsed = 0
 	local function updatetime(t, dt)
-		buffer.writef32(Time.ElapsedBuffer, 0, t)
+		buffer.writef64(Time.ElapsedBuffer, 0, t)
 
 		elapsed += dt
 		if elapsed < Time.Framerate then return end
@@ -107,7 +86,7 @@ if IsServer then
 	RunService.Stepped:Connect(updatetime)
 else
 	TimeRemote.OnClientEvent:Connect(function(eb: buffer)
-		buffer.writef32(Time.ElapsedBuffer, 0, buffer.readf32(eb, 0))
+		buffer.writef64(Time.ElapsedBuffer, 0, buffer.readf64(eb, 0))
 	end)
 end
 

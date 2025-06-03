@@ -48,7 +48,7 @@ local Inputs = {
 		[Enum.UserInputType.MouseButton3] = Enum.KeyCode.MouseMiddleButton;
 	};
 
-	CurrentInputDevice = "Unknown" :: "Unknown"|"Keyboard"|"Mobile"|"Gamepad";
+	CurrentInputDevice = "Unknown" :: "Unknown"|"Keyboard"|"Touch"|"Gamepad";
 	DeviceMap = {
 		[Enum.UserInputType.None] = "Unknown";
 
@@ -59,7 +59,7 @@ local Inputs = {
 		[Enum.UserInputType.MouseMovement] = "Keyboard";
 		[Enum.UserInputType.MouseWheel] = "Keyboard";
 	
-		[Enum.UserInputType.Touch] = "Mobile";
+		[Enum.UserInputType.Touch] = "Touch";
 	
 		[Enum.UserInputType.Gamepad1] = "Gamepad";
 		[Enum.UserInputType.Gamepad2] = "Gamepad";
@@ -69,7 +69,7 @@ local Inputs = {
 		[Enum.UserInputType.Gamepad6] = "Gamepad";
 		[Enum.UserInputType.Gamepad7] = "Gamepad";
 		[Enum.UserInputType.Gamepad8] = "Gamepad";
-	} :: {[Enum.UserInputType]: "Unknown"|"Keyboard"|"Mobile"|"Gamepad"};
+	} :: {[Enum.UserInputType]: "Unknown"|"Keyboard"|"Touch"|"Gamepad"};
 
 	ThumbstickL = Vector3.zero;
 	ThumbstickR = Vector3.zero;
@@ -135,7 +135,7 @@ function Inputs.ended()
 end
 
 --- defers `callback` when the local device input changes
-function Inputs.inputdevicechanged(callback: (inputdevice: "Unknown"|"Keyboard"|"Mobile"|"Gamepad") -> ())
+function Inputs.inputdevicechanged(callback: (inputdevice: "Unknown"|"Keyboard"|"Touch"|"Gamepad") -> ())
 	return UserInputService.LastInputTypeChanged:Connect(function(userinputtype: Enum.UserInputType)
 		local newinputdevice = Inputs.DeviceMap[userinputtype] or "Unknown"
 		if newinputdevice ~= Inputs.CurrentInputDevice then
@@ -249,7 +249,7 @@ else
 		if cursor.ForceScreenPosition then
 			screenposition = cursor.ForceScreenPosition
 		else
-			if Inputs.CurrentInputDevice == "Mobile" then
+			if Inputs.CurrentInputDevice == "Touch" then
 				if inputobject and typeof(inputobject) == "InputObject" then
 					local p = inputobject.Position
 					screenposition = Vector2.new(p.X, p.Y)

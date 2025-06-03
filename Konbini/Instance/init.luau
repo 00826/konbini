@@ -383,7 +383,7 @@ function InstanceK.findhighestancestorofclass(instance: Instance, classname: str
 end
 
 --- emits sound at optional position or instance
-function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspeed: number?)
+function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspeed: number?, timeposition: number?)
 	if typeof(at) == "Instance" then
 		local real: BasePart? = nil
 		if at:IsA("BasePart") then
@@ -398,6 +398,7 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspee
 		local newsound = sound:Clone()
 		newsound.Parent = real
 		newsound.PlaybackSpeed = playbackspeed or 1
+		newsound.TimePosition = timeposition or 0
 		newsound.PlayOnRemove = false
 
 		newsound.Stopped:Once(function()
@@ -408,6 +409,8 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspee
 		end)
 
 		newsound:Play()
+
+		return newsound
 	elseif typeof(at) == "Vector3" then
 		local newpart = SoundPart:Clone()
 		newpart.Position = at
@@ -416,16 +419,22 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspee
 		local newsound = sound:Clone()
 		newsound.Parent = newpart
 		newsound.PlaybackSpeed = playbackspeed or 1
+		newsound.TimePosition = timeposition or 0
 		newsound.PlayOnRemove = true
 		
 		newpart:Destroy()
+
+		return newsound
 	else
 		local newsound = sound:Clone()
 		newsound.Parent = script
 		newsound.PlaybackSpeed = playbackspeed or 1
+		newsound.TimePosition = timeposition or 0
 		newsound.PlayOnRemove = true
 
 		newsound:Destroy()
+
+		return newsound
 	end
 end
 
@@ -507,13 +516,13 @@ end
 
 --- returns `target.PrimaryPart:GetNetworkOwner() == (owner or Players.LocalPlayer)`
 function InstanceK.isnetworkowner(target: Model, owner: Player?)
-	assert(target.PrimaryPart, `{target} has no primarypart`)
+	assert(target.PrimaryPart, string.format("'%s' has no primarypart", target.Name))
 	return target.PrimaryPart:GetNetworkOwner() == (owner or Players.LocalPlayer)
 end
 
 --- sets network owner of target primarypart to owner
 function InstanceK.setnetworkowner(target: Model, owner: Player?)
-	assert(target.PrimaryPart, `{target} has no primarypart`)
+	assert(target.PrimaryPart, string.format("'%s' has no primarypart", target.Name))
 	target.PrimaryPart:SetNetworkOwner(owner)
 end
 
@@ -590,7 +599,7 @@ function InstanceK.applybodymover(target: Model|BasePart, class: MoverClass, tim
 	else
 		rootpart = target
 	end
-	assert(rootpart, `{target} has no PrimaryPart`)
+	assert(rootpart, string.format("'%s' has no primarypart", target.Name))
 
 	local newmover = InstanceK.Movers:FindFirstChildOfClass(class):Clone()
 
@@ -618,7 +627,7 @@ function InstanceK.clearbodymovers(target: Model|BasePart, class: MoverClass)
 	else
 		rootpart = target
 	end
-	assert(rootpart, `{target} has no PrimaryPart`)
+	assert(rootpart, string.format("'%s' has no primarypart", target.Name))
 
 	for _, thing in rootpart:GetChildren() do
 		if thing.ClassName == class then
@@ -704,12 +713,11 @@ function InstanceK.refreshtransparencycontroller(tc: TransparencyController)
 	return false
 end
 
---- equivalent to `TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()` \
---- `...[1]`: `Enum.EasingStyle` \
---- `...[2]`: `Enum.EasingDirection` \
---- `...[3...]`: (remainder of `TweenInfo.new()` args)
-function InstanceK.tween(object: Instance, properties: {[string]: any}, time: number, ...)
-	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
+--- equivalent to `TweenService:Create(object, TweenInfo.new(time, style(?=Enum.EasingStyle.Linear) ...), properties):Play()` \
+--- `...[1]`: `Enum.EasingDirection` \
+--- `...[2...]`: (remainder of `TweenInfo.new()` args)
+function InstanceK.tween(object: Instance, properties: {[string]: any}, time: number, style: Enum.EasingStyle?, ...)
+	TweenService:Create(object, TweenInfo.new(time, style or Enum.EasingStyle.Linear, ...), properties):Play()
 end
 
 --- transforms properties of object toward goal with respect to framerate \

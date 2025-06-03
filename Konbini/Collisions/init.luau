@@ -119,10 +119,28 @@ function Collisions.ispointinbox(point: Vector3, cframe: CFrame, size: Vector3)
 		(absoluteobjectspace.Z <= size.Z)
 end
 
---- returns true if point is within bounds of radius defined by position and radius
+--- returns true if point is within bounds of radius at position
 @native
-function Collisions.ispointinradius(point: Vector3, position: Vector3, radius: number)
-	return vector.magnitude(position::any - point::any) <= radius
+function Collisions.ispointinradius(point: Vector3, position: Vector3, radius: number, minradius: number?)
+	local distance = vector.magnitude(position::any - point::any)
+	
+	if minradius then
+		return (distance >= minradius) and (distance <= radius)
+	end
+
+	return distance <= radius
+end
+
+--- returns true if point is within bounds of 2d radius (xz) at position
+@native
+function Collisions.ispointinradiusxz(point: Vector3, position: Vector3, radius: number, minradius: number?)
+	local distance = vector.magnitude(position*Vector3.new(1, 0, 1)::any - point*Vector3.new(1, 0, 1)::any)
+	
+	if minradius then
+		return (distance >= minradius) and (distance <= radius)
+	end
+
+	return distance <= radius
 end
 
 return Collisions

@@ -5,14 +5,12 @@ local RunService = game:GetService("RunService")
 
 local IsServer = RunService:IsServer()
 
-local DataRemote = script:WaitForChild("Remote")
-
 local ServerCache = {} :: { [Player]: { Data: any } }
 local ClientCache = {} :: any
 
 --- ### Data.luau
 ---
---- data handler
+--- data handler \
 --- intended to be used in conjunction with profileservice
 local Data = {
 	Config = {
@@ -20,9 +18,6 @@ local Data = {
 		Datastore = "PlayerData";
 		--- string describing suffix appended to datastore key
 		Suffix = "_1a";
-
-		--- string-array containing keys that are replicated via `Data.sync`
-		SyncKeys = { } :: { string };
 	};
 }
 
@@ -40,24 +35,11 @@ function Data.get(player: Player?): any
 	return
 end
 
---- sends select keys and their associated value to player
-function Data.sync(player: Player, keys: {string}?)
-	assert(IsServer)
+--- writes key-value to client cache
+function Data.write(key: string, value: any)
+	assert(not IsServer)
 
-	local savedata = ServerCache[player].Data
-	local packet = {}
-
-	for _, key in (keys or Data.Config.SyncKeys) do
-		packet[key] = savedata[key]
-	end
-
-	DataRemote:FireClient(player, packet)
-end
-
---- deferred *after* all key-values of a sync packet are applied to the local cache \
---- left blank to be overwritten externally
-Data.changed = function(key: any, value: any)
-	
+	ClientCache[key] = value
 end
 
 --- adds player saveprofile to server cache
@@ -108,22 +90,6 @@ function Data.wipe(gameid: number, lazystring: string)
 	if #failures > 0 then
 		print(string.format("failed to wipe %d entries:", #failures), failures)
 	end
-end
-
-if IsServer then
-
-else
-	DataRemote.OnClientEvent:Connect(function(packet: {})
-		local changes = table.create(8)
-		for k, v in packet do
-			ClientCache[k] = v
-			table.insert(changes, k)
-		end
-
-		for _, k in changes do
-			task.defer(Data.changed, k, ClientCache[k])
-		end
-	end)
 end
 
 return Data

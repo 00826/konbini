@@ -75,7 +75,7 @@ function TableK.droptable<T>(droptable: {[string]: T}, count: number?, R: Random
 		elseif type(value) == "number" then
 			weightsum += value
 		else
-			assert(comp, `comp() must be passed for non-numeric droptable \{[{typeof(key)}]: {typeof(value)}}`)
+			assert(comp, "comp() must be passed for non-numeric droptable {[%s]: %s}", typeof(key), typeof(value))
 		end
 	end
 
@@ -87,7 +87,7 @@ function TableK.droptable<T>(droptable: {[string]: T}, count: number?, R: Random
 			elseif type(value) == "number" then
 				passed += value
 			else
-				assert(comp, `comp() must be passed for non-numeric droptable \{[{typeof(key)}]: {typeof(value)}}`)
+				assert(comp, "comp() must be passed for non-numeric droptable {[%s]: %s}", typeof(key), typeof(value))
 			end
 
 			if roll < passed then
@@ -153,7 +153,7 @@ function TableK.rotate(A: {any}, x: number?)
 	end
 end
 
---- returns elements of array as a page and the max # of pages that can be displayed with respect to size
+--- returns elements of array as a page
 --- ```
 --- t = {} --- [1, ..., 25]
 --- page(t, 10, 1) --- [1, ..., 10]
@@ -171,8 +171,12 @@ function TableK.page<T>(A: {T}, size: number, offset: number)
 			math.clamp(offset * size, 0, len),
 			1,
 			table.create(len)
-		),
-		math.clamp(math.ceil(len / size), 1, math.huge)
+		)
+end
+
+--- returns the max # of pages that can be displayed with respect to size
+function TableK.numpages(A: {any}, size: number)
+	return math.clamp(math.ceil(#A / size), 1, math.huge)
 end
 
 --- returns key-value should `value` exist in `t`
