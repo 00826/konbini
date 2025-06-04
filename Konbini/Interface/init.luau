@@ -292,7 +292,7 @@ function Interface.scaletext(textlabel: TextLabel)
 	end
 end
 
---- scrolls textlabel text with `speed (?=40)` and initially-visible `graphemes (?=0)`
+--- scrolls textlabel text with `speed (?=100)` and initially-visible `graphemes (?=0)`
 function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?, graphemes: number?)
 	textlabel.MaxVisibleGraphemes = graphemes or 0
 	if text then
