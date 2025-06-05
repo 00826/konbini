@@ -11,7 +11,7 @@ local Motor = script:WaitForChild("Motor6D")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
-local KeyframeBucket = {} :: {[Instance]: KeyframeInfo}
+local KeyframeBucket = {}
 local Keyframable = {
 	"number";
 	"boolean";
@@ -119,7 +119,7 @@ local function getvalue(initial: any, goal: any, a: number, style: Enum.EasingSt
 	error(`untweenable property (this should not happen) type({h}) typeof({k})`)
 end
 
-local function interpolate(object: Instance, keyframeinfo: KeyframeInfo, dt: number)
+local function interpolate(object: Instance, keyframeinfo: any, dt: number)
 	local framerate = keyframeinfo.Framerate
 	keyframeinfo.Framerule += dt
 	keyframeinfo.Elapsed += dt
@@ -150,20 +150,6 @@ local function interpolate(object: Instance, keyframeinfo: KeyframeInfo, dt: num
 	end
 end
 
-export type TransparencyController = {
-	Rig: any;
-
-	TargetTransparency: number;
-	RealTransparency: number;
-
-	Cache: {Instance}; --- BasePart | Decal
-	DescendantAdded: RBXScriptConnection?;
-	DescendantRemoving: RBXScriptConnection?;
-
-	Disconnected: boolean;
-	Disconnect: () -> ();
-}
-
 export type Tree = {
 	ClassName: string;
 	Children: { Tree }?;
@@ -176,41 +162,6 @@ export type MoverClass =
 	| "BodyGyro"
 	| "BodyVelocity"
 	| "BodyPosition"
-	| "VectorForce"
-
-export type KeyframeInfo = {
-	Framerate: number;
-	Framerule: number;
-
-	Time: number;
-	Elapsed: number;
-	IsPaused: boolean;
-
-	Style: Enum.EasingStyle;
-	Direction: Enum.EasingDirection;
-
-	Initial: {[string]: any};
-	Goal: {[string]: any};
-	Destruct: number?;
-
-	Pause: () -> ();
-	Resume: () -> ();
-	Stop: () -> ();
-}
-
-export type KeyframeType =
-	| number
-	| boolean
-	| Vector2
-	| Vector3
-	| CFrame
-	| Color3
-	| ColorSequence
-	| EnumItem
-	| NumberRange
-	| NumberSequence
-	| UDim
-	| UDim2
 
 --- ### Instance.luau
 ---
@@ -649,7 +600,7 @@ function InstanceK.istransparencymodifiable(thing: Instance)
 end
 
 --- returns `TransparencyController` table
-function InstanceK.createtransparencycontroller(rig: Instance): TransparencyController
+function InstanceK.createtransparencycontroller(rig: Instance)
 	local things = rig:GetDescendants()
 	local controller = {
 		Rig = rig;
@@ -697,7 +648,7 @@ function InstanceK.createtransparencycontroller(rig: Instance): TransparencyCont
 end
 
 --- refreshes `LocalTransparencyModifier` of instances associated with `TransparencyController`
-function InstanceK.refreshtransparencycontroller(tc: TransparencyController)
+function InstanceK.refreshtransparencycontroller(tc: typeof(InstanceK.createtransparencycontroller(...)))
 	if tc.Disconnected then return false end
 
 	local target = tc.TargetTransparency
@@ -728,7 +679,21 @@ end
 --- `destruct(?=nil)`: destroy object `n` seconds after effect completion
 --- \
 --- returns a mutable `KeyframeInfo` table
-function InstanceK.keyframe(object: Instance, goal: {[string]: KeyframeType}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?, destruct: number?): KeyframeInfo
+function InstanceK.keyframe(object: Instance, goal: {
+	[string]: 
+		| number
+		| boolean
+		| Vector2
+		| Vector3
+		| CFrame
+		| Color3
+		| ColorSequence
+		| EnumItem
+		| NumberRange
+		| NumberSequence
+		| UDim
+		| UDim2
+}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?, destruct: number?)
 	assert(not IsServer, "InstanceK.keyframe() can only be called on client")
 
 	if KeyframeBucket[object] then
@@ -873,7 +838,7 @@ if IsServer then
 else
 	RunService.Heartbeat:Connect(function(dt)
 		local x = 0
-		for object, keyframeinfo in KeyframeBucket do
+		for object, keyframeinfo in KeyframeBucket::any do
 			if keyframeinfo.IsPaused then continue end
 			interpolate(object, keyframeinfo, dt)
 

@@ -16,40 +16,6 @@ local Encoder = {
 	Abbreviations = {""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
 
---- asserts all types of table `a` against typestring-table `typetable` \
---- values of typetable are separated such that each type is capturable by pattern `%w+` and is compared against `typeof(a[k])` \
---- returns table `c` of all truthful asserted values with respect to `typetable`
---- ```luau
---- Encoder.assert({cats = 5}, {cats = "number"}) --- ok
---- Encoder.assert({}, {cats = "number|nil"}) --- ok
---- Encoder.assert({cats = Vector3.one}, {cats = "number|nil"}) --- error: expected typeof(a["cats"]) (Vector3) to be in set number|nil
---- ```
-function Encoder.assert<T>(a: T & {[string]: unknown}, typetable: {[string]: string}): T & {[string]: unknown}
-	assert(type(a) == "table", string.format("expected type(a) (%s) to be table", type(a)))
-
-	local c = {}
-
-	for key, typestring in typetable do
-		local value = a[key]
-		local type = typeof(value)
-
-		local comp = string.gsub(typestring, "%w+", function(substring)
-			if substring == type then
-				c[key] = value
-				return ""
-			end
-			
-			return substring
-		end)
-
-		if typestring == comp then
-			error(string.format("expected typeof(a[%s]) (%s) to be in typeof-set %s", key, type, typestring), 2)
-		end
-	end
-
-	return c :: T & {[string]: unknown}
-end
-
 --- trims trailing whitespaces from string in buffer
 function Encoder.trimstring(str: string)
 	return string.gsub(string.gsub(str, "%s+", " "), "\u{0000}", "")
@@ -922,6 +888,16 @@ function Encoder.abbreviatenumber(x: number, places: number?, dsep: string?)
 	local suffix = Encoder.Abbreviations[1 + exp] or ("e+" .. exp)
 	
 	return string.gsub(tostring(math.floor(x * ((10 ^ (places or 1)) / (1000 ^ exp))) / (10 ^ (places or 1))), "[.]", dsep or ".") .. suffix
+end
+
+--- returns `string.format("%x", value)`
+function Encoder.tohexadecimal(value: number)
+	return string.format("%x", value)
+end
+
+--- returns `tonumber(value, 16)`
+function Encoder.fromhexadecimal(value: string)
+	return tonumber(value, 16)
 end
 
 type thumb =

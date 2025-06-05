@@ -17,13 +17,6 @@ local PartitionString = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
 local MapKeys = {};
 local SortedMaps = {};
 
-export type Entry = {
-	--- u8[0] number of players present in this server
-	Users: buffer;
-	--- typeof(Memory.Local)
-	Data: {[string]: any};
-}
-
 --- ### Memory.luau
 ---
 --- memorystoreservice wrapper for the rate limit lovers \
@@ -52,8 +45,8 @@ local function storeof(key: string): MemoryStoreSortedMap
 end
 
 --- returns an empty memory store entry
-local function createentry(now: number)
-	local e: Entry = {
+local function createentry()
+	local e = {
 		Users = Users;
 		Data = Memory.Local;
 	}
@@ -173,7 +166,7 @@ function Memory.updateasync(key: string, data: any, expiry: number?)
 
 	local store = storeof(key)
 	local ref = nil
-	local s, result = pcall(store.UpdateAsync, store, key, function(entry: Entry)
+	local s, result = pcall(store.UpdateAsync, store, key, function(entry: typeof(createentry()))
 		if not entry then
 			ref = {
 				Users = buffer.create(1);
@@ -211,7 +204,7 @@ function Memory.refreshasync(key: string, expiry: number?)
 
 	local store = storeof(key)
 	local ref = nil
-	local s, result = pcall(store.UpdateAsync, store, key, function(entry: Entry?)
+	local s, result = pcall(store.UpdateAsync, store, key, function(entry: typeof(createentry())?)
 		ref = entry
 
 		return entry
@@ -328,7 +321,7 @@ if RunService:IsServer() then
 
 			if JobId ~= "" then --- corny freakazoid case where studio jobids are always an empty string
 				local store = storeof(JobId)
-				local s, result = pcall(store.SetAsync, store, JobId, createentry(now), 600)
+				local s, result = pcall(store.SetAsync, store, JobId, createentry(), 600)
 				if s then
 					addunit(1)
 				else
@@ -342,7 +335,7 @@ if RunService:IsServer() then
 			table.clear(Memory.Concurrent)
 	
 			for i, range in ipairs(orderedmaps) do
-				local u: {{key: string, value: Entry}} = unwrap(SortedMaps[range])
+				local u: {{key: string, value: typeof(createentry())}} = unwrap(SortedMaps[range])
 	
 				for _, entry in u do
 					local key = entry.key

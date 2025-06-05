@@ -14,20 +14,6 @@ local function cartesian(p: number, w: number)
 	return p // w, p % w
 end
 
-export type Sprite = {
-	--- position of sprite (L -> R, T -> B)
-	Position: number;
-	--- sprite layout
-	Layout: {
-		--- rbxassetid://
-		Id: string;
-		--- sprite size
-		Size: Vector2;
-		--- sheet dimensions
-		Width: number;
-	};
-}
-
 --- ### Interface.luau
 ---
 --- quality-of-life interface functions \
@@ -250,8 +236,20 @@ function Interface.connectbutton(button: GuiButton, functions: {
 	return connections
 end
 
+--- returns empty sprite
+function Interface.createsprite()
+	return {
+		Position = 0;
+		Layout = {
+			Id = "";
+			Size = Vector2.zero;
+			Width = 0;
+		};
+	}
+end
+
 --- applies `sprite` to `imagelabel`
-function Interface.sprite(imagelabel: ImageLabel, sprite: Sprite?)
+function Interface.sprite(imagelabel: ImageLabel, sprite: typeof(Interface.createsprite())?)
 	if not sprite then
 		imagelabel.Image = ""
 		imagelabel.ImageRectSize = Vector2.zero

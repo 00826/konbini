@@ -29,14 +29,6 @@
 				"MaxForce": [200000, 200000, 200000],
 				"Position": [0, 0, 0]
 			}
-		},
-		{
-			"ClassName": "VectorForce",
-			"Name": "VectorForce",
-			"Properties": {
-				"Force": [0, 0, 0],
-				"RelativeTo": "World"
-			}
 		}
 	]
 }
