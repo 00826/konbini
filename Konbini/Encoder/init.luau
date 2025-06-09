@@ -261,7 +261,8 @@ end
 
 --- returns a `int16`-width matrix-buffer \
 --- space complexity of `2 + (2*columns*rows)` \
---- *matrix value placements start at offset `2`, as column/row info is stored in the first 2 bytes*
+--- *matrix value placements start at offset `2`, as column/row info is stored in the first 2 bytes. \
+--- args passed into mutator functions, however, should be zero-indexed.*
 function Encoder.creatematrix(columns: number, rows: number)
 	local m = buffer.create( 2 + (2 * columns * rows) )
 
@@ -271,44 +272,26 @@ function Encoder.creatematrix(columns: number, rows: number)
 	return m
 end
 
---- writes value to `int16`-width matrix-buffer
-function Encoder.writematrix(m: buffer, column: number, row: number, value: number)
+--- writes value to matrix
+function Encoder.matrixwrite(m: buffer, column: number, row: number, value: number)
 	local width = 2 * buffer.readu8(m, 0)
-	local offset = (2 * column) + ((row - 1) * width)
+	local offset = 2 + (2 * column) + (row * width)
 
 	buffer.writei16(m, offset, value)
 end
 
 --- clears matrix, preserving the first two bits that contain row/column info \
 --- equivalent to `buffer.fill(m, 2, 0)`
-function Encoder.clearmatrix(m: buffer)
+function Encoder.matrixclear(m: buffer)
 	buffer.fill(m, 2, 0)
 end
 
---- writes set of values to row of `int16`-width matrix-buffer \
---- if values are omitted, the range is filled with zeroes
-function Encoder.writerowmatrix(m: buffer, row: number, values: ({number}|buffer)?)
+--- reads set of values along row of matrix
+function Encoder.matrixreadrow(m: buffer, row: number): {number}
 	local columns = buffer.readu8(m, 0)
 	local width = 2 * columns
-	local offset = 2 + ((row - 1) * width)
+	local offset = 2 + (row * width)
 
-	if type(values) == "buffer" then
-		assert(buffer.len(values) == width)
-		buffer.copy(m, offset, values, 0)
-	elseif type(values) == "table" then
-		for i = 1, columns do
-			buffer.writei16(m, offset + (2 * (i - 1)), values[i] or 0)
-		end
-	else
-		buffer.fill(m, offset, 0, width)
-	end
-end
-
---- reads set of values along row of `int16`-width matrix-buffer
-function Encoder.readrowmatrix(m: buffer, row: number): {number}
-	local columns = buffer.readu8(m, 0)
-	local width = 2 * columns
-	local offset = 2 + ((row - 1) * width)
 	local r = table.create(columns, 0)
 
 	for i = 1, columns do
@@ -319,11 +302,11 @@ function Encoder.readrowmatrix(m: buffer, row: number): {number}
 	return r
 end
 
---- returns a copy of row of `int16`-width matrix-buffer
-function Encoder.copyrowmatrix(m: buffer, row: number)
+--- returns a copy of row of matrix
+function Encoder.matrixextractrow(m: buffer, row: number)
 	local columns = buffer.readu8(m, 0)
 	local width = 2 * columns
-	local offset = 2 + ((row - 1) * width)
+	local offset = 2 + (row * width)
 
 	local copy = buffer.create(width)
 	buffer.copy(copy, 0, m, offset, width)
@@ -331,15 +314,29 @@ function Encoder.copyrowmatrix(m: buffer, row: number)
 	return copy
 end
 
---- reads sum of values along column of `int16`-width matrix-buffer
-function Encoder.readcolumnmatrix(m: buffer, column: number)
+--- returns a string interpretation of matrix row
+function Encoder.matrixinterpretrow(m: buffer, row: number)
+	local columns = buffer.readu8(m, 0)
+	local width = 2 * columns
+	local offset = 2 + (row * width)
+
+	local str = ""
+	for _ = 1, columns do
+		str ..= string.format("%05d ", buffer.readi16(m, offset)) --- format precision is 05d because i16's have at most 5 integers not including the sign
+		offset += 2
+	end
+
+	return str
+end
+
+--- reads sum of values along column of matrix
+function Encoder.matrixreadcolumn(m: buffer, column: number)
 	local rows = buffer.readu8(m, 1)
 	local width = 2 * buffer.readu8(m, 0)
+	local offset = 2 + (2 * column)
 
-	local offset = 2 * column
 	local sum = 0
-
-	for i = 1, rows do
+	for _ = 1, rows do
 		sum += buffer.readi16(m, offset)
 		offset += width
 	end
@@ -347,45 +344,34 @@ function Encoder.readcolumnmatrix(m: buffer, column: number)
 	return sum
 end
 
---- returns matrix as a two-dimensional numeric array \
---- `precision (?=4)`: # of digits to display per value \
---- `output (?=false)`: print matrix in output
-function Encoder.unpackmatrix(m: buffer, precision: number?, output: boolean?): { {number} }
-	local columns = buffer.readu8(m, 0)
+--- returns a copy of column of matrix
+function Encoder.matrixextractcolumn(m: buffer, column: number)
 	local rows = buffer.readu8(m, 1)
+	local width = 2 * buffer.readu8(m, 0)
+	local offset = 2 + (2 * column)
 
-	local u = table.create(rows)
-	local sums = table.create(columns, 0)
-
-	local digits = "%0" .. tostring(precision or 4) .. "d"
-
-	if output then
-		print(`{columns}x{rows} (2 + {buffer.len(m)-2} bytes) matrix: `, m)
+	local copy = buffer.create(2 * rows)
+	for i = 0, rows - 1, 1 do
+		buffer.writei16(copy, 2 * i, buffer.readi16(m, offset))
+		offset += width
 	end
 
-	for i = 1, rows do
-		local r = Encoder.readrowmatrix(m, i)
-		table.insert(u, r)
+	return copy
+end
 
-		local strings = table.create(columns)
-		for a, b in ipairs(r) do
-			strings[a] = string.format(digits, b)
-			sums[a] += b
-		end
-		if output then
-			print(`[{i}]	`, table.concat(strings, " "))
-		end
+--- returns a string interpretation of matrix row
+function Encoder.matrixinterpretcolumn(m: buffer, column: number)
+	local rows = buffer.readu8(m, 1)
+	local width = 2 * buffer.readu8(m, 0)
+	local offset = 2 + (2 * column)
+
+	local str = ""
+	for _ = 1, rows do
+		str ..= string.format("%05d ", buffer.readi16(m, offset)) --- format precision is 05d because i16's have at most 5 integers not including the sign
+		offset += width
 	end
 
-	for a, b in ipairs(sums) do
-		sums[a] = string.format(digits, Encoder.readcolumnmatrix(m, a))::any
-	end
-	if output then
-		print("----")
-		print(`[sum]	`, table.concat(sums, " "))
-	end
-
-	return u
+	return str
 end
 
 --- writes value to bit-field-width of u32 stored in buffer at offset \

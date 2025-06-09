@@ -202,17 +202,19 @@ function TableK.deepcopy(t: {[any]: any}): {[any]: any}
 	return copy
 end
 
---- returns union of a and b, avoiding repeating elements and preserving sort order
+--- returns `a ∪ b`
 function TableK.union<T>(a: {T}, b: {T})
-	local union = table.clone(a)
+	return table.move(b, 1, #b, #a + 1, table.clone(a))
+end
 
-	for _, value in ipairs(b) do
-		if not table.find(union, value) then
-			table.insert(union, value)
-		end
+--- returns `a ∖ b`
+function TableK.negate<T>(a: {T}, b: {T})
+	local c = table.clone(a)
+	for _, value in b do
+		table.remove(c, table.find(c, value) or 0)
 	end
 
-	return union
+	return c
 end
 
 --- patches target table using source as a truth state

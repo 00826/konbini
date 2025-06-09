@@ -183,23 +183,27 @@ end
 --- connects button events to `guibutton`
 function Interface.connectbutton(button: GuiButton, functions: {
 	--- `MouseButton1Down`
-	ClickDown: ((x: number?, y: number?) -> ())?;
+	ClickDown: (x: number?, y: number?) -> ()?;
 	--- `MouseButton1Up`
-	ClickUp: ((x: number?, y: number?) -> ())?;
+	ClickUp: (x: number?, y: number?) -> ()?;
 	--- `MouseButton2Down`
-	RClickDown: ((x: number?, y: number?) -> ())?;
+	RClickDown: (x: number?, y: number?) -> ()?;
 	--- `MouseButton2Up`
-	RClickUp: ((x: number?, y: number?) -> ())?;
+	RClickUp: (x: number?, y: number?) -> ()?;
 	--- `MouseEnter` \
 	--- `SelectionGained`
-	Enter: ((x: number?, y: number?) -> ())?;
+	Enter: (x: number?, y: number?) -> ()?;
 	--- `MouseLeave` \
 	--- `SelectionLost`
-	Leave: ((x: number?, y: number?) -> ())?;
+	Leave: (x: number?, y: number?) -> ()?;
 	--- `MouseMoved`
-	Move: ((x: number?, y: number?) -> ())?;
+	Move: (x: number?, y: number?) -> ()?;
+	--- `ScrollUp`
+	ScrollUp: () -> ()?;
+	--- `ScrollDown`
+	ScrollDown: () -> ()?;
 })
-	local connections = table.create(10)
+	local connections = table.create(12)
 
 	if functions.ClickDown then
 		table.insert(connections, button.MouseButton1Down:Connect(functions.ClickDown))
@@ -231,6 +235,12 @@ function Interface.connectbutton(button: GuiButton, functions: {
 	end
 	if functions.Move then
 		table.insert(connections, button.MouseMoved:Connect(functions.Move))
+	end
+	if functions.ScrollUp then
+		table.insert(connections, button.MouseWheelForward:Connect(functions.ScrollUp))
+	end
+	if functions.ScrollDown then
+		table.insert(connections, button.MouseWheelBackward:Connect(functions.ScrollDown))
 	end
 
 	return connections
@@ -290,16 +300,22 @@ function Interface.scaletext(textlabel: TextLabel)
 	end
 end
 
---- scrolls textlabel text with `speed (?=100)` and initially-visible `graphemes (?=0)`
+--- scrolls textlabel text with `speed (?=100)` and initially-visible `graphemes (?=0)` \
+--- returns scroll time
 function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?, graphemes: number?)
 	textlabel.MaxVisibleGraphemes = graphemes or 0
-	if text then
+	if text == "" then
+		--- nothing
+	elseif text then
 		textlabel.Text = text
 	end
 
 	local len = math.clamp((utf8.len(textlabel.ContentText) or 0) - (graphemes or 0), 0, math.huge)
+	local time = len / (speed or 100)
 
-	tween(textlabel, {MaxVisibleGraphemes = len}, len / (speed or 100), Enum.EasingStyle.Linear)
+	tween(textlabel, {MaxVisibleGraphemes = text == "" and 0 or len}, time, Enum.EasingStyle.Linear)
+
+	return time
 end
 
 --- attaches target to textlabel

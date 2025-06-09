@@ -47,10 +47,18 @@ end
 --- sets and plays action track of animation controller \
 --- `priority (?=Library[name].Priority|Enum.AnimationPriority.Action)`: animation priority \
 --- returns `controller.ActionTrack` for convenience
-function Animation.playactiontrack(controller: typeof(Animation.createcontroller(...)), name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+function Animation.playactiontrack(controller: typeof(Animation.createcontroller(...)), name: string?, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
 	if controller.ActionTrack then
 		controller.ActionTrack:Stop(fadetime or Animation.FadeTime)
 		controller.ActionTrack = nil
+	end
+
+	if name == nil then
+		if controller.ActionTrack then
+			controller.ActionTrack:Stop(fadetime or Animation.FadeTime)
+			controller.ActionTrack = nil
+		end
+		return controller.ActionTrack
 	end
 
 	local entry = Animation.Library[name]
@@ -68,10 +76,18 @@ end
 --- sets and plays loop track of animation controller \
 --- `priority (?=Library[name].Priority|Enum.AnimationPriority.Idle)`: animation priority \
 --- returns `controller.LoopTrack` for convenience
-function Animation.playlooptrack(controller: typeof(Animation.createcontroller(...)), name: string, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+function Animation.playlooptrack(controller: typeof(Animation.createcontroller(...)), name: string?, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
 	if controller.LoopTrack then
 		controller.LoopTrack:Stop(fadetime or Animation.FadeTime)
 		controller.LoopTrack = nil
+	end
+
+	if name == nil then
+		if controller.LoopTrack then
+			controller.LoopTrack:Stop(fadetime or Animation.FadeTime)
+			controller.LoopTrack = nil
+		end
+		return controller.LoopTrack
 	end
 
 	local entry = Animation.Library[name]
@@ -108,9 +124,9 @@ function Animation.evaluate(animtrack: AnimationTrack?, name: string?)
 end
 
 --- returns animation library entry
-function Animation.createentry(id: string, priority: Enum.AnimationPriority?)
+function Animation.createentry(name: string, id: string, priority: Enum.AnimationPriority?)
 	local animobject = Instance.new("Animation")
-	animobject.Name = id
+	animobject.Name = name
 	animobject.AnimationId = id
 	animobject.Parent = script
 	
@@ -122,16 +138,14 @@ function Animation.createentry(id: string, priority: Enum.AnimationPriority?)
 end
 
 --- loads entries into library
-function Animation.load(entries: {[string]: typeof(Animation.createentry(...))})
-	for name, entry in entries do
-		local preexisting = Animation.Library[name]
-		if preexisting then
-			preexisting.Animation:Destroy()
-			table.clear(preexisting)
-		end
-
-		Animation.Library[name] = entry
+function Animation.load(name: string, entry: typeof(Animation.createentry(...)))
+	local preexisting = Animation.Library[name]
+	if preexisting then
+		preexisting.Animation:Destroy()
+		table.clear(preexisting)
 	end
+
+	Animation.Library[name] = entry
 end
 
 --- returns array of animation instances for preloading
