@@ -60,35 +60,22 @@ function TableK.average(array: {any}, weights: {number}?)
 	return sum and sum / len
 end
 
---- returns list of elements picked from droptable \
---- compatible with weighted tables whose sum of values does not equal 100
-function TableK.droptable<T>(droptable: {[string]: T}, count: number?, R: Random?, comp: ((T) -> number)?)
+--- returns list of entries from weighted droptable
+function TableK.droptable(droptable: { { key: string, weight: number } & {[string]: any} }, count: number?, R: Random?)
 	local items = table.create(count or 1)
 	local weightsum = 0
 
-	for key, value in droptable do
-		if comp then
-			weightsum += comp(value)
-		elseif type(value) == "number" then
-			weightsum += value
-		else
-			assert(comp, "comp() must be passed for non-numeric droptable {[%s]: %s}", typeof(key), typeof(value))
-		end
+	for _, entry in droptable do
+		weightsum += entry.weight
 	end
 
 	for _ = 1, count or 1 do
 		local roll, passed = (R or Rand):NextNumber(0, weightsum), 0
-		for key, value in droptable do
-			if comp then
-				passed += comp(value)
-			elseif type(value) == "number" then
-				passed += value
-			else
-				assert(comp, "comp() must be passed for non-numeric droptable {[%s]: %s}", typeof(key), typeof(value))
-			end
+		for _, entry in droptable do
+			passed += entry.weight
 
-			if roll < passed then
-				table.insert(items, key)
+			if roll <= passed then
+				table.insert(items, entry)
 				break
 			end
 		end

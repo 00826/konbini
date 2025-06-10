@@ -561,45 +561,56 @@ end
 
 --- returns numeric stage `base / base` \
 --- `base (?=2)`: stage base value
-function Encoder.createstage(base: number?)
-	local s = buffer.create(1)
-	buffer.writebits(s, 0, 4, base or 2)
-	buffer.writebits(s, 4, 4, base or 2)
+function Encoder.createstage(width: number, base: number?)
+	local s = buffer.create(width)
+	for i = 0, width - 1, 1 do
+		local bitoffset = i * 8
+		buffer.writebits(s, bitoffset, 4, base or 2)
+		buffer.writebits(s, bitoffset + 4, 4, base or 2)
+	end
 
 	return s
 end
 
 --- writes value to signed portion of numeric stage
 --- ```luau
---- createstage(2) --- 2/2
---- stagewrite(s, 3) --- 3/2
---- stagewrite(s, -4) --- 3/4
+--- createstage(1) --- 2/2
+--- stagewrite(s, 0, 5) --- 5/2
+--- stagewrite(s, 0, -3) --- 5/3
 --- ```
-function Encoder.stagewrite(s: buffer, value: number)
+function Encoder.stagewrite(s: buffer, byteoffset: number, value: number)
+	local bitoffset = byteoffset * 8
 	if math.sign(value) == 1 then
-		buffer.writebits(s, 0, 4, math.clamp(value, 0, 16))
+		buffer.writebits(s, bitoffset, 4, math.clamp(value, 0, 16))
 	else
-		buffer.writebits(s, 0, 4, math.clamp(math.abs(value), 0, 16))
+		buffer.writebits(s, bitoffset + 4, 4, math.clamp(math.abs(value), 0, 16))
 	end
 end
 
 --- adds value to signed portion of numeric stage
 --- ```luau
---- createstage(2) --- 2/2
---- stagedelta(s, 1) --- 3/2
---- stagedelta(s, -2) --- 3/4
+--- createstage(1) --- 2/2
+--- stagedelta(s, 0, 1) --- 3/2
+--- stagedelta(s, 0, -2) --- 3/4
 --- ```
-function Encoder.stagedelta(s: buffer, value: number)
+function Encoder.stagedelta(s: buffer, byteoffset: number, value: number)
+	local bitoffset = byteoffset * 8
 	if math.sign(value) == 1 then
-		buffer.writebits(s, 0, 4, math.clamp(value + buffer.readbits(s, 0, 4), 0, 16))
+		buffer.writebits(s, bitoffset, 4, math.clamp(value + buffer.readbits(s, 0, 4), 0, 16))
 	else
-		buffer.writebits(s, 0, 4, math.clamp(math.abs(value) + buffer.readbits(s, 4, 4), 0, 16))
+		buffer.writebits(s, bitoffset + 4, 4, math.clamp(math.abs(value) + buffer.readbits(s, 4, 4), 0, 16))
 	end
 end
 
 --- returns numeric stage `x / y`
-function Encoder.stageread(s: buffer)
-	return buffer.readbits(s, 0, 4) / buffer.readbits(s, 4, 4)
+function Encoder.stageread(s: buffer, byteoffset: number)
+	local bitoffset = byteoffset * 8
+	return buffer.readbits(s, bitoffset, 4) / buffer.readbits(s, bitoffset + 4, 4)
+end
+
+--- returns `byteoffset * 8`
+function Encoder.bitoffset(byteoffset: number)
+	return byteoffset * 8 --- yes i unironically need this kthxbai!!
 end
 
 --- equivalent to `bit32.replace(x, value, field, width)`

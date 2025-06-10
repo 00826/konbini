@@ -303,11 +303,12 @@ end
 --- scrolls textlabel text with `speed (?=100)` and initially-visible `graphemes (?=0)` \
 --- returns scroll time
 function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number?, graphemes: number?)
-	textlabel.MaxVisibleGraphemes = graphemes or 0
 	if text == "" then
 		--- nothing
+		textlabel.MaxVisibleGraphemes = utf8.len(textlabel.ContentText) or 0
 	elseif text then
 		textlabel.Text = text
+		textlabel.MaxVisibleGraphemes = graphemes or 0
 	end
 
 	local len = math.clamp((utf8.len(textlabel.ContentText) or 0) - (graphemes or 0), 0, math.huge)
