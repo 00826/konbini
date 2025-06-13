@@ -829,7 +829,7 @@ function InstanceK.camera(cframe: CFrame, fov: number?, name: string?)
 	camera.CFrame = cframe
 	camera.FieldOfView = fov or 70
 	camera.Name = name or "Camera"
-	camera.Parent = script
+	camera.Parent = workspace
 
 	return camera
 end
