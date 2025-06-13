@@ -172,6 +172,8 @@ local InstanceK = {
 
 	KeyframeFramerate = 1/30;
 	KeyframeActiveObjects = 0;
+
+	DebouncePrefix = "__d_";
 }
 
 --- recursive `Instance.new()` using instance tree
@@ -832,6 +834,25 @@ function InstanceK.camera(cframe: CFrame, fov: number?, name: string?)
 	camera.Parent = workspace
 
 	return camera
+end
+
+--- applies attribute debounce to instance, returning true if debounce passes \
+--- if `time` is nil, the debounce attribute is reset and the function will return true
+function InstanceK.debounce(thing: Instance, name: string, now: number?, time: number?)
+	if time then
+		assert(now, "'now' must be passed if time ~= nil")
+		local later = thing:GetAttribute(InstanceK.DebouncePrefix .. name) or 0
+		if later < now then
+			thing:SetAttribute(InstanceK.DebouncePrefix .. name, now + time)
+
+			return true
+		else
+			return false
+		end
+	else
+		thing:SetAttribute(InstanceK.DebouncePrefix .. name, nil)
+		return true
+	end
 end
 
 if IsServer then
