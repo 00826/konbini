@@ -17,22 +17,22 @@
 |[Animation.luau](./Konbini/Animation/init.luau)|animation controller|-|⭕|
 |*[await.luau](./Konbini/await/init.luau)*|`task.await()`|-|⭕|
 |[Bullet.luau](./Konbini/Bullet/init.luau)|projectile solver|-|⭕|
-|**[CFrame.luau](./Konbini/CFrame/init.luau)**|`CFrame` library extension|-|⭕|
+|[CFrame.luau](./Konbini/CFrame/init.luau)|`CFrame` library extension|-|⭕|
 |[Collisions.luau](./Konbini/Collisions/init.luau)|collision solver and spatial query wrapper|-|⭕|
-|**[Color3.luau](./Konbini/Color3/init.luau)**|`Color3`, `ColorSequence` library extension|-|⭕|
+|[Color3.luau](./Konbini/Color3/init.luau)|`Color3`, `ColorSequence` library extension|-|⭕|
 |[Couture.luau](./Konbini/Couture/init.luau)|server-instanced, client-authoritative accessories|-|⭕|
 |[Encoder.luau](./Konbini/Encoder/init.luau)|primitive type helper functions|-|⭕|
 |[Entity.luau](./Konbini/Entity/init.luau)|entity replication controller|-|⭕|
 |*[Hook.luau](./Konbini/Hook/init.luau)*|oopless function binder|-|⭕|
 |[Inputs.luau](./Konbini/Inputs/init.luau)|`UserInputService`, `GamepadService` wrapper|-|⭕|
-|**[Instance.luau](./Konbini/Instance/init.luau)**|`Instance` library extension|-|⭕|
+|[Instance.luau](./Konbini/Instance/init.luau)|`Instance` library extension|-|⭕|
 |[Interface.luau](./Konbini/Interface/init.luau)|`UDim`, `UDim2`, `Vector2` library extensions, ui helper functions|-|⭕|
-|**[Math.luau](./Konbini/Math/init.luau)**|`math` library extension|-|⭕|
+|[Math.luau](./Konbini/Math/init.luau)|`math` library extension|-|⭕|
 |[Network.luau](./Konbini/Network/init.luau)|basic remote interface|-|⭕|
 |[Patronage.luau](./Konbini/Patronage/init.luau)|player patronage (devproducts, gamepasses, premium, group membership, etc)|-|⭕|
-|**[Table.luau](./Konbini/Table/init.luau)**|`table` library extension|-|⭕|
+|[Table.luau](./Konbini/Table/init.luau)|`table` library extension|-|⭕|
 |[Time.luau](./Konbini/Time/init.luau)|server-authoritative global time|-|⭕|
-|**[Vector3.luau](./Konbini/Vector3/init.luau)**|`Vector3` library extension|-|⭕|
+|[Vector3.luau](./Konbini/Vector3/init.luau)|`Vector3` library extension|-|⭕|
 
 ## design language
 
@@ -69,4 +69,4 @@ local module = {}
 return module
 ```
 
-**コ** Konbini by 00826 / overflowed
+コ Konbini by 00826 / overflowed
