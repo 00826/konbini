@@ -38,7 +38,7 @@ end
 
 --- ### Entity.luau
 ---
---- entity handler, belongs as a standalone
+--- entity replication controller
 local Entity = {
 	Cache = {} :: { [string]: any };
 	ListeningTo = {};

@@ -18,7 +18,7 @@ local CursorBlacklist = {}
 
 --- ### Inputs.luau
 ---
---- all-in-one input wrapper
+--- input service wrapper
 local Inputs = {
 	--- written externally. just exists as a universal reference to device input vector
 	InputVector = Vector3.zero;

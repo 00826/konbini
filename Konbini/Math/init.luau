@@ -4,7 +4,7 @@
 
 --- ### Math.luau
 ---
---- extension of math library
+--- math library extension
 local MathK = {
 	pi4 = math.pi/4;
 	pi2 = math.pi/2;

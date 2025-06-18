@@ -6,7 +6,7 @@ local Rand = Random.new()
 
 --- ### Vector3.luau
 ---
---- extension of Vector3 library
+--- Vector3 library extension
 local Vector3K = {
 	yzAxis = Vector3.one - Vector3.xAxis;
 	xzAxis = Vector3.one - Vector3.yAxis;

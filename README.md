@@ -14,25 +14,24 @@
 |-|-|-|:-:|
 |[Konbini](./Konbini/init.luau)|main module|-|⭕|
 |-|-|-|-|
-|[Animation.luau](./Konbini/Animation/init.luau)|aio animation handler|-|⭕|
+|[Animation.luau](./Konbini/Animation/init.luau)|animation controller|-|⭕|
 |*[await.luau](./Konbini/await/init.luau)*|`task.await()`|-|⭕|
 |[Bullet.luau](./Konbini/Bullet/init.luau)|projectile solver|-|⭕|
 |**[CFrame.luau](./Konbini/CFrame/init.luau)**|`CFrame` library extension|-|⭕|
-|[Collisions.luau](./Konbini/Collisions/init.luau)|condensed spatial queries|-|⭕|
-|**[Color3.luau](./Konbini/Color3/init.luau)**|`Color3` library extension|-|⭕|
-|[Couture.luau](./Konbini/Couture/init.luau)|near-client-authoritative accessory/cosmetic handling<br>game server has better things to do than weld accessories<br>*gated to `InsertService:LoadAsset()` being server-only :/*|-|⭕|
-|[Data.luau](./Konbini/Data/init.luau)|glorified `ProfileService` interface|*implied dependence on profileservice*|⭕|
-|[Encoder.luau](./Konbini/Encoder/init.luau)|buffer/string manip library|-|⭕|
-|[Entity.luau](./Konbini/Entity/init.luau)|entity replicator|-|⭕|
-|*[Hook.luau](./Konbini/Hook/init.luau)*|function binder|-|⭕|
-|[Inputs.luau](./Konbini/Inputs/init.luau)|`UserInputService` wrapper, universal mouse position|-|⭕|
+|[Collisions.luau](./Konbini/Collisions/init.luau)|collision solver and spatial query wrapper|-|⭕|
+|**[Color3.luau](./Konbini/Color3/init.luau)**|`Color3`, `ColorSequence` library extension|-|⭕|
+|[Couture.luau](./Konbini/Couture/init.luau)|server-instanced, client-authoritative accessories|-|⭕|
+|[Encoder.luau](./Konbini/Encoder/init.luau)|primitive type helper functions|-|⭕|
+|[Entity.luau](./Konbini/Entity/init.luau)|entity replication controller|-|⭕|
+|*[Hook.luau](./Konbini/Hook/init.luau)*|oopless function binder|-|⭕|
+|[Inputs.luau](./Konbini/Inputs/init.luau)|`UserInputService`, `GamepadService` wrapper|-|⭕|
 |**[Instance.luau](./Konbini/Instance/init.luau)**|`Instance` library extension|-|⭕|
-|[Interface.luau](./Konbini/Interface/init.luau)|user-interface helper functions|-|⭕|
+|[Interface.luau](./Konbini/Interface/init.luau)|`UDim`, `UDim2`, `Vector2` library extensions, ui helper functions|-|⭕|
 |**[Math.luau](./Konbini/Math/init.luau)**|`math` library extension|-|⭕|
-|[Network.luau](./Konbini/Network/init.luau)|straightforward two-function networking interface|-|⭕|
-|[Patronage.luau](./Konbini/Patronage/init.luau)|easily handle devproducts, gamepasses, group membership, etc|-|⭕|
+|[Network.luau](./Konbini/Network/init.luau)|basic remote interface|-|⭕|
+|[Patronage.luau](./Konbini/Patronage/init.luau)|player patronage (devproducts, gamepasses, premium, group membership, etc)|-|⭕|
 |**[Table.luau](./Konbini/Table/init.luau)**|`table` library extension|-|⭕|
-|[Time.luau](./Konbini/Tween/init.luau)|server-auth global time|-|⭕|
+|[Time.luau](./Konbini/Time/init.luau)|server-authoritative global time|-|⭕|
 |**[Vector3.luau](./Konbini/Vector3/init.luau)**|`Vector3` library extension|-|⭕|
 
 ## design language

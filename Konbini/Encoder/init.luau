@@ -11,7 +11,7 @@ end
 
 --- ### Encoder.luau
 ---
---- helper functions for strings, buffers, vectors, numbers
+--- primitive type helper functions
 local Encoder = {
 	Abbreviations = {""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }

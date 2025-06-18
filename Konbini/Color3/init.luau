@@ -2,7 +2,7 @@
 
 --- ### Color3.luau
 ---
---- extension of Color3 library
+--- Color3 library extension
 local Color3K = {
 	white = Color3.fromRGB(255, 255, 255);
 	gray = Color3.fromRGB(148, 148, 148);
@@ -280,7 +280,7 @@ local Color3K = {
 
 	--- ### Color3K.ColorSequence
 	---
-	--- extension of ColorSequence library
+	--- ColorSequence library extension
 	ColorSequence = {
 		white = ColorSequence.new(Color3.fromRGB(255, 255, 255));
 		gray = ColorSequence.new(Color3.fromRGB(148, 148, 148));

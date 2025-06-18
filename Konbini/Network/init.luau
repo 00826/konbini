@@ -57,7 +57,7 @@ export type ClientArg =
 
 --- ### Network.luau
 ---
---- remote wrapper
+--- basic remote interface
 local Network = {
 	Queue = {};
 

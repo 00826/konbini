@@ -2,7 +2,7 @@
 
 --- ### Animation.luau
 ---
---- animation player/controller
+--- animation controller
 local Animation = {
 	Library = {};
 

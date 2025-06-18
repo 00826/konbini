@@ -165,7 +165,7 @@ export type MoverClass =
 
 --- ### Instance.luau
 ---
---- extension of Instance library & instance-related functions
+--- Instance library extension
 local InstanceK = {
 	Movers = script:WaitForChild("Movers");
 	EmitContainer = workspace;

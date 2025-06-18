@@ -23,7 +23,7 @@ end
 
 --- ### Table.luau
 ---
---- extension of table library
+--- table library extension
 local TableK = {}
 
 --- returns a reverse iterator function, array `t`, and the number `0`

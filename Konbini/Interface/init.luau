@@ -16,8 +16,8 @@ end
 
 --- ### Interface.luau
 ---
---- quality-of-life interface functions \
---- includes `UDim`, `UDim2`, `Vector2`, `Color3` constants & constructors
+--- UDim, UDim2, Vector2 library extensions \
+--- ui helper functions
 local Interface = {
 	UDim = {
 		zero = UDim.new(0, 0);
@@ -166,6 +166,7 @@ function Interface.reducedmotionchanged()
 	return GuiService:GetPropertyChangedSignal("ReducedMotionEnabled")
 end
 
+--- returns `GuiService:GetGuiInset()`
 function Interface.guiinset()
 	return GuiService:GetGuiInset()
 end

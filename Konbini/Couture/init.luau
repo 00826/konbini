@@ -12,7 +12,7 @@ local RigidConstraint = script:WaitForChild("RigidConstraint")
 
 --- ### Couture.luau
 ---
---- the closest thing to client-authoritative accessory handling
+--- server-instanced, client-authoritative accessories
 local Couture = {
 	AccessoryProperties = {
 		"BackAccessory";

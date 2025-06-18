@@ -4,7 +4,7 @@
 
 --- ### CFrame.luau
 ---
---- extension of CFrame library
+--- CFrame library extension
 local CFrameK = {
 	--- returns `CFrame.fromOrientation(v.X, v.Y, v.Z)`
 	anglesfromvector = function(v: Vector3)
