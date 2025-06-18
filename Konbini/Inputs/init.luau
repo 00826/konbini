@@ -46,6 +46,31 @@ local Inputs = {
 		[Enum.UserInputType.MouseButton3] = Enum.KeyCode.MouseMiddleButton;
 	};
 
+	InputTypesToPreferredInputs = {
+		[Enum.UserInputType.None] = Enum.PreferredInput.KeyboardAndMouse;
+		[Enum.UserInputType.Focus] = Enum.PreferredInput.KeyboardAndMouse;
+
+		[Enum.UserInputType.MouseButton1] = Enum.PreferredInput.KeyboardAndMouse;
+		[Enum.UserInputType.MouseButton2] = Enum.PreferredInput.KeyboardAndMouse;
+		[Enum.UserInputType.MouseButton3] = Enum.PreferredInput.KeyboardAndMouse;
+		[Enum.UserInputType.MouseWheel] = Enum.PreferredInput.KeyboardAndMouse;
+		[Enum.UserInputType.MouseMovement] = Enum.PreferredInput.KeyboardAndMouse;
+		[Enum.UserInputType.Keyboard] = Enum.PreferredInput.KeyboardAndMouse;
+		
+		[Enum.UserInputType.Touch] = Enum.PreferredInput.Touch;
+		[Enum.UserInputType.Accelerometer] = Enum.PreferredInput.Touch;
+		[Enum.UserInputType.Gyro] = Enum.PreferredInput.Touch;
+
+		[Enum.UserInputType.Gamepad1] = Enum.PreferredInput.Gamepad;
+		[Enum.UserInputType.Gamepad2] = Enum.PreferredInput.Gamepad;
+		[Enum.UserInputType.Gamepad3] = Enum.PreferredInput.Gamepad;
+		[Enum.UserInputType.Gamepad4] = Enum.PreferredInput.Gamepad;
+		[Enum.UserInputType.Gamepad5] = Enum.PreferredInput.Gamepad;
+		[Enum.UserInputType.Gamepad6] = Enum.PreferredInput.Gamepad;
+		[Enum.UserInputType.Gamepad7] = Enum.PreferredInput.Gamepad;
+		[Enum.UserInputType.Gamepad8] = Enum.PreferredInput.Gamepad;
+	};
+
 	ThumbstickL = Vector3.zero;
 	ThumbstickR = Vector3.zero;
 	SignedThumbstickL = Vector3.zero;
@@ -109,14 +134,19 @@ function Inputs.ended()
 	return UserInputService.InputEnded
 end
 
---- returns `UserInputService.PreferredInput`
-function Inputs.preferredinput()
-	return UserInputService.PreferredInput
+--- returns `Enum.UserInputType` converted to its associated `Enum.PreferredInput`
+function Inputs.userinputtypetopreferredinput(userinputtype: Enum.UserInputType)
+	return Inputs.InputTypesToPreferredInputs[userinputtype]
 end
 
---- returns `UserInputService:GetPropertyChangedSignal("PreferredInput")`
-function Inputs.preferredinputchanged()
-	return UserInputService:GetPropertyChangedSignal("PreferredInput")
+--- returns `UserInputService.LasInputTypeChanged`
+function Inputs.lastinputtypechanged()
+	return UserInputService.LastInputTypeChanged
+end
+
+--- returns `UserInputService:GetMouseLocation()`
+function Inputs.mouselocation()
+	return UserInputService:GetMouseLocation()
 end
 
 --- calls `GamepadService:EnableGamepadCursor(target)` or `GamepadService:DisableGamepadCursor()` depending on state
@@ -166,6 +196,11 @@ end
 --- equivalent to `UserInputService.MouseIcon = icon or ""`
 function Inputs.setmouseicon(icon: string?)
 	UserInputService.MouseIcon = icon or ""
+end
+
+--- returns `UserInputService.TouchEnabled`
+function Inputs.touchenabled()
+	return UserInputService.TouchEnabled
 end
 
 --- defers `callback` when a guiobject matching name "TouchGui" is added or already exists in `playergui` \

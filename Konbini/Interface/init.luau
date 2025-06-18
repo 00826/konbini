@@ -4,6 +4,7 @@ local GuiService = game:GetService("GuiService")
 local StarterGui = game:GetService("StarterGui")
 local TextChatService = game:GetService("TextChatService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local function tween(object: Instance, properties: {[string]: any}, time: number, ...)
 	TweenService:Create(object, TweenInfo.new(time, ...), properties):Play()
@@ -228,11 +229,19 @@ function Interface.connectbutton(button: GuiButton, functions: {
 
 	if functions.Enter then
 		table.insert(connections, button.MouseEnter:Connect(functions.Enter))
-		table.insert(connections, button.SelectionGained:Connect(functions.Enter))
+		table.insert(connections, button.SelectionGained:Connect(function()
+			--- local vec2 = button.AbsolutePosition
+			local vec2 = UserInputService:GetMouseLocation()
+			functions.Enter(vec2.X, vec2.Y)
+		end))
 	end
 	if functions.Leave then
 		table.insert(connections, button.MouseLeave:Connect(functions.Leave))
-		table.insert(connections, button.SelectionLost:Connect(functions.Leave))
+		table.insert(connections, button.SelectionLost:Connect(function()
+			--- local vec2 = button.AbsolutePosition
+			local vec2 = UserInputService:GetMouseLocation()
+			functions.Leave(vec2.X, vec2.Y)
+		end))
 	end
 	if functions.Move then
 		table.insert(connections, button.MouseMoved:Connect(functions.Move))
