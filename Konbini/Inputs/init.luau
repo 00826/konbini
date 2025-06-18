@@ -36,8 +36,6 @@ local Inputs = {
 		Normal = Vector3.yAxis;
 		Instance = nil;
 		Material = nil;
-
-		MouseBehavior = Enum.MouseBehavior.Default;
 	};
 
 	--- used by `Inputs.keybindof()` \
@@ -47,29 +45,6 @@ local Inputs = {
 		[Enum.UserInputType.MouseButton2] = Enum.KeyCode.MouseRightButton;
 		[Enum.UserInputType.MouseButton3] = Enum.KeyCode.MouseMiddleButton;
 	};
-
-	CurrentInputDevice = "Unknown" :: "Unknown"|"Keyboard"|"Touch"|"Gamepad";
-	DeviceMap = {
-		[Enum.UserInputType.None] = "Unknown";
-
-		[Enum.UserInputType.Keyboard] = "Keyboard";
-		[Enum.UserInputType.MouseButton1] = "Keyboard";
-		[Enum.UserInputType.MouseButton2] = "Keyboard";
-		[Enum.UserInputType.MouseButton3] = "Keyboard";
-		[Enum.UserInputType.MouseMovement] = "Keyboard";
-		[Enum.UserInputType.MouseWheel] = "Keyboard";
-	
-		[Enum.UserInputType.Touch] = "Touch";
-	
-		[Enum.UserInputType.Gamepad1] = "Gamepad";
-		[Enum.UserInputType.Gamepad2] = "Gamepad";
-		[Enum.UserInputType.Gamepad3] = "Gamepad";
-		[Enum.UserInputType.Gamepad4] = "Gamepad";
-		[Enum.UserInputType.Gamepad5] = "Gamepad";
-		[Enum.UserInputType.Gamepad6] = "Gamepad";
-		[Enum.UserInputType.Gamepad7] = "Gamepad";
-		[Enum.UserInputType.Gamepad8] = "Gamepad";
-	} :: {[Enum.UserInputType]: "Unknown"|"Keyboard"|"Touch"|"Gamepad"};
 
 	ThumbstickL = Vector3.zero;
 	ThumbstickR = Vector3.zero;
@@ -134,16 +109,14 @@ function Inputs.ended()
 	return UserInputService.InputEnded
 end
 
---- defers `callback` when the local device input changes
-function Inputs.inputdevicechanged(callback: (inputdevice: "Unknown"|"Keyboard"|"Touch"|"Gamepad") -> ())
-	return UserInputService.LastInputTypeChanged:Connect(function(userinputtype: Enum.UserInputType)
-		local newinputdevice = Inputs.DeviceMap[userinputtype] or "Unknown"
-		if newinputdevice ~= Inputs.CurrentInputDevice then
-			Inputs.CurrentInputDevice = newinputdevice::any
+--- returns `UserInputService.PreferredInput`
+function Inputs.preferredinput()
+	return UserInputService.PreferredInput
+end
 
-			task.defer(callback, Inputs.CurrentInputDevice)
-		end
-	end)
+--- returns `UserInputService:GetPropertyChangedSignal("PreferredInput")`
+function Inputs.preferredinputchanged()
+	return UserInputService:GetPropertyChangedSignal("PreferredInput")
 end
 
 --- calls `GamepadService:EnableGamepadCursor(target)` or `GamepadService:DisableGamepadCursor()` depending on state
@@ -155,11 +128,14 @@ function Inputs.setgamepadcursorstate(state: boolean, target: GuiObject?)
 	end
 end
 
---- defers `callback` when the gamepad cursor state changes
-function Inputs.gamepadcursorenabled(callback: (state: boolean) -> ())
-	return GamepadService:GetPropertyChangedSignal("GamepadCursorEnabled"):Connect(function()
-		task.defer(callback, GamepadService.GamepadCursorEnabled)
-	end)
+--- returns `GamepadService.GamepadCursorEnabled`
+function Inputs.gamepadcursorenabled()
+	return GamepadService.GamepadCursorEnabled
+end
+
+--- returns `GamepadService:GetPropertyChangedSignal("GamepadCursorEnabled")`
+function Inputs.gamepadcursorstatechanged()
+	return GamepadService:GetPropertyChangedSignal("GamepadCursorEnabled")
 end
 
 --- returns `GuiService.MenuOpened`
@@ -172,9 +148,19 @@ function Inputs.menuclosed()
 	return GuiService.MenuClosed
 end
 
+--- returns `UserInputService.MouseBehavior`
+function Inputs.mousebehavior()
+	return UserInputService.MouseBehavior
+end
+
 --- equivalent to `UserInputService.MouseBehavior = mousebehavior`
 function Inputs.setmousebehavior(mousebehavior: Enum.MouseBehavior)
 	UserInputService.MouseBehavior = mousebehavior
+end
+
+--- returns `UserInputService.MouseIcon`
+function Inputs.mouseicon()
+	return UserInputService.MouseIcon
 end
 
 --- equivalent to `UserInputService.MouseIcon = icon or ""`
@@ -231,8 +217,6 @@ end
 
 if IsServer then
 else
-	Inputs.CurrentInputDevice = (Inputs.DeviceMap[UserInputService:GetLastInputType()] or "Unknown")::any
-
 	local cursor = Inputs.Cursor
 
 	cursor.GuiInset = GuiService:GetGuiInset()
@@ -241,15 +225,13 @@ else
 	end)
 
 	local function updatemouse(inputobject: InputObject?)
-		cursor.MouseBehavior = UserInputService.MouseBehavior
-
 		local currentcamera = workspace.CurrentCamera
 		local screenposition = Vector2.zero
 
 		if cursor.ForceScreenPosition then
 			screenposition = cursor.ForceScreenPosition
 		else
-			if Inputs.CurrentInputDevice == "Touch" then
+			if UserInputService.PreferredInput == Enum.PreferredInput.Touch then
 				if inputobject and typeof(inputobject) == "InputObject" then
 					local p = inputobject.Position
 					screenposition = Vector2.new(p.X, p.Y)

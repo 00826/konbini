@@ -280,6 +280,14 @@ function Encoder.matrixwrite(m: buffer, column: number, row: number, value: numb
 	buffer.writei16(m, offset, value)
 end
 
+--- extract value from matrix
+function Encoder.matrixextract(m: buffer, column: number, row: number)
+	local width = 2 * buffer.readu8(m, 0)
+	local offset = 2 + (2 * column) + (row * width)
+
+	return buffer.readi16(m, offset)
+end
+
 --- clears matrix, preserving the first two bits that contain row/column info \
 --- equivalent to `buffer.fill(m, 2, 0)`
 function Encoder.matrixclear(m: buffer)
@@ -596,9 +604,9 @@ end
 function Encoder.stagedelta(s: buffer, byteoffset: number, value: number)
 	local bitoffset = byteoffset * 8
 	if math.sign(value) == 1 then
-		buffer.writebits(s, bitoffset, 4, math.clamp(value + buffer.readbits(s, 0, 4), 0, 16))
+		buffer.writebits(s, bitoffset, 4, math.clamp(value + buffer.readbits(s, 0, 4), 0, 15))
 	else
-		buffer.writebits(s, bitoffset + 4, 4, math.clamp(math.abs(value) + buffer.readbits(s, 4, 4), 0, 16))
+		buffer.writebits(s, bitoffset + 4, 4, math.clamp(math.abs(value) + buffer.readbits(s, 4, 4), 0, 15))
 	end
 end
 
