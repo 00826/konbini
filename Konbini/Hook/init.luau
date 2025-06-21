@@ -5,17 +5,16 @@ local Cache = {}
 --- ### Hook.luau
 ---
 --- oopless function binder \
---- all bound functions are deferred \
---- `allocate (?=8)`: array portion allocated
+--- all bound functions are deferred
 --- ```luau
 --- Hook("KonbiniHook").Connect(print)
 --- Hook("KonbiniHook").Fire("o/ hi!") --- o/ hi!
 --- ```
-return function(name: string, allocate: number?)
+return function(name: string)
 	if not Cache[name] then
 		Cache[name] = {
-			_functions = table.create(allocate or 8);
-			_yields = table.create(allocate or 8);
+			_functions = {};
+			_yields = {};
 		}
 		local hook = Cache[name]
 
