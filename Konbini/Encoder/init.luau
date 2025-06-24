@@ -617,7 +617,7 @@ function Encoder.stageread(s: buffer, byteoffset: number)
 end
 
 --- returns `bit32.replace(0, 1, 0)` intended for todo32 library \
---- multi-step, multi-requisite quests in 32 bits: \
+--- multi-step, multi-requisite tasks in 32 bits: \
 --- `000000` `[0, 5]` todo step \
 --- `00 00000000 00000000 00000000` `[6, 31]` todo progress
 function Encoder.createtodo32()
