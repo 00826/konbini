@@ -616,6 +616,116 @@ function Encoder.stageread(s: buffer, byteoffset: number)
 	return buffer.readbits(s, bitoffset, 4) / buffer.readbits(s, bitoffset + 4, 4)
 end
 
+--- returns `bit32.replace(0, 1, 0)` intended for todo32 library \
+--- multi-step, multi-requisite quests in 32 bits: \
+--- `000000` `[0, 5]` todo step \
+--- `00 00000000 00000000 00000000` `[6, 31]` todo progress
+function Encoder.createtodo32()
+	return bit32.replace(0, 1, 0)
+end
+
+--- adds signal progress to todo32 integer with respect to todo map \
+--- returns: \
+--- `t`: todo32 integer, mutated \
+--- `todostep`: todo step against `#map`, where `todostep >= #map` indicates todo completion
+function Encoder.todo32add(t: number, signal: { key: string, value: number }, map: { { { key: number, value: {string} } } })
+	local todostep = bit32.extract(t, 0, 6)
+	todostep = map[todostep] and todostep or 1
+
+	local step = map[todostep] or map[1]
+	assert(step, "todo32: cannot progress an empty map")
+
+	local maxstep = #map
+	
+	if todostep > maxstep then
+		t = bit32.replace(t, maxstep, 0, 6)
+		t = bit32.replace(t, 0, 6, 26)
+
+		return t, todostep
+	else
+		local sum = 0
+		local goal = 0
+
+		local offset = 6
+		for _, requisite in ipairs(step) do
+			local key, value = requisite.key, requisite.value
+			local width = Encoder.numbits(key)
+			local requisiteprogress = bit32.extract(t, offset, width)
+			if table.find(value, signal.key) then
+				requisiteprogress = math.clamp(requisiteprogress + signal.value, 0, 2^width - 1)
+			end
+			t = bit32.replace(t, requisiteprogress, offset, width)
+
+			sum += requisiteprogress
+			goal += key
+			offset += width
+		end
+
+		if sum >= goal then
+			todostep += 1
+
+			t = bit32.replace(t, todostep, 0, 6)
+			t = bit32.replace(t, 0, 6, 26)
+		end
+
+		return t, todostep
+	end
+end
+
+--- returns todo32 step \
+--- equivalent to `bit32.extract(t, 0, 6)`
+function Encoder.todo32step(t: number)
+	return bit32.extract(t, 0, 6)
+end
+
+--- returns todo completion details: \
+--- `todostep`: todo step against `#map` \
+--- `receipt`: `{ {requisiteprogress, requisitegoal} }` \
+--- \
+--- if `bit32.extract(t, 0, 6)` is not an index of `map`, the todo is considered complete: \
+--- ... `todostep` will be returned as `#map + 1` for external `if todostep > #map then ... end` case \
+--- ... `receipt` will be returned as `table.create(0)`
+function Encoder.todo32receipt(t: number, map: { { { key: number, value: {string} } } })
+	local todostep = bit32.extract(t, 0, 6)
+
+	local step = map[todostep]
+	if not step then
+		return #map + 1, table.create(0)
+	end
+	
+	local maxstep = #map
+
+	if todostep > maxstep then
+		return todostep, table.create(0)
+	else
+		local receipt = table.create(maxstep)
+
+		local offset = 6
+		for _, requisite in ipairs(step) do
+			local key = requisite.key
+			local width = Encoder.numbits(key)
+			local requisiteprogress = bit32.extract(t, offset, width)
+			table.insert(receipt, {requisiteprogress, key})
+
+			offset += width
+		end
+
+		return todostep, receipt
+	end
+end
+
+--- returns # of bytes required to store given value \
+--- equivalent to `1 + (math.log(value, 2) // 8)`
+function Encoder.numbytes(value: number)
+	return 1 + (math.log(value, 2) // 8)
+end
+
+--- returns # of bits required to store given value \
+--- equivalent to `1 + math.log(value, 2) // 1`
+function Encoder.numbits(value: number)
+	return 1 + math.log(value, 2) // 1
+end
+
 --- returns `byteoffset * 8`
 function Encoder.bitoffset(byteoffset: number)
 	return byteoffset * 8 --- yes i unironically need this kthxbai!!

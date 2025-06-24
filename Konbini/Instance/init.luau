@@ -11,6 +11,7 @@ local Motor = script:WaitForChild("Motor6D")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
+local KeyframeActiveObjects = 0;
 local KeyframeBucket = {}
 local Keyframable = {
 	"number";
@@ -141,12 +142,6 @@ local function interpolate(object: Instance, keyframeinfo: any, dt: number)
 	if a >= 1 then
 		table.clear(KeyframeBucket[object] or table.create(0))
 		KeyframeBucket[object] = nil
-
-		if keyframeinfo.Destruct then
-			task.delay(keyframeinfo.Destruct, function()
-				object:Destroy()
-			end)
-		end
 	end
 end
 
@@ -169,9 +164,6 @@ export type MoverClass =
 local InstanceK = {
 	Movers = script:WaitForChild("Movers");
 	EmitContainer = workspace;
-
-	KeyframeFramerate = 1/30;
-	KeyframeActiveObjects = 0;
 
 	DebouncePrefix = "__d_";
 }
@@ -392,9 +384,9 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspee
 end
 
 --- emits a clone of instance template `t` at vector3 or attached to basepart \
---- `clone<t> -> parented -> deferred transform(?) -> delayed destruct(?) -> return clone<t>` \
+--- `clone<t> -> parented -> deferred transform(?) -> return clone<t>` \
 --- if both `at` and `template` are baseparts, then `t` will be unanchored and massless-ed *prior* to welding. weldconstraint is parented to emitted clone of `t`
-function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart|Model, transform: ((real: t) -> ())?, destruct: number?)
+function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart|Model, transform: ((real: t) -> ())?)
 	local real = template:Clone()
 
 	if typeof(at) == "Vector3" then
@@ -434,10 +426,6 @@ function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart|M
 
 	if transform then
 		task.defer(transform, real)
-	end
-
-	if destruct then
-		task.delay(destruct, function() real:Destroy() end)
 	end
 
 	return real
@@ -563,9 +551,7 @@ function InstanceK.applybodymover(target: Model|BasePart, class: MoverClass, tim
 	end
 
 	if time then
-		task.delay(time, function()
-			newmover:Destroy()
-		end)
+		task.delay(time, newmover.Destroy, newmover)
 	end
 
 	newmover.Parent = rootpart
@@ -676,9 +662,7 @@ end
 --- transforms properties of object toward goal with respect to framerate \
 --- `time(?=1)`: seconds for keyframes to complete \
 --- `style(?=Enum.EasingDirection.Linear)`: effect easingstyle \
---- `direction(?=Enum.EasingDirection.Out)`: effect easingdirection \
---- `framerate(?=InstanceK.KeyframeFramerate)`: effect framerate \
---- `destruct(?=nil)`: destroy object `n` seconds after effect completion
+--- `direction(?=Enum.EasingDirection.Out)`: effect easingdirection
 --- \
 --- returns a mutable `KeyframeInfo` table
 function InstanceK.keyframe(object: Instance, goal: {
@@ -695,7 +679,7 @@ function InstanceK.keyframe(object: Instance, goal: {
 		| NumberSequence
 		| UDim
 		| UDim2
-}, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?, framerate: number?, destruct: number?)
+}, framerate: number, time: number?, style: Enum.EasingStyle?, direction: Enum.EasingDirection?)
 	assert(not IsServer, "InstanceK.keyframe() can only be called on client")
 
 	if KeyframeBucket[object] then
@@ -703,7 +687,7 @@ function InstanceK.keyframe(object: Instance, goal: {
 	end
 
 	local keyframeinfo = {
-		Framerate = framerate or InstanceK.KeyframeFramerate;
+		Framerate = framerate;
 		Framerule = 0;
 
 		Time = time or 1;
@@ -715,7 +699,6 @@ function InstanceK.keyframe(object: Instance, goal: {
 
 		Initial = {};
 		Goal = table.clone(goal);
-		Destruct = destruct;
 	}
 
 	keyframeinfo.Reset = function()
@@ -746,6 +729,11 @@ function InstanceK.keyframe(object: Instance, goal: {
 	KeyframeBucket[object] = keyframeinfo
 
 	return keyframeinfo
+end
+
+--- returns # of instances being keyframed by `InstanceK.keyframe()`
+function InstanceK.keyframeactiveobjects()
+	return KeyframeActiveObjects
 end
 
 --- `ContentProvider:PreloadAsync(assets)` \
@@ -865,7 +853,7 @@ else
 
 			x += 1
 		end
-		InstanceK.KeyframeActiveObjects = x
+		KeyframeActiveObjects = x
 	end)
 end
 
