@@ -589,9 +589,9 @@ end
 function Encoder.stagewrite(s: buffer, byteoffset: number, value: number)
 	local bitoffset = byteoffset * 8
 	if math.sign(value) == 1 then
-		buffer.writebits(s, bitoffset, 4, math.clamp(value, 0, 16))
+		buffer.writebits(s, bitoffset, 4, math.clamp(value, 0, 15))
 	else
-		buffer.writebits(s, bitoffset + 4, 4, math.clamp(math.abs(value), 0, 16))
+		buffer.writebits(s, bitoffset + 4, 4, math.clamp(math.abs(value), 0, 15))
 	end
 end
 
@@ -604,9 +604,9 @@ end
 function Encoder.stagedelta(s: buffer, byteoffset: number, value: number)
 	local bitoffset = byteoffset * 8
 	if math.sign(value) == 1 then
-		buffer.writebits(s, bitoffset, 4, math.clamp(value + buffer.readbits(s, 0, 4), 0, 15))
+		buffer.writebits(s, bitoffset, 4, math.clamp(value + buffer.readbits(s, bitoffset, 4), 0, 15))
 	else
-		buffer.writebits(s, bitoffset + 4, 4, math.clamp(math.abs(value) + buffer.readbits(s, 4, 4), 0, 15))
+		buffer.writebits(s, bitoffset + 4, 4, math.clamp(math.abs(value) + buffer.readbits(s, bitoffset + 4, 4), 0, 15))
 	end
 end
 
