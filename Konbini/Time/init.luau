@@ -11,12 +11,12 @@ local TimeRemote = script:WaitForChild("Remote")
 --- server-authoritative global time
 local Time = {
 	Framerate = 1/60;
-	ElapsedBuffer = buffer.create(8);
+	UnixBuffer = buffer.create(8);
 }
 
---- returns konbini time
-function Time.now(latency: number?)
-	return buffer.readf64(Time.ElapsedBuffer, 0) + (latency or 0)
+--- returns server-authoritative unix time in seconds
+function Time.now()
+	return buffer.readf64(Time.UnixBuffer, 0)
 end
 
 --- runs function for `x` seconds
@@ -73,20 +73,20 @@ end
 
 if IsServer then
 	local elapsed = 0
-	local function updatetime(t, dt)
-		buffer.writef64(Time.ElapsedBuffer, 0, t)
+	local function frame(dt: number)
+		buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis/1000) --- accurate down to the millisecond
 
 		elapsed += dt
 		if elapsed < Time.Framerate then return end
 		elapsed -= Time.Framerate
 
-		TimeRemote:FireAllClients(Time.ElapsedBuffer)
+		TimeRemote:FireAllClients(Time.UnixBuffer)
 	end
-	updatetime(0, Time.Framerate)
-	RunService.Stepped:Connect(updatetime)
+	frame(Time.Framerate)
+	RunService.Heartbeat:Connect(frame)
 else
-	TimeRemote.OnClientEvent:Connect(function(eb: buffer)
-		buffer.writef64(Time.ElapsedBuffer, 0, buffer.readf64(eb, 0))
+	TimeRemote.OnClientEvent:Connect(function(b: buffer)
+		buffer.writef64(Time.UnixBuffer, 0, buffer.readf64(b, 0))
 	end)
 end
 
