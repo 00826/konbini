@@ -804,13 +804,14 @@ function Encoder.hourminutesecond(time: number, notation:
 	| "HH:MM:SS"
 	| "MM:SS"
 	| "M:SS"
-	?
-): string
+	?,
+appendms: boolean?): string
 	--[[
 		os.date("!%X", time) is the fastest for all inputs below 86400, because any input at or above 86400 breaks the formatting
 		string.gsub(string.format(), time, subf) is the second fastest for all inputs, never has a formatting break, but is ~10% slower than os.date("!%X", time)
 		combining both through comparing time >= 86400 gives a faster average across all possible inputs
 	]]
+	local hms = ""
 	if notation == "DD:HH:MM:SS" then
 		if time >= 86400 then
 			local D = time // 86400
@@ -819,9 +820,10 @@ function Encoder.hourminutesecond(time: number, notation:
 			time -= H * 3600
 			local M = time // 60
 			time -= M * 60
-			return string.gsub(string.format("%d:%d:%d:%d", D, H, M, time), "%d+", subf)
+
+			hms = string.gsub(string.format("%d:%d:%d:%d", D, H, M, time), "%d+", subf)
 		else
-			return "00:" .. os.date("!%X", time)
+			hms = "00:" .. os.date("!%X", time)
 		end
 	elseif notation == "HH:MM:SS" then
 		if time >= 86400 then
@@ -829,22 +831,30 @@ function Encoder.hourminutesecond(time: number, notation:
 			time -= H * 3600
 			local M = time // 60
 			time -= M * 60
-			return string.gsub(string.format("%d:%d:%d", H, M, time), "%d+", subf)
+
+			hms = string.gsub(string.format("%d:%d:%d", H, M, time), "%d+", subf)
 		else
-			return os.date("!%X", time)
+			hms = os.date("!%X", time)
 		end
 	elseif notation == "MM:SS" then
 		if time >= 3600 then
 			local M = time // 60
 			time -= M * 60
-			return string.gsub(string.format("%d:%d", M, time), "%d+", subf)
+			hms = string.gsub(string.format("%d:%d", M, time), "%d+", subf)
 		else
-			return string.sub(os.date("!%X", time), 4, 8)
+			hms = string.sub(os.date("!%X", time), 4, 8)
 		end
 	elseif notation == "M:SS" then
-		return string.gsub(string.sub(os.date("!%X", time), 4, 8), "^0", "")
+		hms = string.gsub(string.sub(os.date("!%X", time), 4, 8), "^0", "")
 	end
-	return os.date("!%X", time)
+
+	hms = hms == "" and os.date("!%X", time) or hms
+	if appendms then
+		local _, f = math.modf(time)
+		hms ..= string.sub(string.format("%.3f", f), 2)
+	end
+
+	return hms
 end
 
 --- returns a timestamp of current utc time with respect to format option or time in minutes
