@@ -67,10 +67,6 @@ end
 function Entity.remove(id: string)
 	task.defer(Entity.removed, Entity.Cache[id], id)
 
-	--[[if Entity.Cache[id] then
-		table.clear(Entity.Cache[id])
-	end]]
-
 	Entity.Cache[id] = nil
 	table.remove(Entity.ListeningTo, table.find(Entity.ListeningTo, id) or 0)
 end
@@ -115,11 +111,6 @@ function Entity.tostring(e: {}): string?
 	return
 end
 
---- returns `e` that satisfies `e = Cache[id]`
-function Entity.fromstring(id: string): any?
-	return Entity.Cache[id]
-end
-
 --- returns `#Entity.Cache`
 function Entity.len()
 	local len = 0
@@ -128,6 +119,11 @@ function Entity.len()
 	end
 
 	return len
+end
+
+--- equivalent to `Entity.Cache[key]`
+function Entity.find(key: string): any?
+	return Entity.Cache[key]
 end
 
 --- returns array of `e` from `4*n`-width string buffer of `id`'s \

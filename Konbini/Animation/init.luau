@@ -26,7 +26,11 @@ function Animation.createcontroller(rig: Model)
 		Animator = animator::Animator;
 
 		ActionTrack = nil :: AnimationTrack?;
+		ActionTrackKeyframeReached = nil :: (keyframe: string) -> ()?;
+		ActionTrackKeyframeReachedConnection = nil :: RBXScriptConnection?;
 		LoopTrack = nil :: AnimationTrack?;
+		LoopTrackKeyframeReached = nil :: (keyframe: string) -> ()?;
+		LoopTrackKeyframeReachedConnection = nil :: RBXScriptConnection?;
 	}
 end
 
@@ -48,6 +52,10 @@ end
 --- `priority (?=Library[name].Priority|Enum.AnimationPriority.Action)`: animation priority \
 --- returns `controller.ActionTrack` for convenience
 function Animation.playactiontrack(controller: typeof(Animation.createcontroller(...)), name: string?, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+	if controller.ActionTrackKeyframeReachedConnection then
+		controller.ActionTrackKeyframeReachedConnection:Disconnect()
+		controller.ActionTrackKeyframeReachedConnection = nil
+	end
 	if controller.ActionTrack then
 		controller.ActionTrack:Stop(fadetime or Animation.FadeTime)
 		controller.ActionTrack = nil
@@ -67,6 +75,11 @@ function Animation.playactiontrack(controller: typeof(Animation.createcontroller
 	assert(animobject)
 	controller.ActionTrack = controller.Animator:LoadAnimation(animobject)
 	assert(controller.ActionTrack, "lf solver")
+	controller.ActionTrackKeyframeReachedConnection = controller.ActionTrack.KeyframeReached:Connect(function(...)
+		if controller.ActionTrackKeyframeReached then
+			controller.ActionTrackKeyframeReached(...)
+		end
+	end)
 	controller.ActionTrack:Play(fadetime or Animation.FadeTime, weight, speed)
 	controller.ActionTrack.Priority = priority or entry.Priority or Enum.AnimationPriority.Action
 
@@ -77,6 +90,10 @@ end
 --- `priority (?=Library[name].Priority|Enum.AnimationPriority.Idle)`: animation priority \
 --- returns `controller.LoopTrack` for convenience
 function Animation.playlooptrack(controller: typeof(Animation.createcontroller(...)), name: string?, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
+	if controller.LoopTrackKeyframeReachedConnection then
+		controller.LoopTrackKeyframeReachedConnection:Disconnect()
+		controller.LoopTrackKeyframeReachedConnection = nil
+	end
 	if controller.LoopTrack then
 		controller.LoopTrack:Stop(fadetime or Animation.FadeTime)
 		controller.LoopTrack = nil
@@ -96,6 +113,11 @@ function Animation.playlooptrack(controller: typeof(Animation.createcontroller(.
 	assert(animobject)
 	controller.LoopTrack = controller.Animator:LoadAnimation(animobject)
 	assert(controller.LoopTrack, "lf solver")
+	controller.LoopTrackKeyframeReachedConnection = controller.LoopTrack.KeyframeReached:Connect(function(...)
+		if controller.LoopTrackKeyframeReached then
+			controller.LoopTrackKeyframeReached(...)
+		end
+	end)
 	controller.LoopTrack:Play(fadetime or Animation.FadeTime, weight, speed)
 	controller.LoopTrack.Priority = priority or entry.Priority or Enum.AnimationPriority.Idle
 
