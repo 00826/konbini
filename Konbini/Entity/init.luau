@@ -101,92 +101,22 @@ function Entity.queue(id: string, keys: {string}?)
 	end
 end
 
---- returns first `id` that satisfies `e = Cache[id]`
-function Entity.tostring(e: {}): string?
-	for id, thisentity in Entity.Cache do
-		if thisentity == e then
-			return id
-		end
-	end
-	return
-end
-
---- returns `#Entity.Cache`
-function Entity.len()
-	local len = 0
-	for _ in Entity.Cache do
-		len += 1
-	end
-
-	return len
-end
-
 --- equivalent to `Entity.Cache[key]`
 function Entity.find(key: string): any?
 	return Entity.Cache[key]
 end
 
---- returns array of `e` from `4*n`-width string buffer of `id`'s \
---- assumes that `len(b) % 4 == 0`
-@native
-function Entity.frombuffer(b: buffer): any
-	local len = buffer.len(b)
-	local from = table.create(len // 4)
-
-	for i = 0, len - 4, 4 do
-		local e = Entity.Cache[buffer.readstring(b, i, 4)]
-		if e and not table.find(from, e) then
-			table.insert(from, e)
-		end
-	end
-
-	return from
-end
-
---- returns first `e` and its associated `key` that satisfies `e[scope] == value`
-function Entity.fromscope(scope: string, value: any): (any?, string?)
+--- returns first `key(id), value(entity)` pair that satisfies `e[scope] == value`
+function Entity.scope(scope: string, value: any): (string?, any?)
 	assert(value ~= nil, "cannot scope a nil value")
 
-	for id, thisentity in Entity.Cache do
-		if thisentity[scope] == value then
-			return thisentity, id
+	for id, e in Entity.Cache do
+		if e[scope] == value then
+			return id, e
 		end
 	end
 
 	return
-end
-
---- yields thread until entity that satisfies `e[scope] == value` is added
-function Entity.waitfromscope(scope: string, value: any, timeout: number?): (any, string)
-	assert(value ~= nil, "cannot scope a nil value")
-	local a, b
-	local elapsed = 0
-	timeout = timeout or math.huge
-
-	repeat
-		for id, thisentity in Entity.Cache do
-			if thisentity[scope] == value then
-				a = thisentity
-				b = id
-			end
-		end
-		elapsed += task.wait()
-	until (a and b) or (elapsed >= timeout::any)
-
-	return a, b
-end
-
---- returns key-value subset of `Cache` where e in subset satisfies `comp(e) -> true`
-function Entity.subset(scope: string, comp: (e: {}) -> boolean): {[string]: {}}
-	local subset = {}
-
-	for id, thisentity in Entity.Cache do
-		if comp(thisentity) then
-			subset[id] = thisentity
-		end
-	end
-
-	return subset
 end
 
 --- listens to key changes for this entity
@@ -214,9 +144,9 @@ function Entity.removed(e: any, id: string)
 	
 end
 
---- sends full entity cache to player(kbps disaster)
+--- sends full entity cache to player
 function Entity.all(player: Player)
-	EntityRemote:FireClient(player, Entity.Cache)
+	EntityRemote:FireClient(player, Entity.Cache) --- kbps disaster
 end
 
 --- writes key-values of update `u` into `e`, such that `e` inherits all non-nil key-values of `u` \
