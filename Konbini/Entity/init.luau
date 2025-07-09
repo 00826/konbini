@@ -45,6 +45,8 @@ local Entity = {
 	
 	Rate = 1/40;
 	Bucket = {} :: { [string]: {string}|boolean };
+
+	NilString = "__nil";
 }
 
 --- inserts entity `e` stored at `Cache[id]` \
@@ -228,7 +230,13 @@ function Entity.update(e: any, u: any)
 
 	for k, updatevalue in u do
 		local thisvalue = e[k]
-		if thisvalue == nil then
+
+		if thisvalue == Entity.NilString then
+			e[k] = nil
+			if type(thisvalue) ~= type(nil) then
+				table.insert(changes, k)
+			end
+		elseif thisvalue == nil then
 			e[k] = updatevalue
 			table.insert(changes, k)
 		elseif thisvalue == updatevalue then
@@ -280,7 +288,11 @@ if IsServer then
 				local e = Entity.Cache[id]
 				if not e then continue end
 				for _, key in keys do
-					(packet[id]::{})[key] = e[key]
+					local value = e[key]
+					if value == nil then
+						value = Entity.NilString
+					end
+					(packet[id]::{})[key] = value
 				end
 			elseif keys == false then
 				--- entity destroyed
