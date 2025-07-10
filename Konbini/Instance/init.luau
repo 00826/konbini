@@ -531,6 +531,15 @@ function InstanceK.setlimbcancollide(target: Model, cancollide: boolean, limbs: 
 	end
 end
 
+--- sets collision group of baseparts under target
+function InstanceK.setcollisiongroup(target: Instance, collisiongroup: string)
+	for _, thing in target:GetDescendants() do
+		if thing:IsA("BasePart") then
+			thing.CollisionGroup = collisiongroup
+		end
+	end
+end
+
 --- applies bodymover to primarypart of target \
 --- *in contexts where `time` is omitted, the bodymover will remain indefinitely*
 function InstanceK.applybodymover(target: Model|BasePart, class: MoverClass, time: number?, properties: {[string]: any}?): BodyMover?

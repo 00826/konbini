@@ -37,17 +37,6 @@ function Collisions.ball(type: "Whitelist" | "Blacklist", search: {Instance}, at
 	return workspace:GetPartBoundsInRadius(at, radius, overlap)
 end
 
---- returns: \
---- `distance`: units between `at` and its nearest point on `target` \
---- `radians`: angle between the cone cast with `at & look` against `target` \
---- `position`: nearest point on target towards its position on cone
-function Collisions.cone(at: Vector3, look: Vector3, target: MeshPart)
-	local point = target:GetClosestPointOnSurface(at)
-	local distance = vector.magnitude(point::any - at::any)
-
-	return distance, look:Angle((point - at).Unit), point
-end
-
 --- `workspace:Raycast()` against `search` list & `collisiongroup (?="Default")`
 function Collisions.raycast(type: "Whitelist" | "Blacklist", at: Vector3, direction: Vector3, search: {Instance}, collisiongroup: string?)
 	local list:any = (type == "Whitelist" and WhitelistParams) or (type == "Blacklist" and BlacklistParams)
@@ -82,65 +71,6 @@ function Collisions.fancast(type: "Whitelist" | "Blacklist", at: Vector3, direct
 	end
 
 	return results
-end
-
---- returns true if nearest point on part is within bounds of volume defined by cframe and size
-function Collisions.ispartinbox(part: BasePart, at: CFrame, size: Vector3)
-	local point = part:GetClosestPointOnSurface(at.Position)
-
-	return Collisions.ispointinbox(point, at, size)
-end
-
---- returns true if nearest point on part is within bounds of volume defined by position and radius
-function Collisions.ispartinball(part: BasePart, at: Vector3, radius: number)
-	local point = part:GetClosestPointOnSurface(at)
-	
-	return Collisions.ispointinradius(point, at, radius)
-end
-
---- sets collision group of baseparts under model
-function Collisions.setmodelcollisiongroup(model: Model, collisiongroup: string)
-	for _, thing in model:GetDescendants() do
-		if thing:IsA("BasePart") then
-			thing.CollisionGroup = collisiongroup
-		end
-	end
-end
-
---- returns true if point is within bounds of box defined by cframe and size
-@native
-function Collisions.ispointinbox(point: Vector3, cframe: CFrame, size: Vector3)
-	local absoluteobjectspace = cframe:PointToObjectSpace(point):Abs()
-	size *= 0.5
-
-	return
-		(absoluteobjectspace.X <= size.X) and
-		(absoluteobjectspace.Y <= size.Y) and
-		(absoluteobjectspace.Z <= size.Z)
-end
-
---- returns true if point is within bounds of radius at position
-@native
-function Collisions.ispointinradius(point: Vector3, position: Vector3, radius: number, minradius: number?)
-	local distance = vector.magnitude(position::any - point::any)
-	
-	if minradius then
-		return (distance >= minradius) and (distance <= radius)
-	end
-
-	return distance <= radius
-end
-
---- returns true if point is within bounds of 2d radius (xz) at position
-@native
-function Collisions.ispointinradiusxz(point: Vector3, position: Vector3, radius: number, minradius: number?)
-	local distance = vector.magnitude(position*Vector3.new(1, 0, 1)::any - point*Vector3.new(1, 0, 1)::any)
-	
-	if minradius then
-		return (distance >= minradius) and (distance <= radius)
-	end
-
-	return distance <= radius
 end
 
 return Collisions

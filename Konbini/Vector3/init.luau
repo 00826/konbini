@@ -67,27 +67,6 @@ function Vector3K.write(v: Vector3, w: Vector3)
 	)
 end
 
---- returns `v` as a tuple
-function Vector3K.unpack(v: Vector3)
-	return v.X, v.Y, v.Z
-end
-
---- stretches `v` towards `w`, within bounds of `radius`
-function Vector3K.stretch(v: Vector3, w: Vector3, radius: number)
-	--[[
-	if vector.magnitude(v, w) <= radius then
-		return w
-	end
-
-	return v + (vector.normalize(w - v) * radius)
-	]]
-	if Vector3K.distance(v, w) <= radius then
-		return w
-	end
-
-	return v + ((vector.normalize(w::any - v::any)::any)::Vector3 * radius)
-end
-
 --- returns point on bezier curve at interpolant `a`
 function Vector3K.bezier(points: {Vector3}, a: number)
 	if #points > 1 then
@@ -109,30 +88,6 @@ end
 --- returns random unit vector within bounds of cone \
 --- quasiduck is the goat
 function Vector3K.nextunitspread(v: Vector3, radians: number, R: Random?)
-	--[[
-	--- create an orthonormal basis (u, w, v)
-	--- equivalent of producing the rightvector (u) and upvector (w) of v
-	local u
-	if math.abs(v.Y) < 0.999 then
-		u = vector.normalize(vector.cross(v, Vector3.yAxis))
-	else
-		u = vector.normalize(vector.cross(v, Vector3.xAxis))
-	end
-	local w = vector.cross(v, u)
-
-	--- generate a random point within the spherical cap (from unit sphere)
-	--- produces spherical coordinates
-	local cosTheta = (R or Rand):NextNumber(math.cos(radians), 1)
-	local sinTheta = (1 - cosTheta * cosTheta)^0.5
-	local phi = (R or Rand):NextNumber(0, 2*math.pi)
-
-	local x = sinTheta * math.cos(phi)
-	local y = sinTheta * math.sin(phi)
-	local z = cosTheta
-
-	--- construct the random vector in the original coordinate system
-	return (x*u) + (y*w) + (z*v)
-	]]
 	--- create an orthonormal basis (u, w, v)
 	--- equivalent of producing the rightvector (u) and upvector (w) of v
 	local u
@@ -165,6 +120,7 @@ function Vector3K.nextpointinbounds(v: Vector3, w: Vector3, R: Random?)
 		+ (Vector3.zAxis * (R or Rand):NextNumber(v.Z, w.Z))
 end
 
+--- returns random point in `x,z` radius
 function Vector3K.nextpointinradius(radius: number, R: Random?)
 	local r = radius * ((R or Rand):NextNumber()^0.5)
 	local theta = (R or Rand):NextNumber() * 2 * math.pi
@@ -188,12 +144,12 @@ function Vector3K.tovector(variant: Vector3 | Vector3int16 | PVInstance | CFrame
 end
 
 --- returns `vector.magnitude(w - v)`
-function Vector3K.distance(v: Vector3, w: Vector3)
+function Vector3K.magnitude(v: Vector3, w: Vector3)
 	return vector.magnitude(w::any - v::any)
 end
 
 --- returns `vector.normalize(w - v)`
-function Vector3K.unit(v: Vector3, w: Vector3)
+function Vector3K.normalize(v: Vector3, w: Vector3)
 	--- just beat the type solver final boss
 	--- whats good
 	return (vector.normalize(w::any - v::any)::any)::Vector3
@@ -352,9 +308,90 @@ function Vector3K.slerp(v: Vector3, w: Vector3, t: number)
 	return magC*unitC
 end
 
---- returns `v` as a string
-function Vector3K.tostring(v: Vector3, precision: number?)
-	return string.sub(string.format(string.rep("%." .. (precision or 2) .. "f ", 3), v.X, v.Y, v.Z), 1, -2)
+--- returns `point` transformed to objectspace of `position, lookvector, upvector(?=Vector3.yAxis)`
+function Vector3K.pointtoobjectspace(point: Vector3, position: Vector3, lookvector: Vector3, upvector: Vector3?)
+	local cframe = CFrame.fromMatrix(
+		position,
+		vector.cross(lookvector::any, upvector::any)::any,
+		upvector or Vector3.yAxis,
+		-lookvector
+	)
+	return cframe.Inverse(cframe) * point
+end
+
+--- returns: \
+--- `if point is within or lies on edge of box`: `0` \
+--- `if point is outside of box`: `distance between point and nearest edge on box`
+function Vector3K.distancefrombox(point: Vector3, size: Vector3, position: Vector3, lookvector: Vector3, upvector: Vector3?)
+	local cframe = CFrame.fromMatrix(
+		position,
+		vector.cross(lookvector::any, upvector::any)::any,
+		upvector or Vector3.yAxis,
+		-lookvector
+	)
+	local absoluteobjectspace: Vector3 = vector.abs((cframe.Inverse(cframe) * point)::any)::any
+	size *= 0.5
+
+	local distx = absoluteobjectspace.X - size.X
+	local disty = absoluteobjectspace.Y - size.Y
+	local distz = absoluteobjectspace.Z - size.Z
+
+	if distx <= 0 and disty <= 0 and distz <= 0 then
+		return 0
+	end
+
+	local realx = distx > 0 and vector.magnitude( absoluteobjectspace::any - (absoluteobjectspace + (Vector3.xAxis * distx)) ) or 0
+	local realy = disty > 0 and vector.magnitude( absoluteobjectspace::any - (absoluteobjectspace + (Vector3.yAxis * disty)) ) or 0
+	local realz = distz > 0 and vector.magnitude( absoluteobjectspace::any - (absoluteobjectspace + (Vector3.zAxis * distz)) ) or 0
+	
+	return vector.magnitude(Vector3.new(realx, realy, realz)::any)
+end
+
+--- returns a number describing unit distance of point relative to sphere: \
+--- `if distance < innerradius(?=0)`: `innerradius - distance` \
+--- `if distance > radius`: `distance - radius` \
+--- `if distance <= radius AND angle ~= nil`: `distance between point and nearest point on edge of cone formed by angle` \
+--- `if distance <= radius`: `0`
+function Vector3K.distancefromsphere(point: Vector3, position: Vector3, radius: number, innerradius: number?, angle: number?, lookvector: Vector3?)
+	innerradius = innerradius or 0
+	local distance = vector.magnitude(position::any - point)
+
+	if distance < innerradius::any then
+		return (innerradius::any - distance)::number
+	elseif distance > radius then
+		return distance - radius
+	elseif distance <= radius then
+		if angle then
+			assert(lookvector, "angle argument expects a lookvector")
+			local unit: Vector3 = vector.normalize(point::any - position)::any
+			local unitangle = 2 * vector.angle(lookvector::any, unit::any)
+			local diff: number = (unitangle - angle::any)
+
+			if diff > 0 then
+				local leftangle: number = (angle::any) * -0.5
+				local leftunit = Vector3.new(
+					(lookvector.X * math.cos(leftangle)) - (lookvector.Z * math.sin(leftangle)),
+					lookvector.Y,
+					(lookvector.X * math.sin(leftangle)) + (lookvector.Z * math.cos(leftangle))
+				)
+				local rightangle: number = (angle::any) * 0.5
+				local rightunit = Vector3.new(
+					(lookvector.X * math.cos(rightangle)) - (lookvector.Z * math.sin(rightangle)),
+					lookvector.Y,
+					(lookvector.X * math.sin(rightangle)) + (lookvector.Z * math.cos(rightangle))
+				)
+
+				return math.min(
+					vector.magnitude((position + (leftunit * distance))::any - point),
+					vector.magnitude((position + (rightunit * distance))::any - point)
+				)
+			end
+		end
+
+		return 0
+	end
+	
+	return 0
 end
 
 return Vector3K
