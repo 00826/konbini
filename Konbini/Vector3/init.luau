@@ -310,10 +310,11 @@ end
 
 --- returns `point` transformed to objectspace of `position, lookvector, upvector(?=Vector3.yAxis)`
 function Vector3K.pointtoobjectspace(point: Vector3, position: Vector3, lookvector: Vector3, upvector: Vector3?)
+	upvector = upvector or Vector3.yAxis
 	local cframe = CFrame.fromMatrix(
 		position,
 		vector.cross(lookvector::any, upvector::any)::any,
-		upvector or Vector3.yAxis,
+		upvector::any,
 		-lookvector
 	)
 	return cframe.Inverse(cframe) * point
@@ -323,10 +324,11 @@ end
 --- `if point is within or lies on edge of box`: `0` \
 --- `if point is outside of box`: `distance between point and nearest edge on box`
 function Vector3K.distancefrombox(point: Vector3, size: Vector3, position: Vector3, lookvector: Vector3, upvector: Vector3?)
+	upvector = upvector or Vector3.yAxis
 	local cframe = CFrame.fromMatrix(
 		position,
 		vector.cross(lookvector::any, upvector::any)::any,
-		upvector or Vector3.yAxis,
+		upvector::any,
 		-lookvector
 	)
 	local absoluteobjectspace: Vector3 = vector.abs((cframe.Inverse(cframe) * point)::any)::any
