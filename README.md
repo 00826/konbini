@@ -17,7 +17,6 @@
 |[Animation.luau](./Konbini/Animation/init.luau)|animation controller|-|⭕|
 |*[await.luau](./Konbini/await/init.luau)*|`task.await()`|-|⭕|
 |[Bullet.luau](./Konbini/Bullet/init.luau)|projectile solver|-|⭕|
-|[CFrame.luau](./Konbini/CFrame/init.luau)|`CFrame` library extension|-|⭕|
 |[Collisions.luau](./Konbini/Collisions/init.luau)|collision solver and spatial query wrapper|-|⭕|
 |[Color3.luau](./Konbini/Color3/init.luau)|`Color3`, `ColorSequence` library extension|-|⭕|
 |[Couture.luau](./Konbini/Couture/init.luau)|server-instanced, client-authoritative accessories|-|⭕|
