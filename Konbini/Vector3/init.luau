@@ -308,30 +308,35 @@ function Vector3K.slerp(v: Vector3, w: Vector3, t: number)
 	return magC*unitC
 end
 
---- returns `point` transformed to objectspace of `position, lookvector, upvector(?=Vector3.yAxis)`
+--- returns `point` transformed to objectspace of `position, lookvector, upvector(?=Vector3.yAxis)` \
+--- eev is the goat
 function Vector3K.pointtoobjectspace(point: Vector3, position: Vector3, lookvector: Vector3, upvector: Vector3?)
-	upvector = upvector or Vector3.yAxis
-	local cframe = CFrame.fromMatrix(
-		position,
-		vector.cross(lookvector::any, upvector::any)::any,
-		upvector::any,
-		-lookvector
+	local delta = point - position
+
+	--[[
+	--- case for non-orthonormal input
+	local ub = vector.cross(upvector::any, backvector::any)
+
+	return Vector3.new(
+		vector.dot(delta::any, ub),
+		vector.dot(delta::any, vector.cross(backvector::any, rightvector::any)),
+		vector.dot(delta::any, vector.cross(rightvector::any, upvector::any))
+	) / vector.dot(rightvector::any, ub)
+	]]
+
+	--- fast case for orthonormal input
+	return Vector3.new(
+		vector.dot(delta::any, vector.cross(lookvector::any, upvector::any)::any),
+		vector.dot(delta::any, upvector or Vector3.yAxis::any),
+		-vector.dot(delta::any, lookvector::any)
 	)
-	return cframe.Inverse(cframe) * point
 end
 
 --- returns: \
 --- `if point is within or lies on edge of box`: `0` \
 --- `if point is outside of box`: `distance between point and nearest edge on box`
 function Vector3K.distancefrombox(point: Vector3, size: Vector3, position: Vector3, lookvector: Vector3, upvector: Vector3?)
-	upvector = upvector or Vector3.yAxis
-	local cframe = CFrame.fromMatrix(
-		position,
-		vector.cross(lookvector::any, upvector::any)::any,
-		upvector::any,
-		-lookvector
-	)
-	local absoluteobjectspace: Vector3 = vector.abs((cframe.Inverse(cframe) * point)::any)::any
+	local absoluteobjectspace: Vector3 = vector.abs(Vector3K.pointtoobjectspace(point, position, lookvector, upvector)::any)::any
 	size *= 0.5
 
 	local distx = absoluteobjectspace.X - size.X

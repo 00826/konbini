@@ -197,21 +197,21 @@ end
 
 --- maps worldspace `[x, y, z]` to objectspace of volume defined by cframe and size
 function Encoder.worldspacetou8(cframe: CFrame, size: Vector3, worldspace: Vector3)
-    local objectspace = cframe:PointToObjectSpace(worldspace)
-    local x = (objectspace.X + size.X) / (2 * size.X) * 255
-    local y = (objectspace.Y + size.Y) / (2 * size.Y) * 255
-    local z = (objectspace.Z + size.Z) / (2 * size.Z) * 255
+	local objectspace = cframe:PointToObjectSpace(worldspace)
+	local x = (objectspace.X + size.X) / (2 * size.X) * 255
+	local y = (objectspace.Y + size.Y) / (2 * size.Y) * 255
+	local z = (objectspace.Z + size.Z) / (2 * size.Z) * 255
 
-    return x, y, z
+	return x, y, z
 end
 
 --- returns worldspace from u8 coordinates of objectspace of volume defined by cframe and size
 function Encoder.worldspacefromu8(cframe: CFrame, size: Vector3, u8coords: Vector3)
-    local x = ((u8coords.X / 255) * (2 * size.X)) - size.X
-    local y = ((u8coords.Y / 255) * (2 * size.Y)) - size.Y
-    local z = ((u8coords.Z / 255) * (2 * size.Z)) - size.Z
+	local x = ((u8coords.X / 255) * (2 * size.X)) - size.X
+	local y = ((u8coords.Y / 255) * (2 * size.Y)) - size.Y
+	local z = ((u8coords.Z / 255) * (2 * size.Z)) - size.Z
 
-    return cframe:PointToWorldSpace(Vector3.new(x, y, z))
+	return cframe:PointToWorldSpace(Vector3.new(x, y, z))
 end
 
 --- writes signed 24-bit integer to buffer
