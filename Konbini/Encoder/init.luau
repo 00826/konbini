@@ -850,8 +850,8 @@ appendms: boolean?): string
 
 	hms = hms == "" and os.date("!%X", time) or hms
 	if appendms then
-		local _, f = math.modf(time)
-		hms ..= string.sub(string.format("%.3f", f), 2)
+		local _, frac = math.modf(time)
+		hms ..= string.sub(tostring(frac), 2, 5)
 	end
 
 	return hms
