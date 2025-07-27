@@ -73,41 +73,6 @@ function Encoder.writevector3i24(b: buffer, offset: number, value: Vector3, prec
 	Encoder.writei24(b, offset + 6, value.Z)
 end
 
---- reads CFrame from buffer
-function Encoder.readcframe(b: buffer, offset: number)
-	return CFrame.new(
-		buffer.readf32(b, offset),
-		buffer.readf32(b, offset + 4),
-		buffer.readf32(b, offset + 8)
-	) * CFrame.fromOrientation(
-		buffer.readi16(b, offset + 12) / 100,
-		buffer.readi16(b, offset + 14) / 100,
-		buffer.readi16(b, offset + 16) / 100
-	)
-end
-
---- writes CFrame to buffer
-function Encoder.writecframe(b: buffer, offset: number, value: CFrame)
-	buffer.writef32(b, offset, value.X)
-	buffer.writef32(b, offset + 4, value.Y)
-	buffer.writef32(b, offset + 8, value.Z)
-
-	local rx, ry, rz = value:ToOrientation()
-	buffer.writei16(b, offset + 12, rx * 100)
-	buffer.writei16(b, offset + 14, ry * 100)
-	buffer.writei16(b, offset + 16, rz * 100)
-end
-
---- reads boolean from buffer
-function Encoder.readboolean(b: buffer, offset: number)
-	return buffer.readu8(b, offset) == 1
-end
-
---- writes boolean to buffer
-function Encoder.writeboolean(b: buffer, offset: number, value: boolean?)
-	buffer.writeu8(b, offset, value and 1 or 0)
-end
-
 --- rotates range of values with fixed variable size to the right
 --- ```
 --- rrotate(bufferu8[23, 33, 91], 0, 1, 3) -> [91, 23, 33]
@@ -180,40 +145,6 @@ function Encoder.compare(a: buffer, b: buffer, offset: number?)
 	end
 end
 
---- merges value stored in new buffer into old buffer, returning values of changes made \
---- returns: \
---- `[buffer old u8] @ [offset] == [buffer new u8] @ [offset]` \
---- `[buffer old u8] @ [offset]` \
---- `[buffer new u8] @ [offset]`
-function Encoder.mergeu8(old: buffer, new: buffer, offset: number): (boolean, number, number)
-	local x = buffer.readu8(old, offset)
-	local y = buffer.readu8(new, offset)
-	local applychange = x ~= y
-	if applychange then
-		buffer.copy(old, offset, new, offset, 1)
-	end
-	return applychange, x, y
-end
-
---- maps worldspace `[x, y, z]` to objectspace of volume defined by cframe and size
-function Encoder.worldspacetou8(cframe: CFrame, size: Vector3, worldspace: Vector3)
-	local objectspace = cframe:PointToObjectSpace(worldspace)
-	local x = (objectspace.X + size.X) / (2 * size.X) * 255
-	local y = (objectspace.Y + size.Y) / (2 * size.Y) * 255
-	local z = (objectspace.Z + size.Z) / (2 * size.Z) * 255
-
-	return x, y, z
-end
-
---- returns worldspace from u8 coordinates of objectspace of volume defined by cframe and size
-function Encoder.worldspacefromu8(cframe: CFrame, size: Vector3, u8coords: Vector3)
-	local x = ((u8coords.X / 255) * (2 * size.X)) - size.X
-	local y = ((u8coords.Y / 255) * (2 * size.Y)) - size.Y
-	local z = ((u8coords.Z / 255) * (2 * size.Z)) - size.Z
-
-	return cframe:PointToWorldSpace(Vector3.new(x, y, z))
-end
-
 --- writes signed 24-bit integer to buffer
 function Encoder.writei24(b: buffer, offset: number, value: number)
 	local sign = math.sign(value) < 0 and 1 or 0
@@ -221,42 +152,32 @@ function Encoder.writei24(b: buffer, offset: number, value: number)
 		value += 1
 	end
 	local abs = math.abs(value)
-
-	buffer.writeu8(b, offset, bit32.extract(abs, 0, 8))
-	buffer.writeu8(b, offset + 1, bit32.extract(abs, 8, 8))
-
-	local x = bit32.extract(abs, 16, 8)
-	buffer.writeu8(b, offset + 2, bit32.replace(x, sign, 7, 1))
+	
+	buffer.writebits(b, offset, 23, abs)
+	buffer.writebits(b, offset + 23, 1, sign)
 end
 
 --- reads signed 24-bit integer from buffer
 function Encoder.readi24(b: buffer, offset: number)
-	local int = 0
-	int = bit32.replace(int, buffer.readu8(b, offset), 0, 8)
-	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
-	int = bit32.replace(int, buffer.readu8(b, offset + 2), 16, 8)
-	local sign = bit32.extract(int, 23, 1) == 1 and -1 or 1
-	local value = bit32.extract(int, 0, 23) * sign
-	if sign < 0 then
+	local value = buffer.readbits(b, offset, 23)
+	local sign = buffer.readbits(b, offset + 23, 1)
+	
+	if sign == 1 then
+		value *= -1
 		value -= 1
 	end
+	
 	return value
 end
 
 --- writes unsigned 24-bit integer to buffer
 function Encoder.writeu24(b: buffer, offset: number, value: number)
-	buffer.writeu8(b, offset, bit32.extract(value, 0, 8))
-	buffer.writeu8(b, offset + 1, bit32.extract(value, 8, 8))
-	buffer.writeu8(b, offset + 2, bit32.extract(value, 16, 8))
+	buffer.writebits(b, offset, 24, value)
 end
 
 --- reads unsigned 24-bit integer from buffer
 function Encoder.readu24(b: buffer, offset: number)
-	local int = 0
-	int = bit32.replace(int, buffer.readu8(b, offset), 0, 8)
-	int = bit32.replace(int, buffer.readu8(b, offset + 1), 8, 8)
-	int = bit32.replace(int, buffer.readu8(b, offset + 2), 16, 8)
-	return int
+	return buffer.readbits(b, offset, 24)
 end
 
 --- returns a `int16`-width matrix-buffer \
@@ -380,21 +301,6 @@ function Encoder.matrixinterpretcolumn(m: buffer, column: number)
 	end
 
 	return str
-end
-
---- writes value to bit-field-width of u32 stored in buffer at offset \
---- returns new value, for convenience \
---- accessible bit range: `[0, 31]`
-function Encoder.writeflagu32(b: buffer, offset: number, field: number, width: number, value: number)
-	local x = bit32.replace(buffer.readu32(b, offset), value, field, width)
-	buffer.writeu32(b, offset, x)
-	return x
-end
-
---- reads value stored along bit-field-width of u32 stored in buffer at offset \
---- accessible bit range: `[0, 31]`
-function Encoder.readflagu32(b: buffer, offset: number, field: number, width: number)
-	return bit32.extract(buffer.readu32(b, offset), field, width)
 end
 
 --- returns a width`(?=4(f32))`-wide bar buffer \
@@ -731,18 +637,54 @@ function Encoder.bitoffset(byteoffset: number)
 	return byteoffset * 8 --- yes i unironically need this kthxbai!!
 end
 
---- equivalent to `bit32.replace(x, value, field, width)`
-function Encoder.writebits(x: number, field: number, width: number, value: number)
-	return bit32.replace(x, value, field, width)
-end
-
 --- returns range of bits as a string
-function Encoder.readbits(x: number, field: number, range: number)
+function Encoder.stringbits(x: number, field: number, range: number)
 	local bitstring = ""
 	for i = 1, range do
 		bitstring ..= tostring(bit32.extract(x, field + i))
 	end
 	return bitstring
+end
+
+--- recursively progresses `{ number level, number xp }`-typed array \
+--- `p`: progression array \
+--- `xp`: xp to add \
+--- `required`: returns, with respect to current level, the xp required to progress to the next level \
+--- `max (?=nil)`: if `level > max`, preserves current level and sets xp to 0 \
+--- `offset (?=1)`: offset where `level = p[offset]` and `xp = p[offset + 1]` \
+--- returns # of progression steps made
+function Encoder.prog(p: {number?}, xp: number, required: (number) -> number, max: number?, offset: number?)
+	local i = offset or 1
+	local level = p[i] or 1
+	assert(type(level) == "number", "expected level of `p` to be type number")
+	local ups = 0
+
+	if max then
+		if level > max then
+			p[i + 1] = 0
+
+			return ups
+		end
+	end
+
+	local reqxp = required(level)
+	local oldxp = p[i + 1] or 0
+	assert(type(oldxp) == "number", "expected xp of `p` to be type number")
+	
+	local newxp = oldxp + xp
+
+	if newxp > reqxp then
+		p[1] = level + 1
+		p[2] = newxp - reqxp
+		ups += 1
+
+		return ups + Encoder.prog(p, 0, required, max, offset)
+	else
+		p[1] = level
+		p[2] = newxp
+
+		return ups
+	end
 end
 
 --- returns value represented as a boolean
