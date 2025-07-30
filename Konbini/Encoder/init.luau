@@ -655,33 +655,35 @@ end
 --- returns # of progression steps made
 function Encoder.prog(p: {number?}, xp: number, required: (number) -> number, max: number?, offset: number?)
 	local i = offset or 1
+	local j = i + 1
+
 	local level = p[i] or 1
 	assert(type(level) == "number", "expected level of `p` to be type number")
 	local ups = 0
 
 	if max then
 		if level > max then
-			p[i + 1] = 0
+			p[j] = 0
 
 			return ups
 		end
 	end
 
 	local reqxp = required(level)
-	local oldxp = p[i + 1] or 0
+	local oldxp = p[j] or 0
 	assert(type(oldxp) == "number", "expected xp of `p` to be type number")
-	
+
 	local newxp = oldxp + xp
 
-	if newxp > reqxp then
-		p[1] = level + 1
-		p[2] = newxp - reqxp
+	if newxp >= reqxp then
+		p[i] = level + 1
+		p[j] = newxp - reqxp
 		ups += 1
 
 		return ups + Encoder.prog(p, 0, required, max, offset)
 	else
-		p[1] = level
-		p[2] = newxp
+		p[i] = level
+		p[j] = newxp
 
 		return ups
 	end
