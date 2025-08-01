@@ -24,13 +24,6 @@ local Vector3K = {
 
 --- returns `v.Unit`, or, if `NaN`, `Vector3.zero`
 function Vector3K.unit_or_zero(v: Vector3)
-	--[[
-	if vector.magnitude(v) > 0 then
-		return vector.normalize(v)
-	else
-		return vector.zero
-	end
-	]]
 	if v.Magnitude > 0 then
 		return v.Unit
 	else
@@ -40,10 +33,6 @@ end
 
 --- returns `v` projected onto `w`
 function Vector3K.project(v: Vector3, w: Vector3)
-	--[[
-	w = Vector3K.unit_or_zero(w)
-	return vector.dot(v, w) * w
-	]]
 	w = Vector3K.unit_or_zero(w)
 	return vector.dot(v::any, w::any) * w
 end
@@ -399,6 +388,11 @@ function Vector3K.distancefromsphere(point: Vector3, position: Vector3, radius: 
 	end
 	
 	return 0
+end
+
+--- returns position of a projectile given its initial `velocity`, elapsed `time`, and gravity `?=196`
+function Vector3K.projectile(velocity: Vector3, time: number, gravity: number?)
+	return (vector.normalize(velocity::any)::any * (vector.magnitude(velocity::any) * time)) - ((0.5 * Vector3.yAxis) * (gravity or 196) * (time * time))
 end
 
 return Vector3K

@@ -229,15 +229,15 @@ function TableK.limit(A: {any}, size: number)
 end
 
 --- returns an item \
---- equivalent to `return {id, value}`
-function TableK.itemcreate(id: string, value: any)
-	return {id, value}::{string|any}
+--- equivalent to `return {id, ...}`
+function TableK.itemcreate(id: string, ...: any)
+	return {id, ...}::{string|any}
 end
 
 --- inserts item, by its associated `id`, to list \
 --- *does not account for duplicates*
-function TableK.iteminsert(list: { typeof(TableK.itemcreate(...)) }, id: string, value: any)
-	table.insert(list, TableK.itemcreate(id, value))
+function TableK.iteminsert(list: { typeof(TableK.itemcreate(...)) }, id: string, ...: any)
+	table.insert(list, TableK.itemcreate(id, ...))
 end
 
 --- returns:

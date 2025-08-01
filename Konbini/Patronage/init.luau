@@ -115,6 +115,11 @@ function Patronage.policyfromjson(json: string,
 	return nil
 end
 
+--- returns `pcall(MarketplaceService.GetProductInfo, MarketplaceService, id, itemtype)`
+function Patronage.getproductinfo(id: number, itemtype: Enum.InfoType)
+	return pcall(MarketplaceService.GetProductInfo, MarketplaceService, id, itemtype)
+end
+
 --- returns an empty minimum marketplace product
 function Patronage.minproduct()
 	return {
