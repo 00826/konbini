@@ -163,7 +163,6 @@ export type MoverClass =
 --- Instance library extension
 local InstanceK = {
 	Movers = script:WaitForChild("Movers");
-	EmitContainer = workspace;
 
 	DebouncePrefix = "__d_";
 }
@@ -243,24 +242,6 @@ function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame
 	return newweld
 end
 
---- iterative property setter
-function InstanceK.properties(instance: Instance, properties: {[string]: any})
-	for k, v in properties do
-		if k == "Parent" then continue end
-		(instance :: any)[k] = v
-	end
-	if properties.Parent then
-		instance.Parent = properties.Parent
-	end
-end
-
---- iterative attribute setter
-function InstanceK.attributes(instance: Instance, attributes: {[string]: any})
-	for k, v in attributes do
-		instance:SetAttribute(k, v)
-	end
-end
-
 --- yields until child of class is parented under instance
 function InstanceK.waitforchildofclass(instance: Instance, classname: string, timeout: number?): Instance?
 	local thing, time = instance:FindFirstChildOfClass(classname), timeout or 10
@@ -272,35 +253,6 @@ function InstanceK.waitforchildofclass(instance: Instance, classname: string, ti
 	end
 
 	return thing
-end
-
---- returns first child of instance where `comp(a) -> true`
-function InstanceK.findfirstchildwithcase(instance: Instance, comp: (a: Instance) -> boolean): Instance?
-	for _, thing in instance:GetChildren() do
-		if comp(thing) then return thing end
-	end
-
-	return
-end
-
---- returns children of instance where `comp(a) -> true`
-function InstanceK.getchildrenwithcase(instance: Instance, comp: (a: Instance) -> boolean)
-	local things = instance:GetChildren()
-	local list = table.create(#things)
-	for _, thing in things do
-		if comp(thing) == false then continue end
-		table.insert(list, thing)
-	end
-
-	return list
-end
-
---- destroys children of instance where `comp(a) -> true`
-function InstanceK.clearchildrenwithcase(instance: Instance, comp: (a: Instance) -> boolean)
-	for _, thing in instance:GetChildren() do
-		if comp(thing) == false then continue end
-		thing:Destroy()
-	end
 end
 
 --- recursively searches for the highest ancestor of class
@@ -383,54 +335,6 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspee
 	end
 end
 
---- emits a clone of instance template `t` at vector3 or attached to basepart \
---- `clone<t> -> parented -> deferred transform(?) -> return clone<t>` \
---- if both `at` and `template` are baseparts, then `t` will be unanchored and massless-ed *prior* to welding. weldconstraint is parented to emitted clone of `t`
-function InstanceK.emit<t>(template: t & Instance, at: Vector3|CFrame|BasePart|Model, transform: ((real: t) -> ())?)
-	local real = template:Clone()
-
-	if typeof(at) == "Vector3" then
-		real.Parent = InstanceK.EmitContainer
-		if real:IsA("BasePart") then
-			real.Position = at
-		elseif real:IsA("Model") then
-			real:PivotTo(CFrame.new(at))
-		end
-	elseif typeof(at) == "CFrame" then
-		real.Parent = InstanceK.EmitContainer
-		if real:IsA("BasePart") then
-			real.CFrame = at
-		elseif real:IsA("Model") then
-			real:PivotTo(at)
-		end
-	elseif at:IsA("BasePart") then
-		real.Parent = at
-		if real:IsA("BasePart") then
-			real.Anchored = false
-			real.Massless = true
-
-			InstanceK.weld(at, real)
-		end
-	elseif at:IsA("Model") then
-		real.Parent = at
-		if real:IsA("BasePart") then
-			real.Anchored = false
-			real.Massless = true
-
-			InstanceK.weld(at.PrimaryPart, real)
-		end
-	else
-		real:Destroy()
-		error(typeof(at))
-	end
-
-	if transform then
-		task.defer(transform, real)
-	end
-
-	return real
-end
-
 --- memory-safe `Player:LoadCharacter()`
 function InstanceK.loadcharacter(player: Player, description: HumanoidDescription?)
 	if player.Character then
@@ -445,13 +349,6 @@ function InstanceK.loadcharacter(player: Player, description: HumanoidDescriptio
 		else
 			player:LoadCharacter()
 		end
-	end
-end
-
---- disables humanoidstates
-function InstanceK.disablestates(humanoid: Humanoid, states: {Enum.HumanoidStateType})
-	for _, State: Enum.HumanoidStateType in states do
-		humanoid:SetStateEnabled(State, false)
 	end
 end
 
@@ -517,16 +414,6 @@ function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?)
 				ballsocket.Attachment1:Destroy()
 				ballsocket:Destroy()
 			end
-		end
-	end
-end
-
---- toggles cancollide on targeted limbs
-function InstanceK.setlimbcancollide(target: Model, cancollide: boolean, limbs: {string})
-	for _, name in limbs do
-		local basepart = target:FindFirstChild(name)
-		if basepart and basepart:IsA("BasePart") then
-			basepart.CanCollide = cancollide
 		end
 	end
 end
