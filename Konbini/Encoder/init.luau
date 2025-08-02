@@ -147,20 +147,21 @@ end
 
 --- writes signed 24-bit integer to buffer
 function Encoder.writei24(b: buffer, offset: number, value: number)
+	local bitoffset = offset * 8
 	local sign = math.sign(value) < 0 and 1 or 0
 	if sign == 1 then
 		value += 1
 	end
-	local abs = math.abs(value)
 	
-	buffer.writebits(b, offset, 23, abs)
-	buffer.writebits(b, offset + 23, 1, sign)
+	buffer.writebits(b, bitoffset, 23, math.abs(value))
+	buffer.writebits(b, bitoffset + 23, 1, sign)
 end
 
 --- reads signed 24-bit integer from buffer
 function Encoder.readi24(b: buffer, offset: number)
-	local value = buffer.readbits(b, offset, 23)
-	local sign = buffer.readbits(b, offset + 23, 1)
+	local bitoffset = offset * 8
+	local value = buffer.readbits(b, bitoffset, 23)
+	local sign = buffer.readbits(b, bitoffset + 23, 1)
 	
 	if sign == 1 then
 		value *= -1
@@ -172,12 +173,12 @@ end
 
 --- writes unsigned 24-bit integer to buffer
 function Encoder.writeu24(b: buffer, offset: number, value: number)
-	buffer.writebits(b, offset, 24, value)
+	buffer.writebits(b, offset * 8, 24, value)
 end
 
 --- reads unsigned 24-bit integer from buffer
 function Encoder.readu24(b: buffer, offset: number)
-	return buffer.readbits(b, offset, 24)
+	return buffer.readbits(b, offset * 8, 24)
 end
 
 --- returns a `int16`-width matrix-buffer \
