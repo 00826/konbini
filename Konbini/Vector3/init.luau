@@ -306,6 +306,7 @@ function Vector3K.pointtoobjectspace(point: Vector3, position: Vector3, lookvect
 	--- case for non-orthonormal input
 	local ub = vector.cross(upvector::any, backvector::any)
 
+	upvector = upvector or Vector3.yAxis
 	return Vector3.new(
 		vector.dot(delta::any, ub),
 		vector.dot(delta::any, vector.cross(backvector::any, rightvector::any)),
@@ -314,9 +315,10 @@ function Vector3K.pointtoobjectspace(point: Vector3, position: Vector3, lookvect
 	]]
 
 	--- fast case for orthonormal input
+	upvector = upvector or Vector3.yAxis
 	return Vector3.new(
 		vector.dot(delta::any, vector.cross(lookvector::any, upvector::any)::any),
-		vector.dot(delta::any, upvector or Vector3.yAxis::any),
+		vector.dot(delta::any, upvector::any),
 		-vector.dot(delta::any, lookvector::any)
 	)
 end
