@@ -6,7 +6,7 @@ local HttpService = game:GetService("HttpService")
 local Rand = Random.new()
 
 local function subf(x: string)
-	return #x == 1 and "0" .. x or x
+	return string.len(x) == 1 and "0" .. x or x
 end
 
 --- ### Encoder.luau
@@ -747,9 +747,8 @@ function Encoder.hourminutesecond(time: number, notation:
 	| "DD:HH:MM:SS"
 	| "HH:MM:SS"
 	| "MM:SS"
-	| "M:SS"
-	?,
-appendms: boolean?): string
+	| "M:SS",
+	appendms: boolean?): string
 	--[[
 		os.date("!%X", time) is the fastest for all inputs below 86400, because any input at or above 86400 breaks the formatting
 		string.gsub(string.format(), time, subf) is the second fastest for all inputs, never has a formatting break, but is ~10% slower than os.date("!%X", time)
@@ -758,44 +757,64 @@ appendms: boolean?): string
 	local hms = ""
 	if notation == "DD:HH:MM:SS" then
 		if time >= 86400 then
-			local D = time // 86400
-			time -= D * 86400
-			local H = time // 3600
-			time -= H * 3600
-			local M = time // 60
-			time -= M * 60
+			local days = time // 86400
+			time -= days * 86400
+			local hours = time // 3600
+			time -= hours * 3600
+			local minutes = time // 60
+			time -= minutes * 60
 
-			hms = string.gsub(string.format("%d:%d:%d:%d", D, H, M, time), "%d+", subf)
+			hms = string.gsub(string.format("%d:%d:%d:%d", days, hours, minutes, time), "%d+", subf)
 		else
 			hms = "00:" .. os.date("!%X", time)
 		end
 	elseif notation == "HH:MM:SS" then
 		if time >= 86400 then
-			local H = time // 3600
-			time -= H * 3600
-			local M = time // 60
-			time -= M * 60
+			local hours = time // 3600
+			time -= hours * 3600
+			local minutes = time // 60
+			time -= minutes * 60
 
-			hms = string.gsub(string.format("%d:%d:%d", H, M, time), "%d+", subf)
+			hms = string.gsub(string.format("%d:%d:%d", hours, minutes, time), "%d+", subf)
 		else
 			hms = os.date("!%X", time)
 		end
 	elseif notation == "MM:SS" then
 		if time >= 3600 then
-			local M = time // 60
-			time -= M * 60
-			hms = string.gsub(string.format("%d:%d", M, time), "%d+", subf)
+			local minutes = time // 60
+			time -= minutes * 60
+			hms = string.gsub(string.format("%d:%d", minutes, time), "%d+", subf)
 		else
 			hms = string.sub(os.date("!%X", time), 4, 8)
 		end
 	elseif notation == "M:SS" then
-		hms = string.gsub(string.sub(os.date("!%X", time), 4, 8), "^0", "")
+		if time >= 3600 then
+			local minutes = time // 60
+			time -= minutes * 60
+			hms = string.gsub(string.format("%d:%d", minutes, time), "%d+", subf)
+		else
+			hms = string.gsub(string.sub(os.date("!%X", time), 4, 8), "^0", "")
+		end
 	end
 
-	hms = hms == "" and os.date("!%X", time) or hms
 	if appendms then
-		local _, frac = math.modf(time)
-		hms ..= string.sub(tostring(frac), 2, 5)
+		local stringtime = tostring(time)
+
+		local init = string.find(stringtime, "%.")
+		if init then
+			local append = string.sub(stringtime, init, init + 3)
+			
+			for i = 2, 4, 1 do
+				local substring = string.sub(append, i, i)
+				if substring == "" then
+					append ..= "0"
+				end
+			end
+
+			hms ..= append
+		else
+			hms ..= ".000"
+		end
 	end
 
 	return hms
