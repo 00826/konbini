@@ -743,12 +743,7 @@ function Encoder.richformat(text: string, prefix: string)
 end
 
 --- formats time into a hour-minute-second-esque notation
-function Encoder.hourminutesecond(time: number, notation: 
-	| "DD:HH:MM:SS"
-	| "HH:MM:SS"
-	| "MM:SS"
-	| "M:SS",
-	appendms: boolean?): string
+function Encoder.hourminutesecond(time: number, notation: "DD:HH:MM:SS" | "HH:MM:SS" | "MM:SS" | "M:SS", appendms: boolean?): string
 	--[[
 		os.date("!%X", time) is the fastest for all inputs below 86400, because any input at or above 86400 breaks the formatting
 		string.gsub(string.format(), time, subf) is the second fastest for all inputs, never has a formatting break, but is ~10% slower than os.date("!%X", time)
@@ -821,18 +816,9 @@ function Encoder.hourminutesecond(time: number, notation:
 end
 
 --- returns a timestamp of current utc time with respect to format option or time in minutes
-function Encoder.timestamp(format:
-	| number
-	| "Hour"
-	| "Biphase"
-	| "Day"
-	| "Week"
-	| "Season"
-	| "Biseason"
-	| "Year"
-)
-	local T0 = os.date("!*t")
-	local T1 = table.clone(T0)
+function Encoder.timestamp(format: "Hour" | "Biphase" | "Day" | "Week" | "Season" | "Biseason" | "Year" | number)
+	local datetable = os.date("!*t") --- read from this table as a truth state
+	local datetablecopy = table.clone(datetable) --- write to this table, keys inherited from datetable
 
 	local timestamp = {
 		--- unique, non-recurring string describing format time
@@ -842,6 +828,7 @@ function Encoder.timestamp(format:
 		--- time until format changes
 		Until = 0;
 	}
+
 	if type(format) == "number" then
 		--- `Format: 5`
 		--- `February 14, 2024, 06:44` --> `"2024_45_6_8"`
@@ -849,50 +836,50 @@ function Encoder.timestamp(format:
 		--- `February 14, 2024, 06:44` --> `"2024_45_6_4"`
 		--- `Format: 15`
 		--- `February 14, 2024, 06:44` --> `"2024_45_6_2"`
-		T1.min = format * math.ceil((T1.min + 1) / format)
-		T1.sec = 0
+		datetablecopy.min = format * math.ceil((datetablecopy.min + 1) / format)
+		datetablecopy.sec = 0
 
-		local year, yday, hour, qtrhour = T0.year, T0.yday, T0.hour, math.ceil((T0.min + 1) / format) - 1
+		local year, yday, hour, qtrhour = datetable.year, datetable.yday, datetable.hour, math.ceil((datetable.min + 1) / format) - 1
 		timestamp.Id = string.format("%d_%d_%d_%d", year, yday, hour, qtrhour)
 		timestamp.Seed = tonumber(year .. yday .. hour .. qtrhour) :: number
 	else
 		if format == "Hour" then
 			--- `February 14, 2024, 06:44` --> `"2024_45_6"`
-			T1.hour = math.floor(T1.hour + 1)
-			T1.min = 0
-			T1.sec = 0
+			datetablecopy.hour = math.floor(datetablecopy.hour + 1)
+			datetablecopy.min = 0
+			datetablecopy.sec = 0
 
-			local year, yday, hour = T0.year, T0.yday, T0.hour
+			local year, yday, hour = datetable.year, datetable.yday, datetable.hour
 			timestamp.Id = string.format("%d_%d_%d", year, yday, hour)
 			timestamp.Seed = tonumber(year .. yday .. hour) :: number
 		elseif format == "Biphase" then
 			--- `February 14, 2024, 06:44` --> `"2024_45_AM"`
 			--- `February 14, 2024, 16:44` --> `"2024_45_PM"`
-			T1.hour = 12 * math.ceil((T1.hour + 1) / 12)
-			T1.min = 0
-			T1.sec = 0
+			datetablecopy.hour = 12 * math.ceil((datetablecopy.hour + 1) / 12)
+			datetablecopy.min = 0
+			datetablecopy.sec = 0
 
-			local year, yday, phase = T0.year, T0.yday, os.date("!%p")
+			local year, yday, phase = datetable.year, datetable.yday, os.date("!%p")
 			timestamp.Id = string.format("%d_%d_%s", year, yday, phase)
 			timestamp.Seed = tonumber(year .. yday .. string.byte(phase)) :: number
 		elseif format == "Day" then
 			--- `February 14, 2024` --> `"2024_45"`
-			T1.day += 1
-			T1.hour = 0
-			T1.min = 0
-			T1.sec = 0
+			datetablecopy.day += 1
+			datetablecopy.hour = 0
+			datetablecopy.min = 0
+			datetablecopy.sec = 0
 
-			local year, yday = T0.year, T0.yday
+			local year, yday = datetable.year, datetable.yday
 			timestamp.Id = string.format("%d_%d", year, yday)
 			timestamp.Seed = tonumber(year .. yday) :: number
 		elseif format == "Week" then
 			--- `February 14, 2024` --> `"2024_7_06"` (06th week of 2024)
-			T1.day += 8 - T0.wday
-			T1.hour = 0
-			T1.min = 0
-			T1.sec = 0
+			datetablecopy.day += 8 - datetable.wday
+			datetablecopy.hour = 0
+			datetablecopy.min = 0
+			datetablecopy.sec = 0
 
-			local year, week, yweek = T0.year, T0.wday, os.date("!%U")
+			local year, week, yweek = datetable.year, datetable.wday, os.date("!%U")
 			timestamp.Id = string.format("%d_%d_%s", year, week, yweek)
 			timestamp.Seed = tonumber(year .. week .. yweek) :: number
 		elseif format == "Season" then
@@ -901,43 +888,43 @@ function Encoder.timestamp(format:
 			--- Jun-Aug: `2` (summer)
 			--- Sep-Nov: `3` (fall)
 			--- Dec-Feb: `4` (winter)
-			T1.month += 1 + ((11 - math.ceil((T1.month - 3) % 12)) % 3)
-			T1.day = 1
-			T1.hour = 0
-			T1.min = 0
-			T1.sec = 0
+			datetablecopy.month += 1 + ((11 - math.ceil((datetablecopy.month - 3) % 12)) % 3)
+			datetablecopy.day = 1
+			datetablecopy.hour = 0
+			datetablecopy.min = 0
+			datetablecopy.sec = 0
 
-			local year, month = T0.year, math.ceil((1 + ((T0.month - 3) % 12)) / 3)
+			local year, month = datetable.year, math.ceil((1 + ((datetable.month - 3) % 12)) / 3)
 			timestamp.Id = string.format("%d_%d", year, month)
 			timestamp.Seed = tonumber(year .. month) :: number
 		elseif format == "Biseason" then
 			--- `February 14, 2024` --> `"2024_1"`
 			--- Jan-Jun: `1` (SS)
 			--- Jul-Dec: `2` (FW)
-			T1.month = math.ceil(T1.month / 6)
-			T1.day = 1
-			T1.hour = 0
-			T1.min = 0
-			T1.sec = 0
+			datetablecopy.month = math.ceil(datetablecopy.month / 6)
+			datetablecopy.day = 1
+			datetablecopy.hour = 0
+			datetablecopy.min = 0
+			datetablecopy.sec = 0
 
-			local year, month = T0.year, math.ceil(T0.month / 6)
+			local year, month = datetable.year, math.ceil(datetable.month / 6)
 			timestamp.Id = string.format("%d_%d", year, month)
 			timestamp.Seed = tonumber(year .. month) :: number
 		elseif format == "Year" then
 			--- `February 14, 2024` --> `"2024"`
-			T1.year += 1
-			T1.month = 1
-			T1.day = 1
-			T1.hour = 0
-			T1.min = 0
-			T1.sec = 0
+			datetablecopy.year += 1
+			datetablecopy.month = 1
+			datetablecopy.day = 1
+			datetablecopy.hour = 0
+			datetablecopy.min = 0
+			datetablecopy.sec = 0
 
-			timestamp.Id = tostring(T0.year)
-			timestamp.Seed = tonumber(T0.year) :: number
+			timestamp.Id = tostring(datetable.year)
+			timestamp.Seed = tonumber(datetable.year) :: number
 		end
 	end
 
-	timestamp.Until = os.time(T1) - os.time(T0)
+	timestamp.Until = os.time(datetablecopy) - os.time(datetable)
 
 	return timestamp
 end

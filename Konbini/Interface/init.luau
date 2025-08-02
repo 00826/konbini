@@ -362,16 +362,6 @@ function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alig
 	end
 end
 
---[[--- returns position of target @ x,y constrained within bounds of container
-function Interface.clampposition(x: number, y: number, target: GuiObject, container: GuiObject)
-	local pX, pY = (x - container.AbsolutePosition.X), (y - container.AbsolutePosition.Y - 36)
-
-	local dY = math.abs(math.clamp(container.AbsoluteSize.Y - (pY + target.AbsoluteSize.Y), -math.huge, 0))
-	return UDim2.fromOffset(pX, pY - dY)
-end]]
---- ^ superseded by vector2.clamp but vector2.clamp is untested so keeping this until vector2.clamp is confirmed to work
-local _
-
 --- returns a clone of `template`
 function Interface.clone<T>(template: T & GuiObject, name: string?, layoutorder: number?): T
 	local clone = template:Clone()
