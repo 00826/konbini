@@ -362,6 +362,8 @@ function Interface.dupes<T>(template: T & GuiObject, count: number): {T}
 		clone.Parent = template.Parent
 		clone.LayoutOrder = i
 		clone.Visible = true
+
+		table.insert(result, clone)
 	end
 
 	return result
