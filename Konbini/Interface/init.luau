@@ -172,6 +172,11 @@ function Interface.guiinset()
 	return GuiService:GetGuiInset()
 end
 
+--- returns `(offset?=2) + math.ceil(viewportheight * (scale?=0.025))`
+function Interface.textsize(viewportheight: number, offset: number?, scale: number?)
+	return (offset or 2) + math.ceil(viewportheight * (scale or 0.025))
+end
+
 --- locally emits a TextChatService message in `channel (?="RBXGeneral")`
 function Interface.textchatmessage(message: string, channel: string?)
 	local textchannel = TextChatService:FindFirstChild("TextChannels"):FindFirstChild(channel or "RBXGeneral")
@@ -185,27 +190,27 @@ end
 --- connects button events to `guibutton`
 function Interface.connectbutton(button: GuiButton, functions: {
 	--- `MouseButton1Down`
-	ClickDown: (x: number?, y: number?) -> ()?;
+	ClickDown: (x: number, y: number) -> ()?;
 	--- `MouseButton1Up`
-	ClickUp: (x: number?, y: number?) -> ()?;
+	ClickUp: (x: number, y: number) -> ()?;
 	--- `MouseButton2Down`
-	RClickDown: (x: number?, y: number?) -> ()?;
+	RClickDown: (x: number, y: number) -> ()?;
 	--- `MouseButton2Up`
-	RClickUp: (x: number?, y: number?) -> ()?;
+	RClickUp: (x: number, y: number) -> ()?;
 	--- `MouseEnter` \
 	--- `SelectionGained`
-	Enter: (x: number?, y: number?) -> ()?;
+	Enter: (x: number, y: number) -> ()?;
 	--- `MouseLeave` \
 	--- `SelectionLost`
-	Leave: (x: number?, y: number?) -> ()?;
+	Leave: (x: number, y: number) -> ()?;
 	--- `MouseMoved`
-	Move: (x: number?, y: number?) -> ()?;
-	--- `ScrollUp`
-	ScrollUp: () -> ()?;
-	--- `ScrollDown`
-	ScrollDown: () -> ()?;
+	Move: (x: number, y: number) -> ()?;
+	--- `MouseWheelForward`
+	ScrollUp: (x: number, y: number) -> ()?;
+	--- `MouseWheelBackward`
+	ScrollDown: (x: number, y: number) -> ()?;
 })
-	local connections = table.create(12)
+	local connections = table.create(11)
 
 	if functions.ClickDown then
 		table.insert(connections, button.MouseButton1Down:Connect(functions.ClickDown))
@@ -219,18 +224,11 @@ function Interface.connectbutton(button: GuiButton, functions: {
 	end
 	if functions.RClickUp then
 		table.insert(connections, button.MouseButton2Up:Connect(functions.RClickUp))
-		table.insert(connections, button.TouchTap:Connect(function(array: {Vector2})
-			if #array ~= 2 then return end
-			local vec2 = array[1] + array[2]
-			vec2 *= 0.5
-			functions.RClickUp(vec2.X, vec2.Y)
-		end))
 	end
 
 	if functions.Enter then
 		table.insert(connections, button.MouseEnter:Connect(functions.Enter))
 		table.insert(connections, button.SelectionGained:Connect(function()
-			--- local vec2 = button.AbsolutePosition
 			local vec2 = UserInputService:GetMouseLocation()
 			functions.Enter(vec2.X, vec2.Y)
 		end))
@@ -238,7 +236,6 @@ function Interface.connectbutton(button: GuiButton, functions: {
 	if functions.Leave then
 		table.insert(connections, button.MouseLeave:Connect(functions.Leave))
 		table.insert(connections, button.SelectionLost:Connect(function()
-			--- local vec2 = button.AbsolutePosition
 			local vec2 = UserInputService:GetMouseLocation()
 			functions.Leave(vec2.X, vec2.Y)
 		end))
@@ -290,23 +287,6 @@ function Interface.sprite(imagelabel: ImageLabel, sprite: typeof(Interface.creat
 		imagelabel.Image = ""
 		imagelabel.ImageRectSize = Vector2.zero
 		imagelabel.ImageRectOffset = Vector2.zero
-	end
-end
-
---- scales `textlabel` along `TextBounds.Y`
-function Interface.scaletext(textlabel: TextLabel)
-	local sizeX = textlabel.AbsoluteSize.X
-
-	if textlabel.TextBounds.Y == 0 then
-		textlabel.Size = UDim2.fromOffset(sizeX, 0)
-		return
-	end
-
-	textlabel.Size = UDim2.fromOffset(sizeX, textlabel.TextBounds.Y)
-	if not textlabel.TextFits then
-		repeat
-			textlabel.Size += UDim2.fromOffset(0, 1)
-		until textlabel.TextFits
 	end
 end
 
@@ -373,10 +353,30 @@ function Interface.clone<T>(template: T & GuiObject, name: string?, layoutorder:
 	return clone
 end
 
---- returns `UIGridLayout` `CellPadding` and `CellSize` properties with respect to `columns`, `rows`, and `padding`
-function Interface.grid(columns: number, rows: number, padding: number)
+--- returns array populated by clones of `template`
+function Interface.dupes<T>(template: T & GuiObject, count: number): {T}
+	local result = table.create(count)
+	for i = 1, count do
+		local clone = template:Clone()
+		clone.Name = tostring(i)
+		clone.Parent = template.Parent
+		clone.LayoutOrder = i
+		clone.Visible = true
+	end
+
+	return result
+end
+
+--- applies column-row-padding layout to optional `uigridlayout(?=nil)` \
+--- returns cellpadding, cellsize for convenience
+function Interface.grid(columns: number, rows: number, padding: number, uigridlayout: UIGridLayout?)
 	local cellpadding = UDim2.fromOffset(padding, padding)
 	local cellsize = UDim2.new(1/columns, -padding, 1/rows, -padding)
+
+	if uigridlayout then
+		uigridlayout.CellPadding = cellpadding
+		uigridlayout.CellSize = cellsize
+	end
 
 	return cellpadding, cellsize
 end

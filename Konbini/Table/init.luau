@@ -154,24 +154,8 @@ function TableK.page<T>(A: {T}, size: number, offset: number)
 			1 + math.clamp((offset - 1) * size, 0, len),
 			math.clamp(offset * size, 0, len),
 			1,
-			table.create(len)
+			table.create(size)
 		)
-end
-
---- returns the max # of pages that can be displayed with respect to size
-function TableK.numpages(A: {any}, size: number)
-	return math.clamp(math.ceil(#A / size), 1, math.huge)
-end
-
---- returns key-value should `value` exist in `t`
-function TableK.fromvalue(t: {[any]: any}, value: any): (any, any)
-	for k, v in t do
-		if v == value then
-			return k, v
-		end
-	end
-
-	return nil, nil
 end
 
 --- returns a deep-copy of table
@@ -189,7 +173,7 @@ function TableK.deepcopy(t: {[any]: any}): {[any]: any}
 	return copy
 end
 
---- returns `a ∪ b`
+--- returns `a ∪ b` (`table.move(b, 1, #b, #a + 1, table.clone(a))`)
 function TableK.union<T>(a: {T}, b: {T})
 	return table.move(b, 1, #b, #a + 1, table.clone(a))
 end
@@ -204,52 +188,68 @@ function TableK.negate<T>(a: {T}, b: {T})
 	return c
 end
 
---- patches target table using source as a truth state
-function TableK.patch<T>(target: {[T]: any}, source: {[T]: any})
-	for k in target do
-		if not source[k] then
-			target[k] = nil
-		end
-	end
-	for k, v in source do
-		if type(target[k]) ~= type(v) then
-			target[k] = v
-		end
-	end
+--- returns a page controller
+function TableK.createpagecontroller(pagesize: number)
+	return {
+		Offset = 1;
+		Options = table.create(pagesize);
+		Size = pagesize;
+	}
 end
 
---- limits size of array
-function TableK.limit(A: {any}, size: number)
-	if #A > size then
-		table.remove(A)
-		TableK.limit(A, size)
-	else
-		return
-	end
+--- applies `delta` to pagecontroller `pc`, returning: \
+--- `page`: page of `pc.Options` with respect to `pc.Offset` and `pc.Size` \
+--- `oldoffset`: previous `pc.Offset` \
+--- `newoffset`: current `pc.Offset` \
+--- `numpages`: max # of pages that can be displayed
+function TableK.pagecontrollernext(pc: typeof(TableK.createpagecontroller(...)), delta: number)
+	local len = #pc.Options
+	local size = pc.Size
+
+	local numpages = math.clamp(math.ceil(len / size), 1, math.huge)
+
+	local lastoffset = pc.Offset
+	pc.Offset = math.clamp(pc.Offset + delta, 1, numpages)
+
+	local newoffset = pc.Offset
+
+	return table.move(
+		pc.Options,
+		1 + math.clamp((newoffset - 1) * size, 0, len),
+		math.clamp(newoffset * size, 0, len),
+		1,
+		table.create(size)
+	), lastoffset, newoffset, numpages
 end
 
---- returns an item \
---- equivalent to `return {id, ...}`
-function TableK.itemcreate(id: string, ...: any)
+--- resets page controller
+function TableK.pagecontrollerreset(pc: typeof(TableK.createpagecontroller(...)), resize: number?)
+	pc.Offset = 1
+	table.clear(pc.Options)
+	pc.Size = resize or pc.Size
+end
+
+--- returns an item (`{id, ...}`)
+function TableK.createitem(id: string, ...: any)
 	return {id, ...}::{string|any}
 end
 
 --- inserts item, by its associated `id`, to list \
 --- *does not account for duplicates*
-function TableK.iteminsert(list: { typeof(TableK.itemcreate(...)) }, id: string, ...: any)
-	table.insert(list, TableK.itemcreate(id, ...))
+function TableK.iteminsert(list: { typeof(TableK.createitem(...)) }, id: string, ...: any)
+	table.insert(list, TableK.createitem(id, ...))
 end
 
 --- returns:
 --- `id (i[1])` item id \
 --- `value (i[2...])` item value(s)
-function TableK.itemunpack(i: typeof(TableK.itemcreate(...))): (string, ...any)
+function TableK.itemunpack(i: typeof(TableK.createitem(...))): (string, ...any)
 	return unpack(i)
 end
 
 --- removes all items associated with `id`, from list \
 --- *starts at `i = #list`, ends at `i = 1`, accounting for duplicates*
-function TableK.itemremove(list: { typeof(TableK.itemcreate(...)) }, id: string)
+function TableK.itemremove(list: { typeof(TableK.createitem(...)) }, id: string)
 	for i = #list, 1, -1 do
 		if list[i][1] == id then
 			table.remove(list, i)
@@ -258,7 +258,7 @@ function TableK.itemremove(list: { typeof(TableK.itemcreate(...)) }, id: string)
 end
 
 --- returns item, from its associated `id`, stored in list
-function TableK.itemfind(list: { typeof(TableK.itemcreate(...)) }, id: string): typeof(TableK.itemcreate(...))?
+function TableK.itemfind(list: { typeof(TableK.createitem(...)) }, id: string): typeof(TableK.createitem(...))?
 	for _, thing in list do
 		if thing[1] == id then
 			return thing

@@ -16,6 +16,8 @@ BlacklistParams.FilterDescendantsInstances = {}
 
 local CursorBlacklist = {}
 
+local InternalPreferredInput = Enum.PreferredInput.KeyboardAndMouse
+
 --- ### Inputs.luau
 ---
 --- input service wrapper
@@ -132,6 +134,11 @@ end
 --- returns `UserInputService.InputEnded`
 function Inputs.ended()
 	return UserInputService.InputEnded
+end
+
+--- returns internally-resolved `UserInputService.PreferredInput` based on recency
+function Inputs.preferredinput()
+	return InternalPreferredInput
 end
 
 --- returns `Enum.UserInputType` converted to its associated `Enum.PreferredInput`
@@ -300,6 +307,13 @@ else
 	UserInputService.InputBegan:Connect(updatemouse)
 	UserInputService.InputChanged:Connect(updatemouse)
 	UserInputService.InputEnded:Connect(updatemouse)
+	
+	UserInputService.LastInputTypeChanged:Connect(function(userinputtype: Enum.UserInputType)
+		local thispreferredinput = Inputs.userinputtypetopreferredinput(userinputtype)
+		if InternalPreferredInput ~= thispreferredinput then
+			InternalPreferredInput = thispreferredinput or InternalPreferredInput
+		end
+	end)
 	
 	RunService.Heartbeat:Connect(updatemouse)
 
