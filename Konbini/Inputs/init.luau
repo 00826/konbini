@@ -7,8 +7,6 @@ local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 local GamepadService = game:GetService("GamepadService")
 
-local Keycodes = Enum.KeyCode:GetEnumItems()
-
 local BlacklistParams = RaycastParams.new()
 BlacklistParams.FilterType = Enum.RaycastFilterType.Exclude
 BlacklistParams.IgnoreWater = true
@@ -226,35 +224,6 @@ function Inputs.touchguiadded(playergui: PlayerGui, callback: (touchgui: GuiObje
 		if thing.Name ~= "TouchGui" then return end
 		task.defer(callback, thing)
 	end)
-end
-
---- returns `Enum.Keycode` associated with enum value `ev` from optional range `keycodes (?=Enum.KeyCode:GetEnumItems())`
-function Inputs.keycodefromenumvalue(ev: number, keycodes: {Enum.KeyCode}?): Enum.KeyCode?
-	keycodes = keycodes or Keycodes
-	assert(keycodes)
-
-	local L = 1
-	local R = #keycodes
-
-	if L > R then
-		return nil
-	else
-		local idx = (L + R) // 2
-		local value = keycodes[idx]
-
-		local result = value.Value == ev and 0 or value.Value < ev and 1 or 2
-
-		if result == 0 then
-			return value
-		else
-			if result == 1 then
-				L = idx + 1
-			elseif result == 2 then
-				R = idx - 1
-			end
-			return Inputs.keycodefromenumvalue(ev, table.move(keycodes, L, R, 1, table.create(L + R)))
-		end
-	end
 end
 
 if IsServer then

@@ -172,11 +172,6 @@ function Interface.guiinset()
 	return GuiService:GetGuiInset()
 end
 
---- returns `(offset?=2) + math.ceil(viewportheight * (scale?=0.025))`
-function Interface.textsize(viewportheight: number, offset: number?, scale: number?)
-	return (offset or 2) + math.ceil(viewportheight * (scale or 0.025))
-end
-
 --- locally emits a TextChatService message in `channel (?="RBXGeneral")`
 function Interface.textchatmessage(message: string, channel: string?)
 	local textchannel = TextChatService:FindFirstChild("TextChannels"):FindFirstChild(channel or "RBXGeneral")

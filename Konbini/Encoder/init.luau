@@ -729,18 +729,27 @@ function Encoder.alias(text: string, replace: {[string]: string}, pattern: strin
 	end)
 end
 
---- applies richtext formatting to text \
+--- applies richtext formatting tags to text \
 --- *assumes that richtext closure suffix follows pattern `string.match(prefix, "%a+")`*
 --- ```
---- Encoder.richtext("italicize me", "i") --> <i>italicize me</i>
---- Encoder.richtext("color me surprised", `font color="#ff00ff"`) --> <font color="#ff00ff">color me surprised</font>
+--- Encoder.richtext("color me surprised", "i", "font color='#ff00ff'") --> <font color="#ff00ff"><i>color me surprised</i></font>
+--- Encoder.richtext("color me surprised", "i", Color3.fromRGB(255, 0, 255)) --> <font color="#ff00ff"><i>color me surprised</i></font>
 --- ```
-function Encoder.richformat(text: string, prefix: string)
-	local closure = string.match(prefix, "%a+")
-	assert(closure)
+function Encoder.richformat(text: string, ...: string|Color3)
+	for i, prefix in ipairs({...}::any) do
+		if typeof(prefix) == "Color3" then
+			prefix = "font color='#" .. prefix:ToHex() .. "'"
+		end
 
-	-- return `<{prefix}>{text}</{closure}>`
-	return "<" .. prefix .. ">" .. text .. "</" .. closure .. ">"
+		local closure = string.match(prefix, "%a+")
+		if closure then
+			text = "<" .. prefix .. ">" .. text .. "</" .. closure .. ">"
+		else
+			warn(string.format("skipped bad format tag #%d '%s'", i, prefix))
+		end
+	end
+
+	return text
 end
 
 --- formats time into a hour-minute-second-esque notation
