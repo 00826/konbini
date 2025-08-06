@@ -97,11 +97,18 @@ local Interface = {
 		fromUDim2 = function(v: Vector2)
 			return UDim2.fromOffset(v.X, v.Y)
 		end;
-		--- returns `vec` clamped within bounds defined by `absoluteposition` and `absolutesize`
-		clamp = function(vec: Vector2, absoluteposition: Vector2, absolutesize: Vector2, guiinset: Vector2?)
-			local relativeposition = vec - absoluteposition - (guiinset or Vector2.zero)
+		--- returns square at `vec` with `size` clamped within `bounds`
+		clamp = function(vec: Vector2, size: Vector2, bounds: Vector2)
+			local delta = (vec + size) - bounds
 
-			return relativeposition - Vector2.new(0, math.abs(math.clamp(absolutesize.Y - (relativeposition.Y + absolutesize.Y), -math.huge, 0)))
+			if delta.X > 0 then
+				vec -= Vector2.xAxis * delta.X
+			end
+			if delta.Y > 0 then
+				vec -= Vector2.yAxis * delta.Y
+			end
+
+			return vec
 		end;
 	};
 	AspectRatios = {
