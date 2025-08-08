@@ -703,23 +703,22 @@ function Encoder.toboolean(value: any)
 		(t == "function" and (value::any)()) or false
 end
 
---- returns a randomized alphanumeric string `[A-Za-z0-9], P(62,r)=62^r` \
---- `len (?=4, P(62,4)=677040)`: string length
-function Encoder.string(len: number?)
-	local str = string.rep("0", len or 4)
-	for i = 1, len or 4 do
-		local value = Rand:NextInteger(1, 36)
-		if value <= 26 then
-			if Rand:NextInteger(0, 1) == 0 then
-				str ..= string.char(value + 64) --- [A-Z]
-			else
-				str ..= string.char(value + 96) --- [a-z]
-			end
-		else
-			str ..= tostring(36 - value) --- [0-9]
+--- returns a randomized alphanumeric string \
+--- all characters elements of set `[A-Za-z0-9]`
+function Encoder.string(len: number)
+	local b = buffer.create(len)
+	for i = 0, len - 1, 1 do
+		local value = Rand:NextInteger(1, 62)
+		if value <= 26 then --- [a-z] [abcdefghijklmnopqrstuvwxyz] [1-26] -> [97-122] 
+			buffer.writeu8(b, i, value + 96)
+		elseif value <= 52 then --- [A-Z] [ABCDEFGHIJKLMNOPQRSTUVWXYZ] [27-52] -> [65-90] 
+			buffer.writeu8(b, i, value + 38)
+		else --- elseif value <= 62 then --- [0-9] [0123456789] [53-62] [48-57]
+			buffer.writeu8(b, i, value - 5)
 		end
 	end
-	return str
+
+	return buffer.tostring(b)
 end
 
 --- replaces substrings in text matching capture `pattern (?="[%w+_]+")` with respect to replacement table

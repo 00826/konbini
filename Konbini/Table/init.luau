@@ -4,21 +4,19 @@
 local Rand = Random.new()
 
 local function rstring(len: number)
-	local str = ""
-	for i = 1, len do
-		local value = Rand:NextInteger(1, 36)
+	local b = buffer.create(len)
+	for i = 0, len - 1, 1 do
+		local value = Rand:NextInteger(1, 62)
 		if value <= 26 then
-			if Rand:NextInteger(0, 1) == 0 then
-				str ..= string.char(value + 64) --- [A-Z]
-			else
-				str ..= string.char(value + 96) --- [a-z]
-			end
+			buffer.writeu8(b, i, value + 96)
+		elseif value <= 52 then
+			buffer.writeu8(b, i, value + 38)
 		else
-			str ..= tostring(36 - value) --- [0-9]
+			buffer.writeu8(b, i, value - 5)
 		end
 	end
 
-	return str
+	return buffer.tostring(b)
 end
 
 --- ### Table.luau
@@ -38,10 +36,12 @@ end
 --- similar to `table.insert`, where `T[random alphanumeric key (len ?=4)] = value` \
 --- returns `random alphanumeric key` for convenience
 function TableK.insertkey(t: {[string]: any}, value: any, len: number?)
-	local key = string.rep("0", len or 4)
+	local key = rstring(len or 4)
 
-	repeat key = rstring(len or 4)
-	until t[key] == nil
+	if t[key] ~= nil then
+		repeat key = rstring(4)
+		until t[key] == nil
+	end
 
 	t[key] = value
 

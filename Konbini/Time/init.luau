@@ -19,32 +19,23 @@ function Time.now()
 	return buffer.readf64(Time.UnixBuffer, 0)
 end
 
---- runs function for `x` seconds
-function Time.run(x: number, f: (elapsed: number, dt: number) -> ())
-	local elapsed = 0
-	local c; c = RunService.Heartbeat:Connect(function(dt: number)
-		elapsed += dt
-		f(elapsed, dt)
-
-		if elapsed > x then
-			c:Disconnect()
-		end
-	end)
-
-	return c
-end
-
---- runs function at every second interval `x`
-function Time.framerule(x: number, f: (...any) -> ())
-	local elapsed = x
-	local function frame(dt: number)
-		elapsed += dt
-		if elapsed < x then return end
-		elapsed -= x
-		f()
+--- runs function at second interval `x` \
+--- `immediate(?=true)`: function is called on the next frame
+function Time.framerule(x: number, f: (dt: number) -> (), immediate: boolean?)
+	local recent = os.clock()
+	if immediate ~= false then
+		recent -= x
 	end
 
-	return RunService.Heartbeat:Connect(frame)
+	return RunService.Heartbeat:Connect(function()
+		local now = os.clock()
+		local dt = now - recent
+		if dt > x then
+			recent = now - (dt - x)
+
+			f(dt)
+		end
+	end)
 end
 
 --- runs function at exponential backoff interval `math.clamp(x + (base ^ failures) - 1, x, limit)` \
@@ -72,18 +63,19 @@ function Time.backoff(x: number, base: number, limit: number, f: (...any) -> boo
 end
 
 if IsServer then
-	local elapsed = 0
-	local function frame(dt: number)
-		buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis/1000) --- accurate down to the millisecond
+	local recent = os.clock() - Time.Framerate
+	buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis/1000)
 
-		elapsed += dt
-		if elapsed < Time.Framerate then return end
-		elapsed -= Time.Framerate
+	RunService.Heartbeat:Connect(function()
+		local now = os.clock()
+		local dt = now - recent
+		if dt > Time.Framerate then
+			recent = now - (dt - Time.Framerate)
 
-		TimeRemote:FireAllClients(Time.UnixBuffer)
-	end
-	frame(Time.Framerate)
-	RunService.Heartbeat:Connect(frame)
+			buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis/1000)
+			TimeRemote:FireAllClients(Time.UnixBuffer)
+		end
+	end)
 else
 	TimeRemote.OnClientEvent:Connect(function(b: buffer)
 		buffer.writef64(Time.UnixBuffer, 0, buffer.readf64(b, 0))

@@ -345,10 +345,10 @@ function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alig
 end
 
 --- returns a clone of `template`
-function Interface.clone<T>(template: T & GuiObject, name: string?, layoutorder: number?): T
+function Interface.clone<T>(template: T & GuiObject, name: string?, layoutorder: number?, parent: Instance?): T
 	local clone = template:Clone()
 	clone.Name = name or "_clone"
-	clone.Parent = template.Parent
+	clone.Parent = parent or template.Parent
 	clone.LayoutOrder = layoutorder or 0
 	clone.Visible = true
 
@@ -356,12 +356,12 @@ function Interface.clone<T>(template: T & GuiObject, name: string?, layoutorder:
 end
 
 --- returns array populated by clones of `template`
-function Interface.dupes<T>(template: T & GuiObject, count: number): {T}
+function Interface.dupes<T>(template: T & GuiObject, count: number, parent: Instance?): {T}
 	local result = table.create(count)
 	for i = 1, count do
 		local clone = template:Clone()
 		clone.Name = tostring(i)
-		clone.Parent = template.Parent
+		clone.Parent = parent or template.Parent
 		clone.LayoutOrder = i
 		clone.Visible = true
 
