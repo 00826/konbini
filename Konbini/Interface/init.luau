@@ -76,7 +76,6 @@ local Interface = {
 
 			return results
 		end;
-		
 	};
 	Vector2 = {
 		half = Vector2.new(0.5, 0.5);
@@ -181,7 +180,7 @@ end
 
 --- locally emits a TextChatService message in `channel (?="RBXGeneral")`
 function Interface.textchatmessage(message: string, channel: string?)
-	local textchannel = TextChatService:FindFirstChild("TextChannels"):FindFirstChild(channel or "RBXGeneral")
+	local textchannel = TextChatService:WaitForChild("TextChannels"):WaitForChild(channel or "RBXGeneral")
 	if textchannel and textchannel:IsA("TextChannel") then
 		return textchannel:DisplaySystemMessage(message)
 	end
@@ -255,20 +254,16 @@ function Interface.connectbutton(button: GuiButton, functions: {
 	return connections
 end
 
---- returns empty sprite
-function Interface.createsprite()
-	return {
+--- applies `sprite` to `imagelabel`
+function Interface.sprite(imagelabel: ImageLabel, sprite: typeof(
+	{
 		Position = 0;
 		Layout = {
 			Id = "";
 			Size = Vector2.zero;
 			Width = 0;
 		};
-	}
-end
-
---- applies `sprite` to `imagelabel`
-function Interface.sprite(imagelabel: ImageLabel, sprite: typeof(Interface.createsprite())?)
+	})?)
 	if not sprite then
 		imagelabel.Image = ""
 		imagelabel.ImageRectSize = Vector2.zero
@@ -309,39 +304,6 @@ function Interface.scrolltext(textlabel: TextLabel, text: string?, speed: number
 	tween(textlabel, {MaxVisibleGraphemes = text == "" and 0 or len}, time, Enum.EasingStyle.Linear)
 
 	return time
-end
-
---- attaches target to textlabel
-function Interface.appendtextlabel(textlabel: TextLabel, target: GuiObject, alignment: "Left" | "Right", padding: number?)
-	local textboundsx = textlabel.TextBounds.X
-
-	if textlabel.TextXAlignment == Enum.TextXAlignment.Left then
-		if alignment == "Left" then
-			target.Position = Interface.UDim2.left
-		elseif alignment == "Right" then
-			target.Position = UDim2.new(0, textboundsx, 0.5, 0)
-		end
-	elseif textlabel.TextXAlignment == Enum.TextXAlignment.Right then
-		if alignment == "Left" then
-			target.Position = UDim2.new(1, -textboundsx, 0.5, 0)
-		elseif alignment == "Right" then
-			target.Position = Interface.UDim2.right
-		end
-	elseif textlabel.TextXAlignment == Enum.TextXAlignment.Center then
-		if alignment == "Left" then
-			target.Position = UDim2.new(0.5, -textboundsx * 0.5, 0.5, 0)
-		elseif alignment == "Right" then
-			target.Position = UDim2.new(0.5, textboundsx * 0.5, 0.5, 0)
-		end
-	end
-	
-	if alignment == "Left" then
-		target.AnchorPoint = Interface.Vector2.right
-		target.Position += UDim2.fromOffset(-(padding or 0), 0)
-	elseif alignment == "Right" then
-		target.AnchorPoint = Interface.Vector2.left
-		target.Position += UDim2.fromOffset((padding or 0), 0)
-	end
 end
 
 --- returns a clone of `template`
@@ -402,22 +364,6 @@ function Interface.uipadding(guiobject: GuiObject, value: UDim?)
 	end
 
 	return uipadding::UIPadding
-end
-
---- applies `UITextSizeConstraint` to guiobject, instantiating one if it doesn't already exist
-function Interface.textsizeconstraint(guiobject: GuiObject, max: number?, min: number?)
-	local textsizeconstraint = guiobject:FindFirstChildOfClass("UITextSizeConstraint")
-	if not textsizeconstraint then
-		textsizeconstraint = Instance.new("UITextSizeConstraint")
-		;(textsizeconstraint::any).Parent = guiobject
-	end
-
-	if max then
-		(textsizeconstraint::any).MaxTextSize = max
-		;(textsizeconstraint::any).MinTextSize = min or 1
-	end
-
-	return textsizeconstraint::UITextSizeConstraint
 end
 
 --- applies `UIAspectRatioConstraint` to guiobject, instantiating one if it doesn't already exist

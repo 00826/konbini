@@ -6,7 +6,6 @@ local IsServer = RunService:IsServer()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local DatastoreService = game:GetService("DataStoreService")
 local LocalizationService = game:GetService("LocalizationService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local PolicyService = game:GetService("PolicyService")
@@ -19,56 +18,6 @@ local Patronage = {
 	RegionFlag = "Region"; --- for external use
 	PolicyFlag = "PolicyInfo"; --- for external use
 }
-
---- returns `pcall(DatastoreService.GetDataStore, DatastoreService, name, scope, options)`
-function Patronage.datastore(name: string, scope: string?, options: DataStoreGetOptions?)
-	return pcall(DatastoreService.GetDataStore, DatastoreService, name, scope, options)
-end
-
---- returns `pcall(datastore.GetAsync, datastore, key, getoptions)`
-function Patronage.datastoreget(datastore: DataStore, key: string, getoptions: DataStoreGetOptions?)
-	return pcall(datastore.GetAsync, datastore, key, getoptions)
-end
-
---- returns `pcall(datastore.SetAsync, datastore, key, value, userids, datastoresetoptions)`
-function Patronage.datastoreset(datastore: DataStore|OrderedDataStore, key: string, value: any, userids: {number}?, datastoresetoptions: DataStoreSetOptions?)
-	return pcall(datastore.SetAsync, datastore, key, value, userids, datastoresetoptions)
-end
-
---- returns `pcall(datastore.UpdateAsync, datastore, key, transform)`
-function Patronage.datastoreupdate(datastore: DataStore|OrderedDataStore, key: string, transform: (any, DataStoreKeyInfo) -> (any, {number}?))
-	return pcall(datastore.UpdateAsync, datastore, key, transform)
-end
-
---- returns `pcall(datastore.RemoveAsync, datastore, key)`
-function Patronage.datastoreremove(datastore: DataStore|OrderedDataStore, key: string)
-	return pcall(datastore.RemoveAsync, datastore, key)
-end
-
---- returns `pcall(DatastoreService.GetOrderedDataStore, DatastoreService, name, scope)`
-function Patronage.getordereddatastore(name: string, scope: string?)
-	return pcall(DatastoreService.GetOrderedDataStore, DatastoreService, name, scope)
-end
-
---- returns `pcall(ordereddatastore.GetSortedAsync, ordereddatastore, ascending, pagesize, minvalue, maxvalue)`
-function Patronage.ordereddatastoregetsorted(ordereddatastore: OrderedDataStore, ascending: boolean, pagesize: number, minvalue: number?, maxvalue: number?)
-	return pcall(ordereddatastore.GetSortedAsync, ordereddatastore, ascending, pagesize, minvalue, maxvalue)
-end
-
---- returns `pcall(datastorepages.AdvanceToNextPageAsync, datastorepages)`
-function Patronage.datastorepagesnext(datastorepages: DataStorePages)
-	return pcall(datastorepages.AdvanceToNextPageAsync, datastorepages)
-end
-
---- returns `pcall(datastorepages.GetCurrentPage, datastorepages)`
-function Patronage.datastorepagescurrent(datastorepages: DataStorePages)
-	return pcall(datastorepages.GetCurrentPage, datastorepages)
-end
-
---- returns `DatastoreService:GetRequestBudgetForRequestType(requesttype)`
-function Patronage.requestbudget(requesttype: Enum.DataStoreRequestType)
-	return DatastoreService:GetRequestBudgetForRequestType(requesttype)
-end
 
 --- returns `pcall(a.IsInGroup, a, groupid)`
 function Patronage.isingroup(a: Player, groupid: number)

@@ -10,6 +10,7 @@ return table.freeze{
 	Collisions = require(script:WaitForChild("Collisions"));
 	Color3 = require(script:WaitForChild("Color3"));
 	Couture = require(script:WaitForChild("Couture"));
+	Datastore = require(script:WaitForChild("Datastore"));
 	Encoder = require(script:WaitForChild("Encoder"));
 	Entity = require(script:WaitForChild("Entity"));
 	Hook = require(script:WaitForChild("Hook"));
