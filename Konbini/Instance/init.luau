@@ -6,8 +6,8 @@ local IsServer = RunService:IsServer()
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
-local Ball = script:WaitForChild("BallSocketConstraint")
-local Motor = script:WaitForChild("Motor6D")
+local BallSocketConstraint = script:WaitForChild("BallSocketConstraint")
+local Motor6D = script:WaitForChild("Motor6D")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
@@ -375,7 +375,7 @@ function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?)
 
 				motor6d.Part1:SetAttribute("MotorName", motor6d.Name)
 				motor6d.Part1:SetAttribute("MotorVelocity", motor6d.MaxVelocity)
-				local socket: BallSocketConstraint = Ball:Clone()
+				local socket = BallSocketConstraint:Clone()
 				local A0, A1 = Instance.new("Attachment"), Instance.new("Attachment")
 				A0.Parent = motor6d.Part0
 				A1.Parent = motor6d.Part1
@@ -401,7 +401,7 @@ function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?)
 				ballsocket.TwistUpperAngle = 0
 				ballsocket.TwistLowerAngle = 0
 
-				local motor6d = Motor:Clone()
+				local motor6d = Motor6D:Clone()
 				motor6d.Part0 = ballsocket.Attachment0.Parent
 				motor6d.Part1 = ballsocket.Attachment1.Parent
 				motor6d.C0 = ballsocket.Attachment0.CFrame
