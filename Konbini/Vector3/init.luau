@@ -22,6 +22,14 @@ local Vector3K = {
 	end;
 }
 
+--- returns whether or not `v` is finite
+function Vector3K.isfinite(v: Vector3)
+	local x, y, z = v.X, v.Y, v.Z
+	return (x == x and x ~= 1/0 and x ~= -1/0)
+		and (y == y and y ~= 1/0 and y ~= -1/0)
+		and (z == z and z ~= 1/0 and z ~= -1/0)
+end
+
 --- returns `v.Unit`, or, if `NaN`, `Vector3.zero`
 function Vector3K.unit_or_zero(v: Vector3)
 	if v.Magnitude > 0 then

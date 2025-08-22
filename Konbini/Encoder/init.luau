@@ -587,7 +587,7 @@ end
 
 --- returns todo completion details: \
 --- `todostep`: todo step against `#map` \
---- `receipt`: `{ {requisiteprogress, requisitegoal} }` \
+--- `receipt`: `{ {number requisiteprogress, string requisitekey} }` \
 --- \
 --- if `bit32.extract(t, 0, 6)` is not an index of `map`, the todo is considered complete: \
 --- ... `todostep` will be returned as `#map + 1` for external `if todostep > #map then ... end` case \

@@ -60,6 +60,17 @@ function TableK.average(array: {any}, weights: {number}?)
 	return sum and sum / len
 end
 
+--- returns number of occurrences of `needle` in array
+function TableK.occurrences<T>(array: {T}, needle: T, init: number?)
+	local x = 0
+	local i = table.find(array, needle, init)
+	if i then
+		return x + 1 + TableK.occurrences(array, needle, i + 1)
+	else
+		return x
+	end
+end
+
 --- returns list of entries from weighted droptable
 function TableK.droptable(droptable: { { key: string, weight: number } & {[string]: any} }, count: number?, R: Random?)
 	local items = table.create(count or 1)
@@ -100,18 +111,6 @@ function TableK.droplist<T>(droplist: {T}, count: number?, R: Random?)
 
 		return table.move(B, start, range, 1, table.create(count or 1))
 	end
-end
-
---- returns list of keys contained in `t` \
---- `allocate (?=32)`: array portion allocated
-function TableK.listkeys<T>(t: {[T]: any}, allocate: number?)
-	local list = table.create(allocate or 32)
-
-	for k in t do
-		table.insert(list, k)
-	end
-
-	return list
 end
 
 --- rotates array `A` `x` times such that:

@@ -9,28 +9,27 @@ local MathK = {
 	pi4 = math.pi/4;
 	pi2 = math.pi/2;
 
-	tau = math.pi*2;
-	radian = math.rad(1);
-
 	NumberSequence = {
 		zero = NumberSequence.new(0);
 		one = NumberSequence.new(1);
+
+		zeroone = NumberSequence.new(0, 1);
+		onezero = NumberSequence.new(1, 0);
 	};
 	NumberRange = {
 		zero = NumberRange.new(0);
 		one = NumberRange.new(1);
 
-		zeroOne = NumberRange.new(0, 1);
-		zeroTen = NumberRange.new(0, 10);
-		zeroHundred = NumberRange.new(0, 100);
+		zeroone = NumberRange.new(0, 1);
+		onezero = NumberRange.new(1, 0);
 	};
 
 	random = Random.new();
 }
 
---- returns whether `x` is `NaN` (`return x ~= x == true`)
-function MathK.isnan(x: number)
-	return (x ~= x) == true
+--- returns whether or not `x` is finite
+function MathK.isfinite(x: number)
+	return x == x and x ~= 1/0 and x ~= -1/0
 end
 
 --- returns interpolant with respect to deltatime (`1 - (x ^ dt)`) \
@@ -236,7 +235,7 @@ function MathK.unitcircle(vertices: number, radius: number)
 		return { {X = -radius; Z = 0;}, {X = radius; Z = 0;} }
 	end
 
-	local step = MathK.tau / vertices
+	local step = (2*math.pi) / vertices
 	local tilt = math.pi / vertices
 	local unitcircle = table.create(vertices)
 

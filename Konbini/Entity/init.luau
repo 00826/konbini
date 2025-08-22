@@ -31,7 +31,7 @@ local Entity = {
 	Cache = {} :: { [string]: any };
 	ListeningTo = {};
 	
-	Rate = 1/40;
+	Framerate = 1/40;
 	Bucket = {} :: { [string]: {string}|boolean };
 
 	NilString = "__nil";
@@ -47,7 +47,7 @@ function Entity.insert(e: any): string
 		repeat key = rstring(4)
 		until Entity.Cache[key] == nil
 	end
-	
+
 	Entity.Cache[key] = e
 
 	task.defer(Entity.added, e, key)
@@ -194,40 +194,43 @@ function Entity.update(e: any, u: any)
 end
 
 if IsServer then
-	local elapsed = 0
-	RunService.Heartbeat:Connect(function(dt: number)
-		elapsed += dt
-		if elapsed < Entity.Rate then return end
-		elapsed -= Entity.Rate
+	local recent = os.clock() - Entity.Framerate
+	
+	RunService.Heartbeat:Connect(function()
+		local now = os.clock()
+		local dt = now - recent
+		if dt > Entity.Framerate then
+			recent = now - (dt - Entity.Framerate)
 
-		local packet = {} :: typeof(Entity.Bucket)
+			local packet = {} :: typeof(Entity.Bucket)
 
-		for id, keys in Entity.Bucket do
-			if type(keys) == "table" then
-				--- update keys
-				packet[id] = {}
-				local e = Entity.Cache[id]
-				if not e then continue end
-				for _, key in keys do
-					local value = e[key]
-					if value == nil then
-						value = Entity.NilString
+			for id, keys in Entity.Bucket do
+				if type(keys) == "table" then
+					--- update keys
+					packet[id] = {}
+					local e = Entity.Cache[id]
+					if not e then continue end
+					for _, key in keys do
+						local value = e[key]
+						if value == nil then
+							value = Entity.NilString
+						end
+						(packet[id]::{})[key] = value
 					end
-					(packet[id]::{})[key] = value
+				elseif keys == false then
+					--- entity destroyed
+					packet[id] = false
+				else
+					warn(`fringe case this should not happen {id} {type(keys)} {keys}`)
 				end
-			elseif keys == false then
-				--- entity destroyed
-				packet[id] = false
-			else
-				warn(`fringe case this should not happen {id} {type(keys)} {keys}`)
+
+				Entity.Bucket[id] = nil --- does this leak?
 			end
 
-			Entity.Bucket[id] = nil --- does this leak?
+			if next(packet) == nil then return end
+
+			EntityRemote:FireAllClients(packet)
 		end
-
-		if next(packet) == nil then return end
-
-		EntityRemote:FireAllClients(packet)
 	end)
 else
 	EntityRemote.OnClientEvent:Connect(function(packet: {[string]: {}|boolean})
