@@ -6,10 +6,6 @@ local Cache = {}
 ---
 --- oopless function binder \
 --- all bound functions are deferred
---- ```luau
---- Hook("KonbiniHook").Connect(print)
---- Hook("KonbiniHook").Fire("o/ hi!") --- o/ hi!
---- ```
 return function(name: string)
 	if not Cache[name] then
 		Cache[name] = {
@@ -23,14 +19,14 @@ return function(name: string)
 			local co = table.remove(hook._yields)
 			if co then
 				task.defer(co, ...)
-				hook.Resume(...)
+				resume(...)
 			else
 				return
 			end
 		end
 
 		--- connects function to this hook
-		hook.Connect = function(f: (...any) -> ())
+		hook.connect = function(f: (...any) -> ())
 			table.insert(hook._functions, f)
 
 			return function()
@@ -38,12 +34,12 @@ return function(name: string)
 			end
 		end
 		--- yields thread until this hook is fired
-		hook.Wait = function()
+		hook.wait = function()
 			table.insert(hook._yields, coroutine.running())
 			return coroutine.yield()
 		end
 		--- calls functions bound to this hook along with any arguments passed
-		hook.Fire = function(...: any)
+		hook.fire = function(...: any)
 			for i = #hook._functions, 1, -1 do
 				local f = hook._functions[i]
 				if getfenv(f).script.Parent == nil then
@@ -56,11 +52,11 @@ return function(name: string)
 			resume(...)
 		end
 		--- disconnects all functions bound to this hook
-		hook.DisconnectAll = function()
+		hook.disconnectall = function()
 			table.clear(hook._functions)
 		end
 		--- destroys this hook, resuming any yielded threads prior to destruction
-		hook.Destroy = function(...: any)
+		hook.destroy = function(...: any)
 			resume(...)
 
 			table.clear(hook._functions)
