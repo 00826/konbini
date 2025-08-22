@@ -23,7 +23,7 @@
 |[Inputs.luau](./Konbini/Inputs/init.luau)|`UserInputService`, `GamepadService` wrapper|
 |[Instance.luau](./Konbini/Instance/init.luau)|`Instance` library extension|
 |[Interface.luau](./Konbini/Interface/init.luau)|`UDim`, `UDim2`, `Vector2` library extensions, ui helper functions|
-|[Math.luau](./Konbini/Math/init.luau)|`math` library extension|
+|[Math.luau](./Konbini/Math/init.luau)|`math`, `NumberRange`, `NumberSequence` library extension|
 |[Network.luau](./Konbini/Network/init.luau)|basic remote interface|
 |[Patronage.luau](./Konbini/Patronage/init.luau)|player patronage (devproducts, gamepasses, premium, group membership, etc)|
 |[Table.luau](./Konbini/Table/init.luau)|`table` library extension|

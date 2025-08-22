@@ -6,9 +6,6 @@
 ---
 --- math library extension
 local MathK = {
-	pi4 = math.pi/4;
-	pi2 = math.pi/2;
-
 	NumberSequence = {
 		zero = NumberSequence.new(0);
 		one = NumberSequence.new(1);
