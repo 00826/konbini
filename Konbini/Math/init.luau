@@ -18,7 +18,6 @@ local MathK = {
 		one = NumberRange.new(1);
 
 		zeroone = NumberRange.new(0, 1);
-		onezero = NumberRange.new(1, 0);
 	};
 
 	random = Random.new();
