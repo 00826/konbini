@@ -726,7 +726,7 @@ function Types.delta(new: {[string]: any}, old: {[string]: any}, depth: number)
 		local oldtype = type(oldvalue)
 		
 		if newtype == oldtype then
-			if type(newvalue) == "table" then
+			if newtype == "table" then
 				if next(newvalue) == nil then --- empty
 					if next(oldvalue) ~= nil then
 						result[key] = {}
@@ -750,7 +750,7 @@ function Types.delta(new: {[string]: any}, old: {[string]: any}, depth: number)
 						end
 					end
 				end
-			elseif type(newvalue) == "buffer" then
+			elseif newtype == "buffer" then
 				if not Types.compare(newvalue, oldvalue) then
 					result[key] = Types.duplicate(newvalue)
 				end
@@ -761,9 +761,9 @@ function Types.delta(new: {[string]: any}, old: {[string]: any}, depth: number)
 			end
 		else
 			if newvalue ~= oldvalue then
-				if type(newvalue) == "table" then
+				if newtype == "table" then
 					result[key] = Types.deepcopy(newvalue)
-				elseif type(newvalue) == "buffer" then
+				elseif newtype == "buffer" then
 					result[key] = Types.duplicate(newvalue)
 				else
 					result[key] = newvalue
