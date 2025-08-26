@@ -10,7 +10,6 @@ return table.freeze{
 	Color3 = require(script:WaitForChild("Color3"));
 	Couture = require(script:WaitForChild("Couture"));
 	Datastore = require(script:WaitForChild("Datastore"));
-	Encoder = require(script:WaitForChild("Encoder"));
 	Entity = require(script:WaitForChild("Entity"));
 	Hook = require(script:WaitForChild("Hook"));
 	Inputs = require(script:WaitForChild("Inputs"));
@@ -19,7 +18,7 @@ return table.freeze{
 	Math = require(script:WaitForChild("Math"));
 	Network = require(script:WaitForChild("Network"));
 	Patronage = require(script:WaitForChild("Patronage"));
-	Table = require(script:WaitForChild("Table"));
 	Time = require(script:WaitForChild("Time"));
+	Types = require(script:WaitForChild("Types"));
 	Vector3 = require(script:WaitForChild("Vector3"));
 }

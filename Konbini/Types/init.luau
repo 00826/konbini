@@ -9,20 +9,15 @@ local function subf(x: string)
 	return string.len(x) == 1 and "0" .. x or x
 end
 
---- ### Encoder.luau
+--- ### Types.luau
 ---
---- primitive type helper functions
-local Encoder = {
-	Abbreviations = {""; "K"; "M"; "B"; "T"; "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
+--- primitive type functions
+local Types = {
+	Abbreviations = {"", "K", "M", "B", "T", "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
 
---- trims trailing whitespaces from string in buffer
-function Encoder.trimstring(str: string)
-	return string.gsub(string.gsub(str, "%s+", " "), "\u{0000}", "")
-end
-
 --- reads Vector3 from buffer
-function Encoder.readvector3(b: buffer, offset: number)
+function Types.readvector3(b: buffer, offset: number)
 	return Vector3.new(
 		buffer.readf32(b, offset),
 		buffer.readf32(b, offset + 4),
@@ -31,14 +26,14 @@ function Encoder.readvector3(b: buffer, offset: number)
 end
 
 --- writes Vector3 to buffer
-function Encoder.writevector3(b: buffer, offset: number, value: Vector3)
+function Types.writevector3(b: buffer, offset: number, value: Vector3)
 	buffer.writef32(b, offset, value.X)
 	buffer.writef32(b, offset + 4, value.Y)
 	buffer.writef32(b, offset + 8, value.Z)
 end
 
 --- reads unit vector from buffer
-function Encoder.readunitvector(b: buffer, offset: number)
+function Types.readunitvector(b: buffer, offset: number)
 	return Vector3.new(
 		buffer.readi8(b, offset),
 		buffer.readi8(b, offset + 1),
@@ -48,36 +43,36 @@ end
 
 --- writes unit vector to buffer \
 --- `x,y,z`: mapped to `[-127, 127]`
-function Encoder.writeunitvector(b: buffer, offset: number, value: Vector3)
+function Types.writeunitvector(b: buffer, offset: number, value: Vector3)
 	buffer.writei8(b, offset, math.clamp(value.X * 127, -127, 127))
 	buffer.writei8(b, offset + 1, math.clamp(value.Y * 127, -127, 127))
 	buffer.writei8(b, offset + 2, math.clamp(value.Z * 127, -127, 127))
 end
 
 --- reads Vector3i24 from buffer
-function Encoder.readvector3i24(b: buffer, offset: number, precision: number?)
+function Types.readvector3i24(b: buffer, offset: number, precision: number?)
 	return Vector3.new(
-		Encoder.readi24(b, offset),
-		Encoder.readi24(b, offset + 3),
-		Encoder.readi24(b, offset + 6)
+		Types.readi24(b, offset),
+		Types.readi24(b, offset + 3),
+		Types.readi24(b, offset + 6)
 	) * (precision and 1/precision or 1)
 end
 
 --- writes Vector3i24 to buffer
-function Encoder.writevector3i24(b: buffer, offset: number, value: Vector3, precision: number?)
+function Types.writevector3i24(b: buffer, offset: number, value: Vector3, precision: number?)
 	if precision then
 		value *= precision
 	end
-	Encoder.writei24(b, offset, value.X)
-	Encoder.writei24(b, offset + 3, value.Y)
-	Encoder.writei24(b, offset + 6, value.Z)
+	Types.writei24(b, offset, value.X)
+	Types.writei24(b, offset + 3, value.Y)
+	Types.writei24(b, offset + 6, value.Z)
 end
 
 --- rotates range of values with fixed variable size to the right
 --- ```
 --- rrotate(bufferu8[23, 33, 91], 0, 1, 3) -> [91, 23, 33]
 --- ```
-function Encoder.rrotate(b: buffer, offset: number, size: number, range: number)
+function Types.rrotate(b: buffer, offset: number, size: number, range: number)
 	local x = buffer.readstring(b, offset + (size * (range - 1)), size) --- pull last value [91]
 	buffer.copy(b, offset + size, b, offset, (size * range) - size) --- push range leading up to last value up by 1 place [23, 23, 33]
 	buffer.writestring(b, offset, x) --- write to first value
@@ -87,7 +82,7 @@ end
 --- ```
 --- lrotate(bufferu8[23, 33, 91], 0, 1, 3) -> [33, 91, 23]
 --- ```
-function Encoder.lrotate(b: buffer, offset: number, size: number, range: number)
+function Types.lrotate(b: buffer, offset: number, size: number, range: number)
 	local last = (size * range) - size
 
 	local x = buffer.readstring(b, offset, size) --- pull first value [23]
@@ -97,7 +92,7 @@ end
 
 --- swaps range of bytes stored at offsets `x` and `y` \
 --- `range (?=1)` range of bytes to swap
-function Encoder.swap(b: buffer, x: number, y: number, range: number?)
+function Types.swap(b: buffer, x: number, y: number, range: number?)
 	range = range or 1
 	local temp = buffer.create(range::number)
 	buffer.copy(temp, x, b, 0, range)
@@ -107,7 +102,7 @@ end
 
 --- returns `a == b` \
 --- `offset (?=0)` begin comparison at offset
-function Encoder.compare(a: buffer, b: buffer, offset: number?)
+function Types.compare(a: buffer, b: buffer, offset: number?)
 	local lenA = buffer.len(a)
 	local lenB = buffer.len(b)
 
@@ -123,21 +118,21 @@ function Encoder.compare(a: buffer, b: buffer, offset: number?)
 		if traverse >= 4 then
 			--- print(`comparing u32 {buffer.readu32(a, offset)} against {buffer.readu32(b, offset)} at {offset}, {offset+4}/{lenA}`)
 			if buffer.readu32(a, offset) == buffer.readu32(b, offset) then
-				return Encoder.compare(a, b, offset + 4)
+				return Types.compare(a, b, offset + 4)
 			else
 				return false
 			end
 		elseif traverse >= 2 then
 			--- print(`comparing u16 {buffer.readu16(a, offset)} against {buffer.readu16(b, offset)} at {offset}, {offset+2}/{lenA}`)
 			if buffer.readu16(a, offset) == buffer.readu16(b, offset) then
-				return Encoder.compare(a, b, offset + 2)
+				return Types.compare(a, b, offset + 2)
 			else
 				return false
 			end
 		else
 			--- print(`comparing u8 {buffer.readu8(a, offset)} against {buffer.readu8(b, offset)} at {offset}, {offset+1}/{lenA}`)
 			if buffer.readu8(a, offset) == buffer.readu8(b, offset) then
-				return Encoder.compare(a, b, offset + 1)
+				return Types.compare(a, b, offset + 1)
 			else
 				return false
 			end
@@ -145,8 +140,16 @@ function Encoder.compare(a: buffer, b: buffer, offset: number?)
 	end
 end
 
+--- returns a duplicate of buffer
+function Types.duplicate(b: buffer)
+	local dupe = buffer.create(buffer.len(b))
+	buffer.copy(dupe, 0, b)
+
+	return dupe
+end
+
 --- writes signed 24-bit integer to buffer
-function Encoder.writei24(b: buffer, offset: number, value: number)
+function Types.writei24(b: buffer, offset: number, value: number)
 	local bitoffset = offset * 8
 	local sign = math.sign(value) < 0 and 1 or 0
 	if sign == 1 then
@@ -158,7 +161,7 @@ function Encoder.writei24(b: buffer, offset: number, value: number)
 end
 
 --- reads signed 24-bit integer from buffer
-function Encoder.readi24(b: buffer, offset: number)
+function Types.readi24(b: buffer, offset: number)
 	local bitoffset = offset * 8
 	local value = buffer.readbits(b, bitoffset, 23)
 	local sign = buffer.readbits(b, bitoffset + 23, 1)
@@ -172,12 +175,12 @@ function Encoder.readi24(b: buffer, offset: number)
 end
 
 --- writes unsigned 24-bit integer to buffer
-function Encoder.writeu24(b: buffer, offset: number, value: number)
+function Types.writeu24(b: buffer, offset: number, value: number)
 	buffer.writebits(b, offset * 8, 24, value)
 end
 
 --- reads unsigned 24-bit integer from buffer
-function Encoder.readu24(b: buffer, offset: number)
+function Types.readu24(b: buffer, offset: number)
 	return buffer.readbits(b, offset * 8, 24)
 end
 
@@ -185,7 +188,7 @@ end
 --- space complexity of `2 + (2*columns*rows)` \
 --- *matrix value placements start at offset `2`, as column/row info is stored in the first 2 bytes. \
 --- args passed into mutator functions, however, should be zero-indexed.*
-function Encoder.creatematrix(columns: number, rows: number)
+function Types.creatematrix(columns: number, rows: number)
 	local m = buffer.create( 2 + (2 * columns * rows) )
 
 	buffer.writeu8(m, 0, columns)
@@ -195,7 +198,7 @@ function Encoder.creatematrix(columns: number, rows: number)
 end
 
 --- writes value to matrix
-function Encoder.matrixwrite(m: buffer, column: number, row: number, value: number)
+function Types.matrixwrite(m: buffer, column: number, row: number, value: number)
 	local width = 2 * buffer.readu8(m, 0)
 	local offset = 2 + (2 * column) + (row * width)
 
@@ -203,7 +206,7 @@ function Encoder.matrixwrite(m: buffer, column: number, row: number, value: numb
 end
 
 --- extract value from matrix
-function Encoder.matrixextract(m: buffer, column: number, row: number)
+function Types.matrixextract(m: buffer, column: number, row: number)
 	local width = 2 * buffer.readu8(m, 0)
 	local offset = 2 + (2 * column) + (row * width)
 
@@ -212,12 +215,12 @@ end
 
 --- clears matrix, preserving the first two bits that contain row/column info \
 --- equivalent to `buffer.fill(m, 2, 0)`
-function Encoder.matrixclear(m: buffer)
+function Types.matrixclear(m: buffer)
 	buffer.fill(m, 2, 0)
 end
 
 --- reads set of values along row of matrix
-function Encoder.matrixreadrow(m: buffer, row: number): {number}
+function Types.matrixreadrow(m: buffer, row: number): {number}
 	local columns = buffer.readu8(m, 0)
 	local width = 2 * columns
 	local offset = 2 + (row * width)
@@ -233,7 +236,7 @@ function Encoder.matrixreadrow(m: buffer, row: number): {number}
 end
 
 --- returns a copy of row of matrix
-function Encoder.matrixextractrow(m: buffer, row: number)
+function Types.matrixextractrow(m: buffer, row: number)
 	local columns = buffer.readu8(m, 0)
 	local width = 2 * columns
 	local offset = 2 + (row * width)
@@ -245,7 +248,7 @@ function Encoder.matrixextractrow(m: buffer, row: number)
 end
 
 --- returns a string interpretation of matrix row
-function Encoder.matrixinterpretrow(m: buffer, row: number)
+function Types.matrixinterpretrow(m: buffer, row: number)
 	local columns = buffer.readu8(m, 0)
 	local width = 2 * columns
 	local offset = 2 + (row * width)
@@ -260,7 +263,7 @@ function Encoder.matrixinterpretrow(m: buffer, row: number)
 end
 
 --- reads sum of values along column of matrix
-function Encoder.matrixreadcolumn(m: buffer, column: number)
+function Types.matrixreadcolumn(m: buffer, column: number)
 	local rows = buffer.readu8(m, 1)
 	local width = 2 * buffer.readu8(m, 0)
 	local offset = 2 + (2 * column)
@@ -275,7 +278,7 @@ function Encoder.matrixreadcolumn(m: buffer, column: number)
 end
 
 --- returns a copy of column of matrix
-function Encoder.matrixextractcolumn(m: buffer, column: number)
+function Types.matrixextractcolumn(m: buffer, column: number)
 	local rows = buffer.readu8(m, 1)
 	local width = 2 * buffer.readu8(m, 0)
 	local offset = 2 + (2 * column)
@@ -290,7 +293,7 @@ function Encoder.matrixextractcolumn(m: buffer, column: number)
 end
 
 --- returns a string interpretation of matrix row
-function Encoder.matrixinterpretcolumn(m: buffer, column: number)
+function Types.matrixinterpretcolumn(m: buffer, column: number)
 	local rows = buffer.readu8(m, 1)
 	local width = 2 * buffer.readu8(m, 0)
 	local offset = 2 + (2 * column)
@@ -307,7 +310,7 @@ end
 --- returns a width`(?=4(f32))`-wide bar buffer \
 --- `width: 2 -> u16` `[u16 value (?=maxvalue), u16 maxvalue]` \
 --- `width: 4 -> f32` `[f32 value (?=maxvalue), f32 maxvalue]`
-function Encoder.createbar(width: number, maxvalue: number, value: number?)
+function Types.createbar(width: number, maxvalue: number, value: number?)
 	local b = buffer.create(width + width)
 
 	if width == 2 then
@@ -325,7 +328,7 @@ end
 
 --- writes to bar buffer \
 --- `maxvalue~=nil`: attempts to scale stored value to fit `maxvalue`
-function Encoder.barwrite(b: buffer, value: number?, maxvalue: number?)
+function Types.barwrite(b: buffer, value: number?, maxvalue: number?)
 	local width = buffer.len(b)
 
 	if maxvalue then
@@ -352,7 +355,7 @@ end
 
 --- applies deltas to bar buffer \
 --- `maxvalue~=nil`: attempts to scale stored value to fit `maxvalue`
-function Encoder.bardelta(b: buffer, value: number?, maxvalue: number?)
+function Types.bardelta(b: buffer, value: number?, maxvalue: number?)
 	local width = buffer.len(b)
 
 	if maxvalue then
@@ -382,7 +385,7 @@ function Encoder.bardelta(b: buffer, value: number?, maxvalue: number?)
 end
 
 --- equivalent to `buffer.writef32(b, 0, buffer.readf32(b, 0) - x)`
-function Encoder.barexpend(b: buffer, x: number)
+function Types.barexpend(b: buffer, x: number)
 	local width = buffer.len(b)
 
 	if width == 4 then
@@ -395,7 +398,7 @@ function Encoder.barexpend(b: buffer, x: number)
 end
 
 --- returns bar buffer `value, maxvalue`
-function Encoder.barunpack(b: buffer)
+function Types.barunpack(b: buffer)
 	local width = buffer.len(b)
 
 	if width == 4 then
@@ -410,7 +413,7 @@ end
 --- returns a `[f64 expiry, u8 stacks (?=1)]` state buffer \
 --- a state is considered "expired" if `stacks == 0` or `expiry < time` \
 --- a state is considrered "indefinite" if `expiry == -1`
-function Encoder.createstate(expiry: number, stacks: number?)
+function Types.createstate(expiry: number, stacks: number?)
 	local s = buffer.create(4 + 1)
 
 	buffer.writef64(s, 0, expiry)
@@ -420,25 +423,25 @@ function Encoder.createstate(expiry: number, stacks: number?)
 end
 
 --- writes value to state buffer expiry portion
-function Encoder.stateexpiry(s: buffer, value: number)
+function Types.stateexpiry(s: buffer, value: number)
 	buffer.writef64(s, 0, value)
 end
 
 --- writes value to state buffer stacks portion
-function Encoder.statestacks(s: buffer, value: number)
+function Types.statestacks(s: buffer, value: number)
 	buffer.writeu8(s, 4, value)
 end
 
 --- adds value to state buffer stacks portion
-function Encoder.statestacksdelta(s: buffer, value: number)
+function Types.statestacksdelta(s: buffer, value: number)
 	buffer.writeu8(s, 4, buffer.readu8(s, 4) + value)
 end
 
 --- sets or creates (if it doesn't exist already) a state at `st[key]`
-function Encoder.stateset(st: {[string]: buffer}, key: string, expiry: number, stacks: number?)
+function Types.stateset(st: {[string]: buffer}, key: string, expiry: number, stacks: number?)
 	local state = st[key]
 	if not state then
-		st[key] = Encoder.createstate(expiry, stacks)
+		st[key] = Types.createstate(expiry, stacks)
 	else
 		buffer.writef64(state, 0, expiry)
 		if stacks then
@@ -448,7 +451,7 @@ function Encoder.stateset(st: {[string]: buffer}, key: string, expiry: number, s
 end
 
 --- returns list of active states contained in state table `st`
-function Encoder.statefind(st: {[string]: buffer}, keys: {string}, now: number)
+function Types.statefind(st: {[string]: buffer}, keys: {string}, now: number)
 	local result = table.create(#keys)
 
 	for _, key in keys do
@@ -470,13 +473,13 @@ function Encoder.statefind(st: {[string]: buffer}, keys: {string}, now: number)
 end
 
 --- returns state buffer `expiry, stacks`
-function Encoder.stateunpack(s: buffer)
+function Types.stateunpack(s: buffer)
 	return buffer.readf64(s, 0), buffer.readu8(s, 4)
 end
 
 --- returns numeric stage `base / base` \
 --- `base (?=2)`: stage base value
-function Encoder.createstage(width: number, base: number?)
+function Types.createstage(width: number, base: number?)
 	local s = buffer.create(width)
 	for i = 0, width - 1, 1 do
 		local bitoffset = i * 8
@@ -493,7 +496,7 @@ end
 --- stagewrite(s, 0, 5) --- 5/2
 --- stagewrite(s, 0, -3) --- 5/3
 --- ```
-function Encoder.stagewrite(s: buffer, byteoffset: number, value: number)
+function Types.stagewrite(s: buffer, byteoffset: number, value: number)
 	local bitoffset = byteoffset * 8
 	if math.sign(value) == 1 then
 		buffer.writebits(s, bitoffset, 4, math.clamp(value, 0, 15))
@@ -508,7 +511,7 @@ end
 --- stagedelta(s, 0, 1) --- 3/2
 --- stagedelta(s, 0, -2) --- 3/4
 --- ```
-function Encoder.stagedelta(s: buffer, byteoffset: number, value: number)
+function Types.stagedelta(s: buffer, byteoffset: number, value: number)
 	local bitoffset = byteoffset * 8
 	if math.sign(value) == 1 then
 		buffer.writebits(s, bitoffset, 4, math.clamp(value + buffer.readbits(s, bitoffset, 4), 0, 15))
@@ -518,7 +521,7 @@ function Encoder.stagedelta(s: buffer, byteoffset: number, value: number)
 end
 
 --- returns numeric stage `x / y`
-function Encoder.stageread(s: buffer, byteoffset: number)
+function Types.stageread(s: buffer, byteoffset: number)
 	local bitoffset = byteoffset * 8
 	return buffer.readbits(s, bitoffset, 4) / buffer.readbits(s, bitoffset + 4, 4)
 end
@@ -527,7 +530,7 @@ end
 --- multi-step, multi-requisite tasks in 32 bits: \
 --- `000000` `[0, 5]` todo step \
 --- `00 00000000 00000000 00000000` `[6, 31]` todo progress
-function Encoder.createtodo32()
+function Types.createtodo32()
 	return bit32.replace(0, 1, 0)
 end
 
@@ -535,7 +538,7 @@ end
 --- returns: \
 --- `t`: todo32 integer, mutated \
 --- `todostep`: todo step against `#map`, where `todostep >= #map` indicates todo completion
-function Encoder.todo32add(t: number, signal: { key: string, value: number }, map: { { { key: number, value: {string} } } })
+function Types.todo32add(t: number, signal: { key: string, value: number }, map: { { { key: number, value: {string} } } })
 	local todostep = bit32.extract(t, 0, 6)
 	todostep = map[todostep] and todostep or 1
 
@@ -556,7 +559,7 @@ function Encoder.todo32add(t: number, signal: { key: string, value: number }, ma
 		local offset = 6
 		for _, requisite in ipairs(step) do
 			local key, value = requisite.key, requisite.value
-			local width = Encoder.numbits(key)
+			local width = Types.numbits(key)
 			local requisiteprogress = bit32.extract(t, offset, width)
 			if table.find(value, signal.key) then
 				requisiteprogress = math.clamp(requisiteprogress + signal.value, 0, 2^width - 1)
@@ -581,7 +584,7 @@ end
 
 --- returns todo32 step \
 --- equivalent to `bit32.extract(t, 0, 6)`
-function Encoder.todo32step(t: number)
+function Types.todo32step(t: number)
 	return bit32.extract(t, 0, 6)
 end
 
@@ -592,7 +595,7 @@ end
 --- if `bit32.extract(t, 0, 6)` is not an index of `map`, the todo is considered complete: \
 --- ... `todostep` will be returned as `#map + 1` for external `if todostep > #map then ... end` case \
 --- ... `receipt` will be returned as `table.create(0)`
-function Encoder.todo32receipt(t: number, map: { { { key: number, value: {string} } } })
+function Types.todo32receipt(t: number, map: { { { key: number, value: {string} } } })
 	local todostep = bit32.extract(t, 0, 6)
 
 	local step = map[todostep]
@@ -610,7 +613,7 @@ function Encoder.todo32receipt(t: number, map: { { { key: number, value: {string
 		local offset = 6
 		for _, requisite in ipairs(step) do
 			local key = requisite.key
-			local width = Encoder.numbits(key)
+			local width = Types.numbits(key)
 			local requisiteprogress = bit32.extract(t, offset, width)
 			table.insert(receipt, {requisiteprogress, key})
 
@@ -623,23 +626,23 @@ end
 
 --- returns # of bytes required to store given value \
 --- equivalent to `1 + (math.log(value, 2) // 8)`
-function Encoder.numbytes(value: number)
+function Types.numbytes(value: number)
 	return 1 + (math.log(value, 2) // 8)
 end
 
 --- returns # of bits required to store given value \
 --- equivalent to `1 + math.log(value, 2) // 1`
-function Encoder.numbits(value: number)
+function Types.numbits(value: number)
 	return 1 + math.log(value, 2) // 1
 end
 
 --- returns `byteoffset * 8`
-function Encoder.bitoffset(byteoffset: number)
+function Types.bitoffset(byteoffset: number)
 	return byteoffset * 8 --- yes i unironically need this kthxbai!!
 end
 
 --- returns range of bits as a string
-function Encoder.stringbits(x: number, field: number, range: number)
+function Types.stringbits(x: number, field: number, range: number)
 	local bitstring = ""
 	for i = 1, range do
 		bitstring ..= tostring(bit32.extract(x, field + i))
@@ -654,7 +657,7 @@ end
 --- `max (?=nil)`: if `level > max`, preserves current level and sets xp to 0 \
 --- `offset (?=1)`: offset where `level = p[offset]` and `xp = p[offset + 1]` \
 --- returns # of progression steps made
-function Encoder.prog(p: {number?}, xp: number, required: (number) -> number, max: number?, offset: number?)
+function Types.prog(p: {number?}, xp: number, required: (number) -> number, max: number?, offset: number?)
 	local i = offset or 1
 	local j = i + 1
 
@@ -681,7 +684,7 @@ function Encoder.prog(p: {number?}, xp: number, required: (number) -> number, ma
 		p[j] = newxp - reqxp
 		ups += 1
 
-		return ups + Encoder.prog(p, 0, required, max, offset)
+		return ups + Types.prog(p, 0, required, max, offset)
 	else
 		p[i] = level
 		p[j] = newxp
@@ -690,22 +693,256 @@ function Encoder.prog(p: {number?}, xp: number, required: (number) -> number, ma
 	end
 end
 
---- returns value represented as a boolean
-function Encoder.toboolean(value: any)
-	if not value then return false end
-	local t = type(value)
-	return
-		(t == "boolean" and value) or
-		(t == "number" and value == value) or
-		(t == "string" and value ~= "") or
-		(t == "vector" and value.Magnitude > 0) or
-		(t == "table" and next(value) ~= nil) or
-		(t == "function" and (value::any)()) or false
+--- returns a deep copy of table
+function Types.deepcopy(t: {[any]: any}): {[any]: any}
+	local copy = {}
+
+	for k, v in t do
+		if type(v) == "table" then
+			copy[k] = Types.deepcopy(v)
+		elseif type(v) == "buffer" then
+			local b = buffer.create(buffer.len(v))
+			buffer.copy(b, 0, v, 0)
+			copy[k] = b::any
+		else
+			copy[k] = v
+		end
+	end
+
+	return copy
+end
+
+--- returns a delta-table describing changes made from `old -> new` \
+--- `depth`: recursion depth limit for comparing tables. at `depth <= 0`, delta is resolved by comparing `jsonencode(a) == jsonencode(b)` \
+--- \
+--- `[!]` nil-values are of type `string` and equate to `"nil"`
+function Types.delta(new: {[string]: any}, old: {[string]: any}, depth: number)
+	local result: { [string]: any } = {}
+	
+	for key, newvalue in new do
+		local oldvalue = old[key]
+
+		local newtype = type(newvalue)
+		local oldtype = type(oldvalue)
+		
+		if newtype == oldtype then
+			if type(newvalue) == "table" then
+				if next(newvalue) == nil then --- empty
+					if next(oldvalue) ~= nil then
+						result[key] = {}
+					end
+				elseif #newvalue > 0 then --- array
+					local a, b = Types.jsonencode(newvalue), Types.jsonencode(oldvalue)
+					if a ~= b then
+						result[key] = {}
+						table.move(newvalue, 1, #newvalue, 1, result[key])
+					end
+				else --- dict
+					if depth > 0 then
+						result[key] = {}
+						for a, b in Types.delta(newvalue, oldvalue, depth - 1) do
+							result[key][a] = b
+						end
+					else
+						local a, b = Types.jsonencode(newvalue), Types.jsonencode(oldvalue)
+						if a ~= b then
+							result[key] = Types.deepcopy(newvalue)
+						end
+					end
+				end
+			elseif type(newvalue) == "buffer" then
+				if not Types.compare(newvalue, oldvalue) then
+					result[key] = Types.duplicate(newvalue)
+				end
+			else
+				if newvalue ~= oldvalue then
+					result[key] = newvalue
+				end
+			end
+		else
+			if newvalue ~= oldvalue then
+				if type(newvalue) == "table" then
+					result[key] = Types.deepcopy(newvalue)
+				elseif type(newvalue) == "buffer" then
+					result[key] = Types.duplicate(newvalue)
+				else
+					result[key] = newvalue
+				end
+			end
+		end
+	end
+	
+	for key in old do
+		if new[key] == nil then
+			result[key] = "nil"
+		end
+	end
+	
+	return result
+end
+
+--- reconciles result of `Types.delta(...)` into `t`
+function Types.reconcile(t: {}, delta: typeof(Types.delta(...)))
+	for k, v in delta do
+		if type(v) == "table" then
+			if not t[k] then
+				t[k] = {}
+			end
+			
+			Types.reconcile(t[k], v)
+		elseif type(v) == "buffer" then
+			local preexisting = t[k]
+			local len = buffer.len(v)
+			if type(preexisting) == "buffer" and buffer.len(preexisting) == len then
+				buffer.copy(preexisting, 0, v, 0)
+			else
+				local b = buffer.create(len)
+				buffer.copy(b, 0, v, 0)
+				t[k] = b::any
+			end
+		elseif v == "nil" then
+			t[k] = nil
+		else
+			t[k] = v
+		end
+	end
+end
+
+--- returns an item (`{id, ...}`)
+function Types.createitem(id: string, ...: any)
+	return {id, ...}::{string|any}
+end
+
+--- inserts item, by its associated `id`, to list \
+--- *does not account for duplicates*
+function Types.iteminsert(list: { typeof(Types.createitem(...)) }, id: string, ...: any)
+	table.insert(list, Types.createitem(id, ...))
+end
+
+--- removes all items associated with `id`, from list \
+--- *starts at `i = #list`, ends at `i = 1`, accounting for duplicates*
+function Types.itemremove(list: { typeof(Types.createitem(...)) }, id: string)
+	for i = #list, 1, -1 do
+		if list[i][1] == id then
+			table.remove(list, i)
+		end
+	end
+end
+
+--- returns item, from its associated `id`, stored in list
+function Types.itemfind(list: { typeof(Types.createitem(...)) }, id: string): typeof(Types.createitem(...))?
+	for _, thing in list do
+		if thing[1] == id then
+			return thing
+		end
+	end
+
+	return nil
+end
+
+--- rotates array `A` `x` times such that:
+--- ```
+--- rotate([1, 2, 3, 4, 5], 1) -> [5, 1, 2, 3, 4]
+--- rotate([1, 2, 3, 4, 5], -1) -> [2, 3, 4, 5, 1]
+--- ```
+function Types.rotate(t: {any}, x: number?)
+	x = x or 1
+	assert(x)
+
+	if x ~= 0 then
+		if x > 0 then
+			local value = table.remove(t)
+			table.insert(t, 1, value)
+		elseif x < 0 then
+			local value = table.remove(t, 1)
+			table.insert(t, value)
+		end
+
+		Types.rotate(t, x - math.sign(x))
+	else
+		return
+	end
+end
+
+--- returns elements of array as a page
+--- ```
+--- t = {} --- [1, ..., 25]
+--- page(t, 10, 1) --- [1, ..., 10]
+--- page(t, 10, 2) --- [11, ..., 20]
+--- page(t, 10, 3) --- [21, ..., 25]
+--- page(t, 10, 4) --- []
+--- ```
+function Types.page<T>(t: {T}, size: number, offset: number)
+	local len = #t
+
+	return table.move(
+		t,
+		1 + math.clamp((offset - 1) * size, 0, len),
+		math.clamp(offset * size, 0, len),
+		1,
+		table.create(size)
+	)
+end
+
+--- `T[random alphanumeric key (len ?=4)] = value` \
+--- returns `random alphanumeric key` for convenience
+function Types.insertkey(t: {[string]: any}, value: any, len: number?)
+	len = len or 4
+	assert(len)
+
+	local key = Types.string(len)
+
+	if t[key] ~= nil then
+		repeat key = Types.string(len)
+		until t[key] == nil
+	end
+
+	t[key] = value
+
+	return key
+end
+
+--- returns a reverse iterator function and the table for use in a for loop
+function Types.ipairsr<T>(t: {T}): (({T}, number) -> (number?, T), {T}, number)
+	return coroutine.wrap(function()
+		for i = #t, 1, -1 do
+			coroutine.yield(i, t[i])
+		end
+	end), t, 0
+end
+
+function Types.nextvaluefromlist<T>(t: {T}, R: Random?)
+	assert(#t > 0, "attempt to get next value from empty table")
+
+	local clone = table.clone(t)
+	;(R or Rand):Shuffle(clone)
+
+	return clone[1]
+end
+
+function Types.nextvaluefromweightedtable<T>(t: { { key: string, weight: number } & T }, R: Random?)
+	assert(#t > 0, "attempt to get next value from weight table")
+
+	local sum = 0
+	for _, entry in t do
+		sum += entry.weight
+	end
+	
+	local roll, passed = (R or Rand):NextNumber(0, sum), 0
+	for _, entry in t do
+		passed += entry.weight
+
+		if roll <= passed then
+			return entry
+		end
+	end
+
+	error("this should not happen")
 end
 
 --- returns a randomized alphanumeric string \
 --- all characters elements of set `[A-Za-z0-9]`
-function Encoder.string(len: number)
+function Types.string(len: number)
 	local b = buffer.create(len)
 	for i = 0, len - 1, 1 do
 		local value = Rand:NextInteger(1, 62)
@@ -713,7 +950,7 @@ function Encoder.string(len: number)
 			buffer.writeu8(b, i, value + 96)
 		elseif value <= 52 then --- [A-Z] [ABCDEFGHIJKLMNOPQRSTUVWXYZ] [27-52] -> [65-90] 
 			buffer.writeu8(b, i, value + 38)
-		else --- elseif value <= 62 then --- [0-9] [0123456789] [53-62] [48-57]
+		else --- elseif value <= 62 then --- [0-9] [0123456789] [53-62] -> [48-57]
 			buffer.writeu8(b, i, value - 5)
 		end
 	end
@@ -721,8 +958,13 @@ function Encoder.string(len: number)
 	return buffer.tostring(b)
 end
 
+--- trims trailing whitespaces from string read from buffer
+function Types.trimstring(str: string)
+	return string.gsub(string.gsub(str, "%s+", " "), "\u{0000}", "")
+end
+
 --- replaces substrings in text matching capture `pattern (?="[%w+_]+")` with respect to replacement table
-function Encoder.alias(text: string, replace: {[string]: string}, pattern: string?)
+function Types.alias(text: string, replace: {[string]: string}, pattern: string?)
 	return string.gsub(text, pattern or "[%w+_]+", function(s: string)
 		return replace[s] or s
 	end)
@@ -731,10 +973,10 @@ end
 --- applies richtext formatting tags to text \
 --- *assumes that richtext closure suffix follows pattern `string.match(prefix, "%a+")`*
 --- ```
---- Encoder.richtext("color me surprised", "i", "font color='#ff00ff'") --> <font color="#ff00ff"><i>color me surprised</i></font>
---- Encoder.richtext("color me surprised", "i", Color3.fromRGB(255, 0, 255)) --> <font color="#ff00ff"><i>color me surprised</i></font>
+--- Types.richtext("color me surprised", "i", "font color='#ff00ff'") --> <font color="#ff00ff"><i>color me surprised</i></font>
+--- Types.richtext("color me surprised", "i", Color3.fromRGB(255, 0, 255)) --> <font color="#ff00ff"><i>color me surprised</i></font>
 --- ```
-function Encoder.richformat(text: string, ...: string|Color3)
+function Types.richformat(text: string, ...: string|Color3)
 	for i, prefix in ipairs({...}::any) do
 		if typeof(prefix) == "Color3" then
 			prefix = "font color='#" .. prefix:ToHex() .. "'"
@@ -752,7 +994,7 @@ function Encoder.richformat(text: string, ...: string|Color3)
 end
 
 --- formats time into a hour-minute-second-esque notation
-function Encoder.hourminutesecond(time: number, notation: "DD:HH:MM:SS" | "HH:MM:SS" | "MM:SS" | "M:SS", appendms: boolean?): string
+function Types.hourminutesecond(time: number, notation: "DD:HH:MM:SS" | "HH:MM:SS" | "MM:SS" | "M:SS", appendms: boolean?): string
 	--[[
 		os.date("!%X", time) is the fastest for all inputs below 86400, because any input at or above 86400 breaks the formatting
 		string.gsub(string.format(), time, subf) is the second fastest for all inputs, never has a formatting break, but is ~10% slower than os.date("!%X", time)
@@ -825,7 +1067,7 @@ function Encoder.hourminutesecond(time: number, notation: "DD:HH:MM:SS" | "HH:MM
 end
 
 --- returns a timestamp of current utc time with respect to format option or time in minutes
-function Encoder.timestamp(format: "Hour" | "Biphase" | "Day" | "Week" | "Season" | "Biseason" | "Year" | number)
+function Types.timestamp(format: "Hour" | "Biphase" | "Day" | "Week" | "Season" | "Biseason" | "Year" | number)
 	local datetable = os.date("!*t") --- read from this table as a truth state
 	local datetablecopy = table.clone(datetable) --- write to this table, keys inherited from datetable
 
@@ -941,23 +1183,23 @@ end
 --- formats number: \
 --- thousands separated by `tsep (?=".")` \
 --- decimals separated by `dsep (?=".")`, truncated by `places (?=1)`
-function Encoder.formatnumber(x: number, tsep: string?, dsep: string?, places: number?)
+function Types.formatnumber(x: number, tsep: string?, dsep: string?, places: number?)
 	if places == 0 then
-		return Encoder.commanumber(x, tsep)
+		return Types.commanumber(x, tsep)
 	else
 		local num = tostring(x)
 		local i = string.find(num, "%.")
 		
 		if i then
-			return Encoder.commanumber(x, tsep) .. (dsep or ".") .. string.sub(num, 1 + i, i + (places or 1))
+			return Types.commanumber(x, tsep) .. (dsep or ".") .. string.sub(num, 1 + i, i + (places or 1))
 		else
-			return Encoder.commanumber(x, tsep)
+			return Types.commanumber(x, tsep)
 		end
 	end
 end
 
 --- formats number, thousands separated by `tsep (?=",")`
-function Encoder.commanumber(x: number, tsep: string?)
+function Types.commanumber(x: number, tsep: string?)
 	if math.abs(x) < 1000 then
 		return tostring(math.floor(x))
 	else
@@ -967,20 +1209,20 @@ function Encoder.commanumber(x: number, tsep: string?)
 end
 
 --- abbreviates number, decimals separated by `dsep (?=".")`, truncated by `places (?=1)`
-function Encoder.abbreviatenumber(x: number, places: number?, dsep: string?)
+function Types.abbreviatenumber(x: number, places: number?, dsep: string?)
 	local exp = math.floor(math.log(math.max(1, math.abs(x)), 1000))
-	local suffix = Encoder.Abbreviations[1 + exp] or ("e+" .. exp)
+	local suffix = Types.Abbreviations[1 + exp] or ("e+" .. exp)
 	
 	return string.gsub(tostring(math.floor(x * ((10 ^ (places or 1)) / (1000 ^ exp))) / (10 ^ (places or 1))), "[.]", dsep or ".") .. suffix
 end
 
 --- returns `string.format("%x", value)`
-function Encoder.tohexadecimal(value: number)
+function Types.tohexadecimal(value: number)
 	return string.format("%x", value)
 end
 
 --- returns `tonumber(value, 16)`
-function Encoder.fromhexadecimal(value: string)
+function Types.fromhexadecimal(value: string)
 	return tonumber(value, 16)
 end
 
@@ -1003,16 +1245,16 @@ local rbxthumb: thumb = function(type, id, size)
 end
 
 --- returns `rbxthumb://` thumbnail
-Encoder.rbxthumb = rbxthumb
+Types.rbxthumb = rbxthumb
 
 --- returns `HttpService:JSONEncode(input)`
-function Encoder.jsonencode(input: any)
+function Types.jsonencode(input: any)
 	return HttpService:JSONEncode(input)
 end
 
 --- returns `HttpService:JSONDecode(input)`
-function Encoder.jsondecode(input: string)
+function Types.jsondecode(input: string)
 	return HttpService:JSONDecode(input)
 end
 
-return Encoder
+return Types
