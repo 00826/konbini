@@ -890,10 +890,10 @@ function Types.insertkey(t: {[string]: any}, value: any, len: number?)
 	len = len or 4
 	assert(len)
 
-	local key = Types.string(len)
+	local key = Types.createstring(len)
 
 	if t[key] ~= nil then
-		repeat key = Types.string(len)
+		repeat key = Types.createstring(len)
 		until t[key] == nil
 	end
 
@@ -914,10 +914,7 @@ end
 function Types.nextvaluefromlist<T>(t: {T}, R: Random?)
 	assert(#t > 0, "attempt to get next value from empty table")
 
-	local clone = table.clone(t)
-	;(R or Rand):Shuffle(clone)
-
-	return clone[1]
+	return t[(R or Rand):NextInteger(1, #t)]
 end
 
 function Types.nextvaluefromweightedtable<T>(t: { { key: string, weight: number } & T }, R: Random?)
@@ -942,7 +939,7 @@ end
 
 --- returns a randomized alphanumeric string \
 --- all characters elements of set `[A-Za-z0-9]`
-function Types.string(len: number)
+function Types.createstring(len: number)
 	local b = buffer.create(len)
 	for i = 0, len - 1, 1 do
 		local value = Rand:NextInteger(1, 62)
@@ -1215,37 +1212,6 @@ function Types.abbreviatenumber(x: number, places: number?, dsep: string?)
 	
 	return string.gsub(tostring(math.floor(x * ((10 ^ (places or 1)) / (1000 ^ exp))) / (10 ^ (places or 1))), "[.]", dsep or ".") .. suffix
 end
-
---- returns `string.format("%x", value)`
-function Types.tohexadecimal(value: number)
-	return string.format("%x", value)
-end
-
---- returns `tonumber(value, 16)`
-function Types.fromhexadecimal(value: string)
-	return tonumber(value, 16)
-end
-
-type thumb =
-	((type: "Asset", id: number, size: "150x150"|"420x420") -> string)
-&	((type: "Avatar", id: number, size: "48x48"|"60x60"|"100x100"|"150x150"|"180x180"|"352x352"|"420x420"|"720x720") -> string)
-&	((type: "AvatarBust", id: number, size: "50x50"|"60x60"|"75x75"|"100x100"|"150x150"|"180x180"|"352x352"|"420x420") -> string)
-&	((type: "AvatarHeadShot", id: number, size: "48x48"|"60x60"|"100x100"|"150x150"|"180x180"|"352x352"|"420x420") -> string)
-&	((type: "BadgeIcon", id: number, size: "150x150") -> string)
-&	((type: "BundleThumbnail", id: number, size: "150x150"|"420x420") -> string)
-&	((type: "FontFamily", id: number, size: "1200x80") -> string)
-&	((type: "GameIcon", id: number, size: "50x50"|"150x150") -> string)
-&	((type: "GamePass", id: number, size: "150x150") -> string)
-&	((type: "GameThumbnail", id: number, size: "256x144"|"384x216"|"480x270"|"576x324"|"768x432") -> string)
-&	((type: "GroupIcon", id: number, size: "150x150"|"420x420") -> string)
-&	((type: "Outfit", id: number, size: "150x150"|"420x420") -> string)
-
-local rbxthumb: thumb = function(type, id, size)
-	return string.format("rbxthumb://type=%s&id=%d&w=%s&h=%s", type, id, unpack(string.split(size, "x")))
-end
-
---- returns `rbxthumb://` thumbnail
-Types.rbxthumb = rbxthumb
 
 --- returns `HttpService:JSONEncode(input)`
 function Types.jsonencode(input: any)

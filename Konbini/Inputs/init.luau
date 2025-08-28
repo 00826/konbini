@@ -163,6 +163,7 @@ end
 function Inputs.screenpointraycast(camera: Camera, screenposition: Vector2, raycastparams: RaycastParams, length: number?)
 	local unitray = camera:ScreenPointToRay(screenposition.X, screenposition.Y)
 	local origin, direction = unitray.Origin, unitray.Direction
+
 	return origin, direction, workspace:Raycast(origin, direction * (length or 1024), raycastparams)
 end
 

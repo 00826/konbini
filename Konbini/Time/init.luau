@@ -4,7 +4,7 @@
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
-local TimeRemote = script:WaitForChild("Remote")
+local Remote = script:WaitForChild("Remote")
 
 --- ### Time.luau
 ---
@@ -73,11 +73,11 @@ if IsServer then
 			recent = now - (dt - Time.Framerate)
 
 			buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis/1000)
-			TimeRemote:FireAllClients(Time.UnixBuffer)
+			Remote:FireAllClients(Time.UnixBuffer)
 		end
 	end)
 else
-	TimeRemote.OnClientEvent:Connect(function(b: buffer)
+	Remote.OnClientEvent:Connect(function(b: buffer)
 		buffer.writef64(Time.UnixBuffer, 0, buffer.readf64(b, 0))
 	end)
 end

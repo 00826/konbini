@@ -313,9 +313,9 @@ end
 
 --- adjusts color3 saturation
 function Color3K.saturation(c: Color3, value: number)
-	local H, S, V = c:ToHSV()
+	local h, s, v = c:ToHSV()
 
-	return Color3.fromHSV(H, math.clamp(S + (value / 100), 0, 1), V)
+	return Color3.fromHSV(h, math.clamp(s + (value / 100), 0, 1), v)
 end
 
 --- returns approximate sort value of color3 \

@@ -1,6 +1,5 @@
 --!strict
 --!native
---!optimize 2
 
 local Rand = Random.new()
 

@@ -6,10 +6,10 @@ local IsServer = RunService:IsServer()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+local HttpService = game:GetService("HttpService")
 local LocalizationService = game:GetService("LocalizationService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local PolicyService = game:GetService("PolicyService")
-local HttpService = game:GetService("HttpService")
 
 --- ### Patronage.luau
 ---

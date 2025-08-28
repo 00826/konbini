@@ -5,8 +5,6 @@
 --- a shelf of roblox-luau convenience modules \
 --- [*view konbini on github*](https://github.com/00826/konbini)
 return table.freeze{
-	Animation = require(script:WaitForChild("Animation"));
-	Collisions = require(script:WaitForChild("Collisions"));
 	Color3 = require(script:WaitForChild("Color3"));
 	Couture = require(script:WaitForChild("Couture"));
 	Datastore = require(script:WaitForChild("Datastore"));

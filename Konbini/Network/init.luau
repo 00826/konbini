@@ -5,49 +5,6 @@ local IsServer = RunService:IsServer()
 
 local Players = game:GetService("Players")
 
-local ByteSizes = {
-	_remoteoverhead = 9;
-	--- _remotefunctionoverhead = 2;
-	_clienttoserveroverhead = 5;
-	_type = 1;
-	_nil = 0;
-
-	f64 = 8;
-	f32 = 4;
-	u32 = 4;
-	i32 = 4;
-	u16 = 2;
-	i16 = 2;
-	u8 = 1;
-	i8 = 1;
-
-	Axes = 6;
-	boolean = 1;
-	BrickColor = 4;
-	CFrame = 19;
-	Color3 = 12;
-	Color3uint8 = 3;
-	ColorSequenceKeypoint = 16;
-	EnumItem = 4;
-	Faces = 6;
-	number = 8;
-	NumberRange = 8;
-	NumberSequenceKeypoint = 12;
-	PhysicalProperties = 20;
-	Ray = 24;
-	Rect = 16;
-	UDim = 8;
-	UDim2 = 16;
-	Vector2 = 8;
-	Vector2int16 = 4;
-	Vector3 = 12;
-	Vector3int16 = 6;
-};
-
-local function vlq(initialsize: number, length: number)
-	return math.max(math.ceil(math.log(length + initialsize, 128)), initialsize)
-end
-
 export type ClientArg = 
 	| nil
 	| number
@@ -59,8 +16,6 @@ export type ClientArg =
 ---
 --- basic remote interface
 local Network = {
-	Queue = {};
-
 	RemoteEvent = script:WaitForChild("RemoteEvent");
 	UnreliableRemoteEvent = script:WaitForChild("UnreliableRemoteEvent");
 }
@@ -162,69 +117,6 @@ function Network.wait(scope: string, timeout: number?)
 	if b then b:Disconnect() end
 
 	return response
-end
-
---- returns size, in bytes, of `packet`
-function Network.measurepacket(packet: {any}, clienttoserver: boolean)
-	local total = ByteSizes._remoteoverhead + ByteSizes._type
-
-	for a, b in ipairs(packet) do
-		total += Network.sizeof(b) + ByteSizes._type
-	end
-
-	return total
-end
-
---- returns size, in bytes, of `data`
---- derived from `/Pyseph/RemotePacketSizeCounter`
-function Network.sizeof(data: any)
-	local total = 0
-	if data ~= nil then
-		total += ByteSizes._type
-	end
-
-	local datatype = typeof(data)
-
-	if datatype == "string" then
-		local len = #data
-		total += vlq(1, len) + len
-	elseif datatype == "buffer" then
-		local len = buffer.len(data)
-		total += vlq(1, len) + len
-	elseif datatype == "NumberSequence" then
-		total += 4
-		for _, keypoint in (data::NumberSequence).Keypoints do
-			total += ByteSizes.NumberSequenceKeypoint
-		end
-	elseif datatype == "ColorSequence" then
-		total += 4
-		for _, keypoint in (data::ColorSequence).Keypoints do
-			total += ByteSizes.ColorSequenceKeypoint
-		end
-	elseif datatype == "table" then
-		local keys = 0
-		local sum = 0
-
-		if data[1] ~= nil then
-			for _, v in data do
-				keys += 1
-				sum += Network.sizeof(v)::number + ByteSizes._type
-			end
-		else
-			for k, v in data do
-				keys += 1
-				sum += Network.sizeof(k)::number + Network.sizeof(v) + ByteSizes._type
-			end
-		end
-
-		total += vlq(1, keys) + sum
-	elseif ByteSizes[datatype] then
-		total += ByteSizes[datatype]
-	else
-		error(`unknown type {datatype}`)
-	end
-
-	return total
 end
 
 return Network

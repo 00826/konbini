@@ -1,7 +1,6 @@
 --!strict
 
 local RunService = game:GetService("RunService")
-
 local IsServer = RunService:IsServer()
 
 local EntityRemote = script:WaitForChild("Remote")

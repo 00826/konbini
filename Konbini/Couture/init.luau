@@ -4,7 +4,6 @@ local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
 local InsertService = game:GetService("InsertService")
-
 local Players = game:GetService("Players")
 
 local AccessoryPart = script:WaitForChild("AccessoryPart")
@@ -237,7 +236,7 @@ function Couture.encode(t: {[string]: any} | HumanoidDescription | Player | numb
 				continue
 			end
 			if typeof(v) == "Color3" then
-				v = "0x" .. v:ToHex()
+				v = v:ToHex()
 			end
 			
 			result[k] = v
@@ -271,7 +270,7 @@ function Couture.encode(t: {[string]: any} | HumanoidDescription | Player | numb
 			do --- body colors
 				for _, property in Couture.BodyColorProperties do
 					local value = (t::any)[property] :: Color3
-					result[property] = "0x" .. value:ToHex()
+					result[property] = value:ToHex()
 				end
 			end
 	
@@ -353,9 +352,9 @@ function Couture.decode(t: {[string]: any})
 			continue
 		end
 		if table.find(Couture.BodyColorProperties, k) or table.find(Couture.ClothingColorProperties, k) then
-			local num = tonumber(v)
-			if num and num <= 16777215 then --- 0xFFFFFF
-				result[k] = Color3.fromHex(string.gsub(v, "0x", "")::string)
+			local num = tonumber(v, 16)
+			if num and num <= 16777215 then
+				result[k] = Color3.fromHex(v)
 
 				continue
 			end

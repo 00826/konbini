@@ -12,8 +12,6 @@
 |-|-|
 |[Konbini](./Konbini/init.luau)|main module|
 |-|-|
-|[Animation.luau](./Konbini/Animation/init.luau)|animation controller|
-|[Collisions.luau](./Konbini/Collisions/init.luau)|collision solver and spatial query wrapper|
 |[Color3.luau](./Konbini/Color3/init.luau)|`Color3`, `ColorSequence` library extension|
 |[Couture.luau](./Konbini/Couture/init.luau)|server-instanced, client-authoritative accessories|
 |[Datastore.luau](./Konbini/Datastore/init.luau)|pcall-wrapped datastore functions|
