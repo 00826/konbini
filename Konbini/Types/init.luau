@@ -918,7 +918,7 @@ function Types.nextvaluefromlist<T>(t: {T}, R: Random?)
 end
 
 function Types.nextvaluefromweightedtable<T>(t: { { key: string, weight: number } & T }, R: Random?)
-	assert(#t > 0, "attempt to get next value from weight table")
+	assert(#t > 0, "attempt to get next value from empty weight table")
 
 	local sum = 0
 	for _, entry in t do

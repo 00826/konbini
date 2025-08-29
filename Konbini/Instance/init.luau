@@ -438,7 +438,7 @@ function InstanceK.createtransparencycontroller(thing: Instance)
 end
 
 --- refreshes `LocalTransparencyModifier` of instances associated with `TransparencyController`
-function InstanceK.steptransparencycontroller(tc: typeof(InstanceK.createtransparencycontroller(...)))
+function InstanceK.transparencycontrollerstep(tc: typeof(InstanceK.createtransparencycontroller(...)))
 	if tc.Disconnected then return false end
 
 	local target = tc.TargetTransparency
@@ -453,8 +453,6 @@ function InstanceK.steptransparencycontroller(tc: typeof(InstanceK.createtranspa
 
 	return false
 end
-
-
 
 --- `ContentProvider:PreloadAsync(assets)` \
 --- `destruct (?=false)`: clear assets after preloading? if asset is an instance, `:Destroy`

@@ -392,6 +392,52 @@ function Interface.setcoreguienabled(coreguis: {[Enum.CoreGuiType]: boolean})
 	end)
 end
 
+--- creates a textqueuecontroller
+function Interface.createtextqueuecontroller(textobject: TextLabel, separator: string, alloc: number?)
+	return {
+		Queue = table.create(alloc or 16) :: { {string|number} };
+		Separator = separator;
+		TextObject = textobject;
+	}
+end
+
+--- inserts text into textqueuecontroller
+function Interface.textqueuecontrollerinsert(tq: typeof(Interface.createtextqueuecontroller(...)), text: string, expiry: number)
+	table.insert(tq.Queue, 1, {text, expiry::any})
+end
+
+--- advances textqueuecontroller, removing any expired text
+function Interface.textqueuecontrollerstep(tq: typeof(Interface.createtextqueuecontroller(...)), now: number)
+	local queue = tq.Queue
+	for i = #queue, 1, -1 do
+		local expiry = queue[i][2]::number
+		if expiry < now then
+			table.remove(queue, i)
+		end
+	end
+
+	local len = #queue
+	local textobject = tq.TextObject
+	if len < 1 then
+		textobject.Text = ""
+	elseif len == 1 then
+		textobject.Text = queue[1][1]::string
+	else
+		local concat = ""
+		local sep = tq.Separator
+		for i, entry in ipairs(queue) do
+			local text = entry[1]::string
+			if i < len then
+				concat ..= text .. sep
+			else
+				concat ..= text
+			end
+		end
+
+		textobject.Text = concat
+	end
+end
+
 function Interface.nextguiobject(guiobjects: {GuiObject}, direction: Vector3, current: GuiObject?): GuiObject?
 	current = current or guiobjects[1]
 	if not current then

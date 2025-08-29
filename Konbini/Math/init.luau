@@ -260,7 +260,7 @@ function MathK.createspring(frequency: number, distance: number, mindistance: nu
 end
 
 --- advances spring by `dt`
-function MathK.stepspring(s: typeof(MathK.createspring(...)), dt: number)
+function MathK.springstep(s: typeof(MathK.createspring(...)), dt: number)
 	local freq = s.frequency * 2 * math.pi --- Convert from Hz to rad/s
 	local distance = s.distance
 	local velocity = s.velocity
