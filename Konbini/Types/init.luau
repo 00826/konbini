@@ -647,6 +647,7 @@ function Types.stringbits(x: number, field: number, range: number)
 	for i = 1, range do
 		bitstring ..= tostring(bit32.extract(x, field + i))
 	end
+
 	return bitstring
 end
 
@@ -712,41 +713,30 @@ function Types.deepcopy(t: {[any]: any}): {[any]: any}
 	return copy
 end
 
---- returns a delta-table describing changes made from `old -> new` \
---- `depth`: recursion depth limit for comparing tables. at `depth <= 0`, delta is resolved by comparing `jsonencode(a) == jsonencode(b)` \
+--- returns a diff-table describing changes made from `old -> new` \
 --- \
 --- `[!]` nil-values are of type `string` and equate to `"nil"`
-function Types.delta(new: {[string]: any}, old: {[string]: any}, depth: number)
-	local result: { [string]: any } = {}
-	
+function Types.diff(new: {[string]: any}, old: {[string]: any})
+	local result: { [any]: any } = {}
+
 	for key, newvalue in new do
 		local oldvalue = old[key]
 
 		local newtype = type(newvalue)
 		local oldtype = type(oldvalue)
-		
+
 		if newtype == oldtype then
 			if newtype == "table" then
 				if next(newvalue) == nil then --- empty
 					if next(oldvalue) ~= nil then
 						result[key] = {}
 					end
-				elseif #newvalue > 0 then --- array
-					local a, b = Types.jsonencode(newvalue), Types.jsonencode(oldvalue)
-					if a ~= b then
+				else
+					local diff = Types.diff(newvalue, oldvalue)
+					if next(diff) ~= nil then
 						result[key] = {}
-						table.move(newvalue, 1, #newvalue, 1, result[key])
-					end
-				else --- dict
-					if depth > 0 then
-						result[key] = {}
-						for a, b in Types.delta(newvalue, oldvalue, depth - 1) do
+						for a, b in diff do
 							result[key][a] = b
-						end
-					else
-						local a, b = Types.jsonencode(newvalue), Types.jsonencode(oldvalue)
-						if a ~= b then
-							result[key] = Types.deepcopy(newvalue)
 						end
 					end
 				end
@@ -771,18 +761,18 @@ function Types.delta(new: {[string]: any}, old: {[string]: any}, depth: number)
 			end
 		end
 	end
-	
+
 	for key in old do
 		if new[key] == nil then
 			result[key] = "nil"
 		end
 	end
-	
+
 	return result
 end
 
 --- reconciles result of `Types.delta(...)` into `t`
-function Types.reconcile(t: {}, delta: typeof(Types.delta(...)))
+function Types.reconcile(t: {}, delta: typeof(Types.diff(...)))
 	for k, v in delta do
 		if type(v) == "table" then
 			if not t[k] then
