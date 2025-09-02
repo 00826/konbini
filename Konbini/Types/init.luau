@@ -771,9 +771,16 @@ function Types.diff(new: {[string]: any}, old: {[string]: any})
 	return result
 end
 
---- reconciles result of `Types.delta(...)` into `t`
-function Types.reconcile(t: {}, delta: typeof(Types.diff(...)))
-	for k, v in delta do
+--- reconciles result of `Types.diff(...)` into `t` \
+--- attempts to convert string-keys of `t` into numeric indices \
+--- to account for array diffs being converted from `{any} -> {[string]: any}` when passed over the network
+function Types.reconcile(t: {}, diff: typeof(Types.diff(...)))
+	for k, v in diff do
+		local i = tonumber(k)
+		if i ~= nil then
+			k = i
+		end
+
 		if type(v) == "table" then
 			if not t[k] then
 				t[k] = {}
