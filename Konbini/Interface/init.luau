@@ -403,7 +403,7 @@ end
 
 --- inserts text into textqueuecontroller
 function Interface.textqueuecontrollerinsert(tq: typeof(Interface.createtextqueuecontroller(...)), text: string, expiry: number)
-	table.insert(tq.Queue, 1, {text, expiry::any})
+	table.insert(tq.Queue, {text, expiry::any})
 end
 
 --- advances textqueuecontroller, removing any expired text

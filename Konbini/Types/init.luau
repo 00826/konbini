@@ -775,32 +775,58 @@ end
 --- attempts to convert string-keys of `t` into numeric indices \
 --- to account for array diffs being converted from `{any} -> {[string]: any}` when passed over the network
 function Types.reconcile(t: {}, diff: typeof(Types.diff(...)))
-	for k, v in diff do
-		local i = tonumber(k)
-		if i ~= nil then
-			k = i
-		end
-
-		if type(v) == "table" then
-			if not t[k] then
-				t[k] = {}
-			end
-			
-			Types.reconcile(t[k], v)
-		elseif type(v) == "buffer" then
-			local preexisting = t[k]
-			local len = buffer.len(v)
-			if type(preexisting) == "buffer" and buffer.len(preexisting) == len then
-				buffer.copy(preexisting, 0, v, 0)
+	if #diff > 0 then
+		for i, v in ipairs(diff) do
+			if type(v) == "table" then
+				if not t[i] then
+					t[i] = {}
+				end
+				
+				Types.reconcile(t[i], v)
+			elseif type(v) == "buffer" then
+				local preexisting = t[i]
+				local len = buffer.len(v)
+				if type(preexisting) == "buffer" and buffer.len(preexisting) == len then
+					buffer.copy(preexisting, 0, v, 0)
+				else
+					local b = buffer.create(len)
+					buffer.copy(b, 0, v, 0)
+					t[i] = b::any
+				end
+			elseif v == "nil" then
+				t[i] = nil
 			else
-				local b = buffer.create(len)
-				buffer.copy(b, 0, v, 0)
-				t[k] = b::any
+				t[i] = v
 			end
-		elseif v == "nil" then
-			t[k] = nil
-		else
-			t[k] = v
+		end
+	else
+		for k, v in diff do
+			local i = tonumber(k)
+			if i ~= nil then
+				k = i
+			end
+
+			if type(v) == "table" then
+				if not t[k] then
+					t[k] = {}
+				end
+				
+				Types.reconcile(t[k], v)
+			elseif type(v) == "buffer" then
+				local preexisting = t[k]
+				local len = buffer.len(v)
+				if type(preexisting) == "buffer" and buffer.len(preexisting) == len then
+					buffer.copy(preexisting, 0, v, 0)
+				else
+					local b = buffer.create(len)
+					buffer.copy(b, 0, v, 0)
+					t[k] = b::any
+				end
+			elseif v == "nil" then
+				t[k] = nil
+			else
+				t[k] = v
+			end
 		end
 	end
 end
@@ -882,7 +908,8 @@ function Types.page<T>(t: {T}, size: number, offset: number)
 end
 
 --- `T[random alphanumeric key (len ?=4)] = value` \
---- returns `random alphanumeric key` for convenience
+--- returns `random alphanumeric key` for convenience \
+--- guarantees that `tonumber(key) == nil` to avoid errors when sending such a key over the network boundary
 function Types.insertkey(t: {[string]: any}, value: any, len: number?)
 	len = len or 4
 	assert(len)
@@ -891,7 +918,7 @@ function Types.insertkey(t: {[string]: any}, value: any, len: number?)
 
 	if t[key] ~= nil then
 		repeat key = Types.createstring(len)
-		until t[key] == nil
+		until (tonumber(key) == nil) and (t[key] == nil)
 	end
 
 	t[key] = value
