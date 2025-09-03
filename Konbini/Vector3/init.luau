@@ -139,23 +139,6 @@ function Vector3K.tovector(variant: Vector3 | Vector3int16 | PVInstance | CFrame
 	return Vector3.zero
 end
 
---- returns `vector.magnitude(w - v)`
-function Vector3K.magnitude(v: Vector3, w: Vector3)
-	return vector.magnitude(w::any - v::any)
-end
-
---- returns `vector.normalize(w - v)`
-function Vector3K.normalize(v: Vector3, w: Vector3)
-	--- just beat the type solver final boss
-	--- whats good
-	return (vector.normalize(w::any - v::any)::any)::Vector3
-end
-
---- returns `vector.angle(v, w)`
-function Vector3K.angle(v: Vector3, w: Vector3)
-	return vector.angle(v::any, w::any)
-end
-
 --- returns the midpoint of `vectors`
 function Vector3K.midpoint(vectors: { Vector3 | Vector3int16 | PVInstance | CFrame })
 	local length = #vectors
@@ -234,18 +217,24 @@ function Vector3K.rotation(v: Vector3, axis: Enum.Axis)
 	end
 end
 
---- returns unit vector from input vector `i`, relative to (camera) `cframe`
-function Vector3K.movevector(i: Vector3, cframe: CFrame)
+--- returns unit vector from input vector `i`, relative to viewport `lookvector, -upvector`
+function Vector3K.movevector(i: Vector3, lookvector: Vector3, upvector: Vector3)
+	local rightvector = (vector.cross(lookvector::any, upvector::any)::any)::Vector3
 	local cos, sin
-	local _, _, _, R00, R01, R02, _, _, R12, _, _, R22 = cframe:GetComponents()
+
+	--[[
+	local R00, R01, R02 = rightvector.X, upvector.X, lookvector.X
+	local   _,   _, R12 = rightvector.Y, upvector.Y, lookvector.Y
+	local   _,   _, R22 = rightvector.Z, upvector.Z, lookvector.Z]]
+
+	local R12 = lookvector.Y
+
 	if R12 < 1 and R12 > -1 then
-		--- cos, sin = lookvector.x, lookvector.z
-		cos = R22
-		sin = R02
+		cos = lookvector.Z
+		sin = lookvector.X
 	else
-		--- cos, sin = rightvector.x, upvector.x
-		cos = R00
-		sin = -R01*math.sign(R12)
+		cos = rightvector.X
+		sin = -upvector.X*math.sign(lookvector.Y)
 	end
 
 	local length = (cos*cos + sin*sin)^0.5
@@ -255,8 +244,8 @@ end
 --- interpolates between unit vector `v` and unit vector `w` with respect to interpolant `t` \
 --- axisangle is the goat
 function Vector3K.slerp(v: Vector3, w: Vector3, t: number)
-	local magA = v.Magnitude
-	local magB = w.Magnitude
+	local magA = vector.magnitude(v::any)
+	local magB = vector.magnitude(w::any)
 
 	if magA == 0 and magB == 0 then
 		return Vector3.zero
@@ -281,25 +270,25 @@ function Vector3K.slerp(v: Vector3, w: Vector3, t: number)
 	local magC = magA^(1 - t)*magB^t --- final magnitude
 
 	-- get k*cosine and k*sine components of the angle between v and w
-	local co = v:Dot(w)
-	local si = v:Cross(w).Magnitude
+	local cosine = vector.dot(v::any, w::any)
+	local sine = vector.magnitude(vector.cross(v::any, w::any))
 
-	local unitA = v.Unit
-	local unitB = w.Unit
+	local unitA = (vector.normalize(v::any)::any)::Vector3
+	local unitB = (vector.normalize(w::any)::any)::Vector3
 
 	-- more degenerate cases
-	if co < 0 and si < -1e-16*co then --- this test sees, in a stable way, if they are opposite and abs(tan(angle)) < 1e-16
+	if cosine < 0 and sine < -1e-16*cosine then --- this test sees, in a stable way, if they are opposite and abs(tan(angle)) < 1e-16
 		if t%2 < 1/2 or t%2 >= 3/2 then
 			return magC*unitA
 		else
 			return magC*unitB
 		end
-	elseif co > 0 and si < 1e-16*co then --- this test sees, in a stable way, if they are in the same direction and abs(tan(angle)) < 1e-16
-		return magC*((1 - t)*unitA + t*unitB).Unit
+	elseif cosine > 0 and sine < 1e-16*cosine then --- this test sees, in a stable way, if they are in the same direction and abs(tan(angle)) < 1e-16
+		return magC*(vector.normalize((1 - t)*unitA + t*unitB::any)::any)
 	end
-	local ang = math.atan2(si, co)
+	local angle = math.atan2(sine, cosine)
 
-	local unitC = (math.sin((1 - t)*ang)*unitA + math.sin(t*ang)*unitB).Unit
+	local unitC = (vector.normalize(math.sin((1 - t)*angle)*unitA + math.sin(t*angle)*unitB::any)::any)::Vector3
 
 	return magC*unitC
 end
