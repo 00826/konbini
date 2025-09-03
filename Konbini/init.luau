@@ -8,7 +8,6 @@ return table.freeze{
 	Color3 = require(script:WaitForChild("Color3"));
 	Couture = require(script:WaitForChild("Couture"));
 	Datastore = require(script:WaitForChild("Datastore"));
-	Entity = require(script:WaitForChild("Entity"));
 	Hook = require(script:WaitForChild("Hook"));
 	Inputs = require(script:WaitForChild("Inputs"));
 	Instance = require(script:WaitForChild("Instance"));

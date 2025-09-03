@@ -863,6 +863,17 @@ function Types.itemfind(list: { typeof(Types.createitem(...)) }, id: string): ty
 	return nil
 end
 
+--- returns first key-value pair from nested table `t` that satisfies `t[k][scope] == value`
+function Types.scope<T>(t: {[string]: any}, scope: string, value: any): (any?, {[string]: any}?)
+	for k, v in t do
+		if v[scope] == value then
+			return k, v
+		end
+	end
+
+	return nil, nil
+end
+
 --- rotates array `A` `x` times such that:
 --- ```
 --- rotate([1, 2, 3, 4, 5], 1) -> [5, 1, 2, 3, 4]
@@ -914,12 +925,10 @@ function Types.insertkey(t: {[string]: any}, value: any, len: number?)
 	len = len or 4
 	assert(len)
 
-	local key = Types.createstring(len)
+	local key = nil
 
-	if t[key] ~= nil then
-		repeat key = Types.createstring(len)
-		until (tonumber(key) == nil) and (t[key] == nil)
-	end
+	repeat key = Types.createstring(len)
+	until (key ~= nil) and (tonumber(key) == nil) and (t[key] == nil)
 
 	t[key] = value
 
