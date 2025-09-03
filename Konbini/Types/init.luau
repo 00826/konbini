@@ -781,6 +781,9 @@ function Types.reconcile(t: {}, diff: typeof(Types.diff(...)))
 				if not t[i] then
 					t[i] = {}
 				end
+				if next(v) == nil then
+					table.clear(t[i])
+				end
 				
 				Types.reconcile(t[i], v)
 			elseif type(v) == "buffer" then
@@ -809,6 +812,9 @@ function Types.reconcile(t: {}, diff: typeof(Types.diff(...)))
 			if type(v) == "table" then
 				if not t[k] then
 					t[k] = {}
+				end
+				if next(v) == nil then
+					table.clear(t[k])
 				end
 				
 				Types.reconcile(t[k], v)
