@@ -3,11 +3,15 @@
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
 
+local InsertService = game:GetService("InsertService")
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
+local AccessoryPart = script:WaitForChild("AccessoryPart")
 local Animation = script:WaitForChild("Animation")
 local BallSocketConstraint = script:WaitForChild("BallSocketConstraint")
 local Motor6D = script:WaitForChild("Motor6D")
+local RigidConstraint = script:WaitForChild("RigidConstraint")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
@@ -30,8 +34,50 @@ export type MoverClass =
 local InstanceK = {
 	Movers = script:WaitForChild("Movers");
 
+	AccessoryFlag = "Accessory";
+	AppearanceFlag = "AppearanceDescription";
+	AppearanceMap = {
+		AccessoryProperties = {
+			"BackAccessory";
+			"FaceAccessory";
+			"FrontAccessory";
+			"HairAccessory";
+			"HatAccessory";
+			"NeckAccessory";
+			"ShouldersAccessory";
+			"WaistAccessory";
+		};
+		BodyColorProperties = {
+			"HeadColor";
+			"TorsoColor";
+			"LeftArmColor";
+			"LeftLegColor";
+			"RightArmColor";
+			"RightLegColor";
+		};
+		ClothingColorProperties = {
+			"ShirtColor";
+			"PantsColor"
+		};
+		BodyPartProperties = {
+			"Face";
+		};
+		ClothingProperties = {
+			"GraphicTShirt";
+			"Shirt";
+			"Pants";
+		};
+		GirlTorsos = {
+			86499666; --- r15 torso
+			48474356; --- r6 torso
+		};
+		DefaultFace = "rbxasset://textures/face.png";
+	};
+
 	DebouncePrefix = "__d_";
 }
+
+AccessoryPart:SetAttribute(InstanceK.AccessoryFlag, true)
 
 --- equivalent to `TweenService:Create(object, TweenInfo.new(time, style(?=Enum.EasingStyle.Linear) ...), properties):Play()` \
 --- `...[1]`: `Enum.EasingDirection` \
@@ -452,6 +498,260 @@ function InstanceK.transparencycontrollerstep(tc: typeof(InstanceK.createtranspa
 	end
 
 	return false
+end
+
+--- encodes data type into an appearance description table (datastore-friendly)
+function InstanceK.createappearancedescription(t: {[string]: any} | HumanoidDescription | Player | number | string)
+	local appearancemap = InstanceK.AppearanceMap
+	
+	local result = {}::{[string]: any}
+
+	if type(t) == "table" then
+		for k, v in t do
+			if k == "Accessories" then
+				local split = string.split(v, ",")
+				local array = table.create(#split)
+				for _, stringid in split do
+					table.insert(array, tonumber(stringid))
+				end
+	
+				result[k] = array
+	
+				continue
+			end
+			if typeof(v) == "Color3" then
+				v = v:ToHex()
+			end
+			
+			result[k] = v
+		end
+	elseif type(t) == "string" then
+		local userid = Players:GetUserIdFromNameAsync(t)
+		if userid < 1 then return InstanceK.emptydescription() end
+
+		return InstanceK.createappearancedescription(userid)
+	elseif type(t) == "number" then
+		if t < 1 then return InstanceK.emptydescription() end
+
+		return InstanceK.createappearancedescription(Players:GetHumanoidDescriptionFromUserId(t))
+	elseif typeof(t) == "Instance" then
+		if t:IsA("HumanoidDescription") then
+			do --- accessories
+				local accessories = table.create(4 * #appearancemap.AccessoryProperties)
+	
+				for _, property in appearancemap.AccessoryProperties do
+					local value = (t::any)[property] :: string
+					if value ~= "" then
+						for _, stringid in string.split(value, ",") do
+							table.insert(accessories, tonumber(stringid))
+						end
+					end
+				end
+	
+				result.Accessories = accessories
+			end
+	
+			do --- body colors
+				for _, property in appearancemap.BodyColorProperties do
+					local value = (t::any)[property] :: Color3
+					result[property] = value:ToHex()
+				end
+			end
+	
+			do --- body parts
+				for _, property in appearancemap.BodyPartProperties do
+					local value = (t::any)[property] :: number
+	
+					if (property == "Face")
+					and (value == 0)
+					then
+						result[property] = appearancemap.DefaultFace
+						continue
+					end
+
+					if property == "Face" then
+						local insertmodel = InsertService:LoadAsset(value)
+						local thing = insertmodel:FindFirstChildOfClass("Decal")
+						if thing then
+							result[property] = thing.Texture
+							
+							insertmodel:Destroy()
+						end
+						continue
+					end
+	
+					result[property] = "rbxassetid://" .. tostring(value)
+				end
+			end
+
+			do --- clothing
+				for _, property in appearancemap.ClothingProperties do
+					local value = (t::any)[property] :: number
+					if value == 0 then
+						result[property] = "rbxassetid://0"
+						continue
+					end
+
+					local insertmodel = InsertService:LoadAsset(value)
+					local thing = insertmodel:FindFirstChildOfClass("Shirt") or insertmodel:FindFirstChildOfClass("Pants") or insertmodel:FindFirstChildOfClass("ShirtGraphic")
+					if thing then
+						if thing:IsA("Shirt") then
+							result[property] = "rbxassetid://" .. (string.match(thing.ShirtTemplate, "%d+") or "0")
+						elseif thing:IsA("Pants") then
+							result[property] = "rbxassetid://" .. (string.match(thing.PantsTemplate, "%d+") or "0")
+						elseif thing:IsA("ShirtGraphic") then
+							result[property] = "rbxassetid://" .. (string.match(thing.Graphic, "%d+") or "0")
+						end
+
+						insertmodel:Destroy()
+					else
+						warn(`shirt or pants or shirtgraphic not found (classname "{thing.ClassName}")`)
+					end
+				end
+			end
+	
+			do --- female torso
+				result.GirlTorso = table.find(appearancemap.GirlTorsos, t.Torso) ~= nil
+			end
+		elseif t:IsA("Player") then
+			if t.UserId < 1 then
+				return InstanceK.emptydescription()
+			end
+
+			return InstanceK.createappearancedescription(Players:GetHumanoidDescriptionFromUserId(t.UserId))
+		end
+	end
+
+	return result
+end
+
+--- decodes appearance description table 
+function InstanceK.decodeappearancedescription(a: typeof(InstanceK.createappearancedescription(...)))
+	local appearancemap = InstanceK.AppearanceMap
+
+	local result = {}::{[string]: any}
+
+	for k, v in a::{[string]: any} do
+		if k == "Accessories" then
+			result[k] = table.concat(v, ",")
+
+			continue
+		end
+		if table.find(appearancemap.BodyColorProperties, k) or table.find(appearancemap.ClothingColorProperties, k) then
+			local num = tonumber(v, 16)
+			if num and num <= 16777215 then
+				result[k] = Color3.fromHex(v)
+
+				continue
+			end
+		end
+
+		result[k] = v
+	end
+
+	return result
+end
+
+--- attaches basepart to instance \
+--- assumes that both basepart and instance have an attachment instance with matching names
+function InstanceK.attach(instance: Instance, basepart: BasePart, parent: Instance?)
+	local accessoryattachment = basepart:FindFirstChildOfClass("Attachment")
+	if not accessoryattachment then return false end
+
+	local rigattachment = InstanceK.findattachment(instance, accessoryattachment.Name)
+	if not rigattachment then return false end
+
+	basepart:SetAttribute(InstanceK.AccessoryFlag, true)
+	basepart.Parent = parent or instance
+
+	local constraint = RigidConstraint:Clone()
+	constraint.Parent = basepart
+	constraint.Attachment0 = rigattachment
+	constraint.Attachment1 = accessoryattachment
+
+	return true
+end
+
+--- returns attachment in instance
+function InstanceK.findattachment(instance: Instance, name: string): Attachment?
+	for _, thing in instance:GetChildren() do
+		if thing:GetAttribute(InstanceK.AccessoryFlag) then continue end
+
+		if thing:IsA("BasePart") or thing:IsA("MeshPart") then
+			for _, maybeattachment in thing:GetChildren() do
+				if maybeattachment:IsA("Attachment") and maybeattachment.Name == name then
+					return maybeattachment
+				end
+			end
+		end
+	end
+
+	return
+end
+
+--- returns an `AccessoryPart` from assetid (server-only), or an empty AccessoryPart if no assetid is provided
+function InstanceK.createaccessory(assetid: number?)
+	if not assetid then
+		local clone = AccessoryPart:Clone()
+		clone.Name = "Accessory"
+		clone.Parent = script
+
+		return clone
+	end
+
+	assert(IsServer, "InstanceK.createaccessory() can only be called on server (InsertService limitation T__T)")
+	local asset = InsertService:LoadAsset(assetid)
+
+	local accessory = asset:FindFirstChildOfClass("Accessory")
+	assert(accessory)
+	assert(accessory:IsA("Accessory"))
+
+	local handle = accessory:FindFirstChild("Handle") or accessory:WaitForChild("Handle")
+	assert(handle)
+	assert(handle:IsA("BasePart"))
+
+	local attachment = handle:FindFirstChildOfClass("Attachment")
+	assert(attachment)
+	assert(attachment:IsA("Attachment"))
+
+	handle.Name = tostring(assetid)
+	handle.Locked = false
+	handle.EnableFluidForces = false
+	handle.CanCollide = false
+	handle.CanTouch = false
+	handle.CanQuery = false
+	handle.Massless = true
+	handle.Anchored = false
+	handle.Position = Vector3.zero
+	handle.Size = Vector3.one
+	handle.Parent = script
+
+	handle:SetAttribute(InstanceK.AccessoryFlag, true)
+
+	asset:Destroy()
+
+	return handle
+end
+
+--- returns an empty appearance description
+function InstanceK.emptydescription()
+	return {
+		Accessories = table.create(0);
+		Face = "rbxasset://textures/face.png";
+
+		HeadColor = "a3a2a5";
+		TorsoColor = "a3a2a5";
+		LeftArmColor = "a3a2a5";
+		LeftLegColor = "a3a2a5";
+		RightArmColor = "a3a2a5";
+		RightLegColor = "a3a2a5";
+
+		Shirt = "rbxassetid://0";
+		Pants = "rbxassetid://0";
+		GraphicTShirt = "rbxassetid://0";
+
+		GirlTorso = false;
+	};
 end
 
 --- `return pcall(contentprovider.PreloadAsync, contentprovider, assets, f)`
