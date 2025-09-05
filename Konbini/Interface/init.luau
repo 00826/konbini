@@ -402,8 +402,12 @@ function Interface.createtextqueuecontroller(textobject: TextLabel, separator: s
 end
 
 --- inserts text into textqueuecontroller
-function Interface.textqueuecontrollerinsert(tq: typeof(Interface.createtextqueuecontroller(...)), text: string, expiry: number)
-	table.insert(tq.Queue, {text, expiry::any})
+function Interface.textqueuecontrollerinsert(tq: typeof(Interface.createtextqueuecontroller(...)), text: string, expiry: number, front: boolean)
+	if front then
+		table.insert(tq.Queue, 1, {text, expiry::any})
+	else
+		table.insert(tq.Queue, {text, expiry::any})
+	end
 end
 
 --- advances textqueuecontroller, removing any expired text
