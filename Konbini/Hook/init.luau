@@ -57,7 +57,7 @@ return function(name: string)
 		--- yields thread until this hook is fired
 		hook.wait = function()
 			table.insert(hook._yields, coroutine.running())
-			
+
 			return coroutine.yield()
 		end
 		--- calls functions bound to this hook along with any arguments passed
@@ -72,13 +72,15 @@ return function(name: string)
 		--- disconnects all functions bound to this hook
 		hook.disconnectall = function()
 			table.clear(hook._functions)
+			table.clear(hook._onces)
 		end
 		--- destroys this hook, resuming any yielded threads prior to destruction
 		hook.destroy = function(...: any)
-			onces(...)
 			resume(...)
 
 			table.clear(hook._functions)
+			table.clear(hook._onces)
+			
 			table.clear(hook)
 			Hooks[name] = nil
 		end
