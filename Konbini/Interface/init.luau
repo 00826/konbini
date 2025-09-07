@@ -468,19 +468,70 @@ function Interface.nextguiobject(guiobjects: {GuiObject}, direction: Vector3, cu
 		table.insert(guiobjectswithinangle, guiobject)
 	end
 
-	table.sort(guiobjectswithinangle, function(a: GuiObject, b: GuiObject): boolean
-		local apos = a.AbsolutePosition + (a.AbsoluteSize * 0.5)
-		local bpos = b.AbsolutePosition + (b.AbsoluteSize * 0.5)
+	table.sort(guiobjectswithinangle, function(a, b)
+		local dista = (a.AbsolutePosition + (a.AbsoluteSize*0.5) - point).Magnitude
+		local distb = (b.AbsolutePosition + (b.AbsoluteSize*0.5) - point).Magnitude
 
-		--[[local avec = Vector3.new(apos.X, apos.Y, 0)
-		local bvec = Vector3.new(bpos.X, bpos.Y, 0)]]
-		local adis = (apos - point).Magnitude
-		local bdis = (bpos - point).Magnitude
-
-		return adis < bdis
+		return dista < distb
 	end)
 
 	return guiobjectswithinangle[1] or current
+end
+
+--- returns true if guiobject is actually visible on screen
+function Interface.isvisibleonscreen(guiobject: GuiObject)
+	if guiobject.Visible == false then
+		return false
+	else
+		local screengui = guiobject:FindFirstAncestorOfClass("ScreenGui")
+		if screengui then
+			if screengui.Enabled == false then
+				return false
+			end
+		end
+
+		local ancestor = guiobject:FindFirstAncestorWhichIsA("GuiObject")
+		if ancestor then
+			return Interface.isvisibleonscreen(ancestor)
+		else
+			return guiobject.Visible
+		end
+	end
+end
+
+--- returns the equivalent of `BasePlayerGui:GetWhitelistedGuiObjectsAtPosition()`
+function Interface.findhovertarget(list: {GuiObject}, insetmouselocation: Vector2): GuiObject?
+	local mousex, mousey = insetmouselocation.X, insetmouselocation.Y
+
+	local inbounds = table.create(#list)
+
+	for _, guiobject in list do
+		local topleft = guiobject.AbsolutePosition
+		local bottomright = topleft + guiobject.AbsoluteSize
+
+		if mousex >= topleft.X 
+		and mousex <= bottomright.X
+		and mousey >= topleft.Y
+		and mousey <= bottomright.Y
+		and Interface.isvisibleonscreen(guiobject)
+		then
+			table.insert(inbounds, guiobject)
+		end
+	end
+
+	if #inbounds > 1 then
+		--- sort by distance from center of guiobject
+		table.sort(inbounds, function(a, b)
+			--- local dista = vector.magnitude(a.AbsolutePosition::any + (a.AbsoluteSize*0.5) - insetmouselocation)
+			--- local distb = vector.magnitude(b.AbsolutePosition::any + (b.AbsoluteSize*0.5) - insetmouselocation)
+			local dista = (a.AbsolutePosition + (a.AbsoluteSize*0.5) - insetmouselocation).Magnitude
+			local distb = (b.AbsolutePosition + (b.AbsoluteSize*0.5) - insetmouselocation).Magnitude
+
+			return dista < distb
+		end)
+	end
+	
+	return inbounds[1]
 end
 
 return Interface

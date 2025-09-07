@@ -950,30 +950,46 @@ function Types.ipairsr<T>(t: {T}): (({T}, number) -> (number?, T), {T}, number)
 	end), t, 0
 end
 
-function Types.nextvaluefromlist<T>(t: {T}, R: Random?)
-	assert(#t > 0, "attempt to get next value from empty table")
-
-	return t[(R or Rand):NextInteger(1, #t)]
+--- returns random value from list
+function Types.nextvaluefromlist<T>(t: {T}, R: Random?): T?
+	if #t < 0 then
+		return nil
+	else
+		return t[(R or Rand):NextInteger(1, #t)]
+	end
 end
 
-function Types.nextvaluefromweightedtable<T>(t: { { key: string, weight: number } & T }, R: Random?)
-	assert(#t > 0, "attempt to get next value from empty weight table")
-
-	local sum = 0
-	for _, entry in t do
-		sum += entry.weight
-	end
-	
-	local roll, passed = (R or Rand):NextNumber(0, sum), 0
-	for _, entry in t do
-		passed += entry.weight
-
-		if roll <= passed then
-			return entry
+--- returns random value from weighted table
+function Types.nextvaluefromweightedtable<T>(t: { { key: string, weight: number } & T }, R: Random?): T?
+	if #t < 0 then
+		return nil
+	else
+		local sum = 0
+		for _, entry in t do
+			sum += entry.weight
 		end
+		
+		local roll, passed = (R or Rand):NextNumber(0, sum), 0
+		for _, entry in t do
+			passed += entry.weight
+
+			if roll <= passed then
+				return entry
+			end
+		end
+
+		return nil
+	end
+end
+
+--- returns `t[1] ∪ ... ∪ t[#t]`
+function Types.union<T>(t: { {T} })
+	local result = {}
+	for _, list in ipairs(t) do
+		table.move(list, 1, #list, #result + 1, result)
 	end
 
-	error("this should not happen")
+	return result
 end
 
 --- returns a randomized alphanumeric string \

@@ -10,9 +10,6 @@ local UserInputService = game:GetService("UserInputService")
 ---
 --- input service wrapper
 local Inputs = {
-	--- written externally. just exists as a universal reference to device input vector
-	InputVector = Vector3.zero;
-
 	--- interally-resolved preferred input based on recency
 	PreferredInput = Enum.PreferredInput.KeyboardAndMouse;
 
@@ -56,7 +53,7 @@ local Inputs = {
 	UserInputService = UserInputService;
 }
 
---- returns key bound to `Inputs.InputTypesToKeyCodes[inputobject.UserInputType]` or `inputObject.KeyCode` \
+--- returns index-value pair of key bound to `Inputs.InputTypesToKeyCodes[inputobject.UserInputType]` or `inputObject.KeyCode` \
 --- `Enum.KeyCode.Unknown` returns `nil, nil`
 function Inputs.keybindof(inputobject: InputObject, keybinds: {{value: Enum.KeyCode} & {[string]: any}}): (number?, ({value: Enum.KeyCode} & {[string]: any})?)
 	local keycode = Inputs.InputTypesToKeyCodes[inputobject.UserInputType] or inputobject.KeyCode
