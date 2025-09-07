@@ -462,7 +462,7 @@ function Interface.nextguiobject(guiobjects: {GuiObject}, direction: Vector3, cu
 		local thispoint = guiobject.AbsolutePosition + (guiobject.AbsoluteSize * 0.5)
 		thispoint -= point
 
-		local dot = direction:Dot(-Vector3.new(thispoint.X, thispoint.Y, 0).Unit)
+		local dot = vector.dot(direction::any, vector.normalize(-Vector3.new(thispoint.X, thispoint.Y, 0)::any))
 		if dot <= 0 then continue end
 
 		table.insert(guiobjectswithinangle, guiobject)

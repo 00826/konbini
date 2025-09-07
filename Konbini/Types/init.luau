@@ -924,6 +924,42 @@ function Types.page<T>(t: {T}, size: number, offset: number)
 	)
 end
 
+--- returns a book-type, used for neatly getting chunks (pages) of an array \
+--- `size`: book page size \
+--- `alloc (?=size)`: `b.Items = table.create(alloc)`
+function Types.createbook(size: number, alloc: number?)
+	return {
+		Offset = 1;
+		Size = size;
+		Items = table.create(alloc or size);
+	}
+end
+
+--- advances book by `delta` (can be positive, negative, or zero!), returning: \
+--- `page`: page of `pc.Items` with respect to `pc.Offset` and `pc.Size` \
+--- `oldoffset`: previous `pc.Offset` \
+--- `newoffset`: current `pc.Offset` \
+--- `numpages`: max # of pages that can be displayed
+function Types.booknext(b: typeof(Types.createbook(...)), delta: number)
+	local len = #b.Items
+	local size = b.Size
+
+	local numpages = math.clamp(math.ceil(len / size), 1, math.huge)
+
+	local oldoffset = b.Offset
+	local newoffset = math.clamp(b.Offset + delta, 1, numpages)
+
+	b.Offset = newoffset
+
+	return table.move(
+		b.Items,
+		1 + math.clamp((newoffset - 1) * size, 0, len),
+		math.clamp(newoffset * size, 0, len),
+		1,
+		table.create(size)
+	), oldoffset, newoffset, numpages
+end
+
 --- `T[random alphanumeric key (len ?=4)] = value` \
 --- returns `random alphanumeric key` for convenience \
 --- guarantees that `tonumber(key) == nil` to avoid errors when sending such a key over the network boundary
