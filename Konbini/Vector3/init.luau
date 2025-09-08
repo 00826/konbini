@@ -7,18 +7,9 @@ local Rand = Random.new()
 ---
 --- Vector3 library extension
 local Vector3K = {
-	yzAxis = Vector3.one - Vector3.xAxis;
-	xzAxis = Vector3.one - Vector3.yAxis;
-	xyAxis = Vector3.one - Vector3.zAxis;
-
-	xAxisHalf = Vector3.xAxis * 0.5;
-	yAxisHalf = Vector3.yAxis * 0.5;
-	zAxisHalf = Vector3.zAxis * 0.5;
-
-	--- returns `Vector3.one * w`
-	fromconstant = function(w: number)
-		return Vector3.one * w
-	end;
+	yzaxis = Vector3.one - Vector3.xAxis;
+	xzaxis = Vector3.one - Vector3.yAxis;
+	xyaxis = Vector3.one - Vector3.zAxis;
 }
 
 --- returns whether or not `v` is finite
@@ -29,10 +20,10 @@ function Vector3K.isfinite(v: Vector3)
 		and (z == z and z ~= 1/0 and z ~= -1/0)
 end
 
---- returns `v.Unit`, or, if `NaN`, `Vector3.zero`
-function Vector3K.unit_or_zero(v: Vector3)
-	if v.Magnitude > 0 then
-		return v.Unit
+--- returns `vector.normalize(v)`, or, if `NaN`, `Vector3.zero`
+function Vector3K.unitorzero(v: Vector3)
+	if vector.magnitude(v::any) > 0 then
+		return (vector.normalize(v::any)::any)::Vector3
 	else
 		return Vector3.zero
 	end
@@ -40,7 +31,8 @@ end
 
 --- returns `v` projected onto `w`
 function Vector3K.project(v: Vector3, w: Vector3)
-	w = Vector3K.unit_or_zero(w)
+	w = Vector3K.unitorzero(w)
+
 	return vector.dot(v::any, w::any) * w
 end
 
@@ -64,16 +56,43 @@ function Vector3K.write(v: Vector3, w: Vector3)
 end
 
 --- returns point on bezier curve at interpolant `a`
-function Vector3K.bezier(points: {Vector3}, a: number)
-	if #points > 1 then
-		local newpoints = table.create(#points)
-		for i = 1, #points - 1 do
-			table.insert(newpoints, points[i]:Lerp(points[i + 1], a))
-		end
-		return Vector3K.bezier(newpoints, a)
-	end
+function Vector3K.bezier(vectors: {Vector3}, a: number)
+	local len = #vectors
+	if len > 1 then
+		local result = table.create(len)
+		for i, v in ipairs(vectors) do
+			local w = vectors[i + 1]
+			if not w then break end
 
-	return points[1]
+			--- table.insert(result, (vector.lerp(v::any, w::any, a)::any)::Vector3)
+			table.insert(result, v:Lerp(w, a))
+		end
+
+		return Vector3K.bezier(result, a)
+	else
+		return vectors[1]
+	end
+end
+
+--- returns vectors between `v` and `w` such that `u` and `w` are split into `u` equal segments \
+--- `split[1]` guarantees equivalence to `v` \
+--- `split[#split]` guarantees equivalence to `w`
+function Vector3K.split(v: Vector3, w: Vector3, u: number)
+	if u < 3 then
+		return {v, w}
+	else
+		local result = table.create(u)
+		table.insert(result, v)
+		
+		for i = 1, u - 1 do
+			--- table.insert(result, (vector.lerp(v::any, w::any, i / u)::any)::Vector3)
+			table.insert(result, v:Lerp(w, i / u))
+		end
+
+		table.insert(result, w)
+
+		return result
+	end
 end
 
 --- returns random unit vector
@@ -122,67 +141,6 @@ function Vector3K.nextpointinradius(radius: number, R: Random?)
 	local theta = (R or Rand):NextNumber() * 2 * math.pi
 
 	return (Vector3.xAxis * r * math.cos(theta)) + (Vector3.zAxis * r * math.sin(theta))
-end
-
---- returns vector3 representation of `variant`
-function Vector3K.tovector(variant: Vector3 | Vector3int16 | PVInstance | CFrame?)
-	if typeof(variant) == "Vector3" then
-		return variant
-	elseif typeof(variant) == "Vector3int16" then
-		return Vector3.new(variant.X, variant.Y, variant.Z)
-	elseif typeof(variant) == "CFrame" then
-		return Vector3.new(variant.X, variant.Y, variant.Z)
-	elseif typeof(variant) == "PVInstance" then
-		return variant:GetPivot().Position
-	end
-
-	return Vector3.zero
-end
-
---- returns the midpoint of `vectors`
-function Vector3K.midpoint(vectors: { Vector3 | Vector3int16 | PVInstance | CFrame })
-	local length = #vectors
-
-	local sum = Vector3.zero
-	for _, v in vectors do
-		if typeof(v) == "Vector3" then
-			sum += v
-		else
-			sum += Vector3K.tovector(v)
-		end
-	end
-
-	return sum / length
-end
-
---- returns points along line drawn from `v` towards `w` and the distance from `v` towards `w` including segments
-function Vector3K.segment(v: Vector3, w: Vector3, segments: number, transform: ((u: Vector3) -> Vector3)?)
-	local partition = table.create(segments)
-	partition[1] = v
-	partition[segments] = w
-
-	if segments <= 2 then
-		return partition, (partition[segments] - partition[1]).Magnitude
-	else
-		local step = segments - 1
-		for i = 1, segments - 2, 1 do
-			local u = v:Lerp(w, i / step)
-			if transform then
-				u = transform(u)
-			end
-			partition[i + 1] = u
-		end
-
-		local distance = 0
-		for i, seg in partition do
-			local ment = partition[i + 1]
-			if not ment then break end
-
-			distance += (seg - ment).Magnitude
-		end
-
-		return partition, distance
-	end
 end
 
 --- returns true if `v` and `w` are coplanar along unit vector `u`

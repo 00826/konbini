@@ -11,6 +11,35 @@ local MathK = {
 
 		zeroone = NumberSequence.new(0, 1);
 		onezero = NumberSequence.new(1, 0);
+
+		--- returns numbersequence from alpha `a`
+		fromalpha = function(a: number)
+			if a <= 0.01 then
+				return NumberSequence.new(0)
+			elseif a >= 0.99 then
+				return NumberSequence.new(1)
+			else
+				a = math.clamp(a, 0, 1)
+
+				return NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0);
+					NumberSequenceKeypoint.new(a, 0);
+					NumberSequenceKeypoint.new(math.clamp(a + 0.01, 0, 1), 1);
+					NumberSequenceKeypoint.new(1, 1);
+				})
+			end
+		end;
+		--- scales numbersequence by `x`
+		scale = function(numbersequence: NumberSequence, x: number)
+			local keypoints = numbersequence.Keypoints
+			local newsequence = table.create(#keypoints)
+
+			for _, keypoint in ipairs(keypoints) do
+				table.insert(newsequence, NumberSequenceKeypoint.new(keypoint.Time, keypoint.Value * x))
+			end
+
+			return NumberSequence.new(newsequence)
+		end;
 	};
 	NumberRange = {
 		zero = NumberRange.new(0);
@@ -18,6 +47,8 @@ local MathK = {
 
 		zeroone = NumberRange.new(0, 1);
 	};
+
+	phi = (1 + 5^0.5) * 0.5;
 
 	random = Random.new();
 }
@@ -65,9 +96,9 @@ function MathK.fibonacci(n: number)
 end
 
 --- returns winner of rally point game with minimum `score` given team 1 points `k` and team 2 points `k` \
---- `RallyPoint(25, 24, 25) -> 0` \
---- `RallyPoint(25, 25, 27) -> 2` \
---- `RallyPoint(25, 25, 0) -> 1`
+--- `rallypoint(25, 24, 25) -> 0` \
+--- `rallypoint(25, 25, 27) -> 2` \
+--- `rallypoint(25, 25, 0) -> 1`
 function MathK.rallypoint(score: number, h: number, k: number)
 	if (h >= score) and (h - k >= 2) then
 		return 1
@@ -79,9 +110,9 @@ function MathK.rallypoint(score: number, h: number, k: number)
 end
 
 --- returns winner of best-of `series` given team 1 wins `h` and team 2 wins `k` \
---- `BestOf(3, 1, 2) -> 2` \
---- `BestOf(5, 2, 2) -> 0` \
---- `BestOf(7, 4, 3) -> 1`
+--- `bestof(3, 1, 2) -> 2` \
+--- `bestof(5, 2, 2) -> 0` \
+--- `bestof(7, 4, 3) -> 1`
 function MathK.bestof(series: number, h: number, k: number)
 	local wins = 1 + (series // 2)
 
@@ -189,57 +220,6 @@ end
 --- returns the equivalent of `Random.new():NextInteger(0, y) / y <= odds`
 function MathK.nextnumberoutcome(y: number, odds: number, R: Random?)
 	return (R or MathK.random):NextNumber(0, y) / y <= odds
-end
-
---- scales numbersequence by `x`
-function MathK.scalenumbersequence(numbersequence: NumberSequence, x: number)
-	local newsequence = {}
-	for _, keypoint in ipairs(numbersequence.Keypoints) do
-		table.insert(newsequence,NumberSequenceKeypoint.new(keypoint.Time, keypoint.Value * x))
-	end
-
-	return NumberSequence.new(newsequence)
-end
-
---- converts `x`, where `x in [0, 1]`, to a numbersequence
-function MathK.alphatonumbersequence(x: number)
-	if x <= 0.01 then
-		return MathK.NumberSequence.zero
-	elseif x == 1 then
-		return MathK.NumberSequence.one
-	elseif x >= 0.99 then
-		return MathK.NumberSequence.one
-	end
-	x = math.clamp(x, 0, 1)
-
-	return NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0);
-		NumberSequenceKeypoint.new(x, 0);
-		NumberSequenceKeypoint.new(math.clamp(x + 0.001, 0, 1), 1);
-		NumberSequenceKeypoint.new(1, 1);
-	})
-end
-
---- returns a unit circle \
---- *in contexts where `vertices == 1`, the vertex is placed at `x = -r`* \
---- *in contexts where `vertices == 2`, the vertices are placed at `x = ±r`*
-function MathK.unitcircle(vertices: number, radius: number)
-	if vertices == 1 then
-		return { {X = -radius; Z = 0;} }
-	elseif vertices == 2 then
-		return { {X = -radius; Z = 0;}, {X = radius; Z = 0;} }
-	end
-
-	local step = (2*math.pi) / vertices
-	local tilt = math.pi / vertices
-	local unitcircle = table.create(vertices)
-
-	for i = 1, vertices do
-		local a = (i * step) - tilt
-		table.insert(unitcircle, { X = radius * math.cos(a); Z = radius * math.sin(a); })
-	end
-
-	return unitcircle
 end
 
 --- creates a spring

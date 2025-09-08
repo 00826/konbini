@@ -15,14 +15,6 @@ local RigidConstraint = script:WaitForChild("RigidConstraint")
 local SoundPart = script:WaitForChild("SoundPart")
 local Weld = script:WaitForChild("Weld")
 
-export type Tree = {
-	ClassName: string;
-	Children: { Tree }?;
-	Parent: Instance?;
-
-	[string]: unknown;
-}
-
 export type MoverClass =
 	| "BodyGyro"
 	| "BodyVelocity"
@@ -134,31 +126,6 @@ function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame
 	newweld.Parent = b
 
 	return newweld
-end
-
---- recursively searches for the highest ancestor of class
---- ```
---- --- Fish: Model
---- --- ┣━ Scales: Part
---- --- ┣━ Eyes: Part
---- --- ┗┳ Fins: Model
---- ---  ┣━ RightFin: Part
---- ---  ┗━ LeftFin: Part
---- --- ┗━ Animator: Animator
---- InstanceK.findhighestancestorofclass(RightFin, "Model") --> Fish
---- ```
-function InstanceK.findhighestancestorofclass(instance: Instance, classname: string): Instance?
-	local ancestor = instance:FindFirstAncestorOfClass(classname)
-	if ancestor then
-		local thisancestor = InstanceK.findhighestancestorofclass(ancestor, classname)
-		if not thisancestor then
-			return ancestor
-		else
-			ancestor = thisancestor
-		end
-	end
-
-	return ancestor
 end
 
 --- emits sound at optional position or instance
@@ -299,7 +266,7 @@ end
 
 --- applies bodymover to primarypart of target \
 --- *in contexts where `time` is omitted, the bodymover will remain indefinitely*
-function InstanceK.applybodymover(target: Model|BasePart, class: MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
+function InstanceK.bodymover(target: Model|BasePart, class: MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
 	local rootpart
 	if target:IsA("Model") then
 		rootpart = target.PrimaryPart
@@ -325,7 +292,7 @@ function InstanceK.applybodymover(target: Model|BasePart, class: MoverClass, tim
 end
 
 --- clears bodymovers from primarypart of target
-function InstanceK.clearbodymovers(target: Model|BasePart, class: MoverClass)
+function InstanceK.bodymoverclear(target: Model|BasePart, class: MoverClass)
 	local rootpart
 	if target:IsA("Model") then
 		rootpart = target.PrimaryPart
@@ -339,18 +306,6 @@ function InstanceK.clearbodymovers(target: Model|BasePart, class: MoverClass)
 			thing:Destroy()
 		end
 	end
-end
-
---- return `true` if `thing` has a `LocalTransparencyModifier` property
-function InstanceK.istransparencymodifiable(thing: Instance)
-	if thing:IsA("BasePart") then
-		return true
-	elseif thing:IsA("Decal") then
-		return true
-	elseif thing:FindFirstAncestorOfClass("Tool") then
-		return false
-	end
-	return false
 end
 
 --- creates an `Animation` instance with its `AnimationId` property set to `id`
@@ -433,6 +388,19 @@ function InstanceK.animationcontrollerevaluate(ac: typeof(InstanceK.createanimat
 	else
 		return animtrack.Animation ~= animation
 	end
+end
+
+--- return `true` if `thing` has a `LocalTransparencyModifier` property
+function InstanceK.istransparencymodifiable(thing: Instance)
+	if thing:IsA("BasePart") then
+		return true
+	elseif thing:IsA("Decal") then
+		return true
+	elseif thing:FindFirstAncestorOfClass("Tool") then
+		return false
+	end
+
+	return false
 end
 
 --- creates a transparency controller using localtransparencymodifier

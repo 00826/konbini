@@ -346,7 +346,8 @@ end
 
 --- returns color3 with respect to player name
 function Color3K.fromplayername(name: string)
-	local value, len = 0, #name
+	local value, len = 0, string.len(name)
+
 	for i = 1, len do
 		local byte = string.byte(string.sub(name, i, i))
 		local reverseidx = len - i + 1

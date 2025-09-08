@@ -1,5 +1,4 @@
 --!strict
---!native
 
 local RunService = game:GetService("RunService")
 local IsServer = RunService:IsServer()
@@ -34,30 +33,6 @@ function Time.framerule(x: number, f: (dt: number) -> (), immediate: boolean?)
 			recent = now - (dt - x)
 
 			f(dt)
-		end
-	end)
-end
-
---- runs function at exponential backoff interval `math.clamp(x + (base ^ failures) - 1, x, limit)` \
---- `f() -> true`: failures decremented by `1` (min: `0`) \
---- `f() -> false`: failures incremented by `1` (max: `math.huge`)
-function Time.backoff(x: number, base: number, limit: number, f: (...any) -> boolean)
-	local elapsed, failures = x, 0
-
-	return RunService.Heartbeat:Connect(function(dt: number)
-		local backoffrate = math.clamp(x + (base ^ failures) - 1, x, limit)
-		elapsed += dt
-		if elapsed < backoffrate then return end
-		elapsed -= backoffrate
-
-		local success = f()
-		if success == true then
-			failures = math.clamp(failures - 1, 0, math.huge)
-		elseif success == false then
-			failures += 1
-		else
-			warn(`{debug.traceback()}, function {f} did not return a boolean; interpreting as failure`)
-			failures += 1
 		end
 	end)
 end

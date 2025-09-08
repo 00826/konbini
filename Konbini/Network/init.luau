@@ -5,6 +5,9 @@ local IsServer = RunService:IsServer()
 
 local Players = game:GetService("Players")
 
+local RemoteEvent = script:WaitForChild("RemoteEvent")
+local UnreliableRemoteEvent = script:WaitForChild("UnreliableRemoteEvent")
+
 export type ClientArg = 
 	| nil
 	| number
@@ -15,14 +18,12 @@ export type ClientArg =
 --- ### Network.luau
 ---
 --- basic remote interface
-local Network = {
-	RemoteEvent = script:WaitForChild("RemoteEvent");
-	UnreliableRemoteEvent = script:WaitForChild("UnreliableRemoteEvent");
-}
+local Network = {}
 
 --- sends packet related to this scope
 function Network.send(scope: string, packet: { }, unreliable: boolean?, client: ClientArg?)
-	local remote = unreliable and Network.UnreliableRemoteEvent or Network.RemoteEvent
+	local remote = unreliable and UnreliableRemoteEvent or RemoteEvent
+
 	if IsServer then
 		if type(client) == "nil" then --- fire all
 			remote:FireAllClients(scope, packet)
@@ -68,8 +69,8 @@ function Network.recv(scope: string, recv: ((packet: { }) -> ()) & (player: Play
 
 			if recvscope == scope then recv(player, packet) end
 		end
-		local a = Network.RemoteEvent.OnServerEvent:Connect(serverrecv)
-		local b = Network.UnreliableRemoteEvent.OnServerEvent:Connect(serverrecv)
+		local a = RemoteEvent.OnServerEvent:Connect(serverrecv)
+		local b = UnreliableRemoteEvent.OnServerEvent:Connect(serverrecv)
 
 		return a, b
 	else
@@ -79,44 +80,11 @@ function Network.recv(scope: string, recv: ((packet: { }) -> ()) & (player: Play
 
 			if recvscope == scope then recv(packet) end
 		end
-		local a = Network.RemoteEvent.OnClientEvent:Connect(clientrecv)
-		local b = Network.UnreliableRemoteEvent.OnClientEvent:Connect(clientrecv)
+		local a = RemoteEvent.OnClientEvent:Connect(clientrecv)
+		local b = UnreliableRemoteEvent.OnClientEvent:Connect(clientrecv)
 
 		return a, b
 	end
-end
-
---- yields until this scope receives a packet from the server
-function Network.wait(scope: string, timeout: number?)
-	assert(not IsServer, debug.traceback("Network.wait() can only be called on client", 2))
-
-	local a, b, response
-	local function scopewait(recvscope: string, packet: { })
-		assert(type(recvscope) == "string", debug.traceback(string.format("expected string scope, got %s", type(recvscope)), 2))
-
-		if recvscope == scope then
-			response = packet
-
-			if a then a:Disconnect() end
-			if b then b:Disconnect() end
-		end
-	end
-	a = Network.RemoteEvent.OnClientEvent:Once(scopewait)
-	b = Network.UnreliableRemoteEvent.OnClientEvent:Once(scopewait)
-
-	timeout = timeout or 5
-	assert(timeout)
-
-	repeat timeout -= task.wait() until (timeout < 0) or (response ~= nil)
-
-	if (timeout < 0) and (response == nil) then
-		warn(`Network.wait({scope}, {timeout}) timeout exhausted`)
-	end
-
-	if a then a:Disconnect() end
-	if b then b:Disconnect() end
-
-	return response
 end
 
 return Network

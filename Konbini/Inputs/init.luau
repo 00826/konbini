@@ -91,7 +91,7 @@ function Inputs.lastinputtypechanged()
 	return UserInputService.LastInputTypeChanged
 end
 
---- returns internally-resolved `UserInputService.PreferredInput` based on recency
+--- returns internally-resolved `UserInputService.PreferredInput` signal based on recency
 function Inputs.preferredinputchanged()
 	return script:GetAttributeChangedSignal("PreferredInput")
 end
@@ -155,13 +155,12 @@ function Inputs.menuclosed()
 	return GuiService.MenuClosed
 end
 
---- returns position, direction, and raycastresult of `camera:ScreenPointToRay` \
---- `length(?=1024)`: raycast length
-function Inputs.screenpointraycast(camera: Camera, screenposition: Vector2, raycastparams: RaycastParams, length: number?)
+--- returns position, direction, and raycastresult of `camera:ScreenPointToRay`
+function Inputs.screenpointraycast(camera: Camera, screenposition: Vector2, raycastparams: RaycastParams, length: number)
 	local unitray = camera:ScreenPointToRay(screenposition.X, screenposition.Y)
 	local origin, direction = unitray.Origin, unitray.Direction
 
-	return origin, direction, workspace:Raycast(origin, direction * (length or 1024), raycastparams)
+	return origin, direction, workspace:Raycast(origin, direction * length, raycastparams)
 end
 
 if RunService:IsClient() then

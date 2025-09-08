@@ -1,7 +1,6 @@
 --!strict
 
 local GuiService = game:GetService("GuiService")
-local StarterGui = game:GetService("StarterGui")
 local TextChatService = game:GetService("TextChatService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -13,6 +12,24 @@ end
 local function cartesian(p: number, w: number)
 	p -= 1
 	return p // w, p % w
+end
+
+--- returns point along bezier curve `u` at interpolant `a`
+local function bezier(u: {UDim2}, a: number)
+	local len = #u
+	if len > 1 then
+		local newpoints = table.create(len)
+		for i, v in ipairs(u) do
+			local w = u[i + 1]
+			if not w then break end
+
+			table.insert(newpoints, v:Lerp(w, a))
+		end
+
+		return bezier(newpoints, a)
+	else
+		return u[1]
+	end
 end
 
 --- ### Interface.luau
@@ -30,71 +47,41 @@ local Interface = {
 	};
 	UDim2 = {
 		zero = UDim2.fromScale(0, 0);
-
-		oneOffset = UDim2.fromOffset(1, 1);
-		xOffset = UDim2.fromOffset(1, 0);
-		yOffset = UDim2.fromOffset(0, 1);
-		oneScale = UDim2.fromScale(1, 1);
-		xScale = UDim2.fromScale(1, 0);
-		yScale = UDim2.fromScale(0, 1);
-
 		half = UDim2.fromScale(0.5, 0.5);
-		top = UDim2.fromScale(0.5, 0);
-		bottom = UDim2.fromScale(0.5, 1);
-		left = UDim2.fromScale(0, 0.5);
-		right = UDim2.fromScale(1, 0.5);
-		topLeft = UDim2.fromScale(0, 0);
-		topRight = UDim2.fromScale(1, 0);
-		bottomLeft = UDim2.fromScale(0, 1);
-		bottomRight = UDim2.fromScale(1, 1);
 
-		--- returns UDim2.fromScale(v, v)
-		fromScale = function(v: number)
+		onescale = UDim2.fromScale(1, 1);
+		xscale = UDim2.fromScale(1, 0);
+		yscale = UDim2.fromScale(0, 1);
+
+		oneoffset = UDim2.fromOffset(1, 1);
+		xoffset = UDim2.fromOffset(1, 0);
+		yoffset = UDim2.fromOffset(0, 1);
+
+		--- returns `UDim2.fromScale(v, v)`
+		fromscale = function(v: number)
 			return UDim2.fromScale(v, v)
 		end;
-		--- returns UDim2.fromOffset(v, v)
-		fromOffset = function(v: number)
+		--- returns `UDim2.fromOffset(v, v)`
+		fromoffset = function(v: number)
 			return UDim2.fromOffset(v, v)
 		end;
-		--- returns UDim2.fromOffset(v.X, v.Y)
-		fromVector2 = function(v: Vector2|Vector3)
+		--- returns `UDim2.fromOffset(v.X, v.Y)`
+		fromvector = function(v: Vector2|Vector3)
 			return UDim2.fromOffset(v.X, v.Y)
 		end;
-		--- returns unit circle with initial rotation `initialradians (?=0)`
-		unitcircle = function(vertices: number, radius: number, initialradians: number?)
-			local results = table.create(vertices)
-
-			local start = initialradians or 0
-			local step = (2 * math.pi) / vertices
-
-			for i = 1, vertices do
-				i -= 1
-				local a = (i * step) + start
-				local udim = UDim2.fromScale(radius * math.cos(a), radius * math.sin(a)) + UDim2.fromScale(0.5, 0.5)
-				table.insert(results, udim)
-			end
-
-			return results
-		end;
+		
+		bezier = bezier;
 	};
 	Vector2 = {
 		half = Vector2.new(0.5, 0.5);
-		top = Vector2.new(0.5, 0);
-		bottom = Vector2.new(0.5, 1);
-		left = Vector2.new(0, 0.5);
-		right = Vector2.new(1, 0.5);
-		topLeft = Vector2.new(0, 0);
-		topRight = Vector2.new(1, 0);
-		bottomLeft = Vector2.new(0, 1);
-		bottomRight = Vector2.new(1, 1);
 
 		--- returns `Vector2.new(w, w)`
-		fromConstant = function(w: number)
+		fromconstant = function(w: number)
 			return Vector2.new(w, w)
 		end;
-		--- returns `UDim2.fromOffset(v.X, v.Y)`
-		fromUDim2 = function(v: Vector2)
-			return UDim2.fromOffset(v.X, v.Y)
+		--- returns `UDim2.fromOffset(u.X.Offset, u.Y.Offset)`
+		fromudim2 = function(u: UDim2)
+			return UDim2.fromOffset(u.X.Offset, u.Y.Offset)
 		end;
 		--- returns square at `vec` with `size` clamped within `bounds`
 		clamp = function(vec: Vector2, size: Vector2, bounds: Vector2)
@@ -110,38 +97,7 @@ local Interface = {
 			return vec
 		end;
 	};
-	AspectRatios = {
-		--- `1:1`
-		Square = 1/1;
-		--- `4:3`
-		Classy = 4/3;
-		--- `1.618:1`
-		GoldenRatio = (1 + 5^0.5) * 0.5;
-		--- `16:9`
-		Standard = 16/9;
-		--- `21:9`
-		Ultrawide = 21/9;
-		--- `1.85:1`
-		Cinema = 37/20;
-		--- `6:13`
-		Portrait = 6/13;
-	};
 }
-
---- returns point along bezier `curve` at interpolant `a`
-Interface.UDim2.bezier = function(curve: {UDim2}, a: number)
-	local len = #curve
-	if len > 1 then
-		local newpoints = table.create(len)
-		for i = 1, len - 1 do
-			table.insert(newpoints, curve[i]:Lerp(curve[i + 1], a))
-		end
-
-		return Interface.UDim2.bezier(newpoints, a)
-	end
-
-	return curve[1]
-end;
 
 --- returns `GuiService.PreferredTextSize`
 function Interface.preferredtextsize()
@@ -347,53 +303,8 @@ function Interface.grid(columns: number, rows: number, padding: number, uigridla
 	return cellpadding, cellsize
 end
 
---- applies `UIPadding` to guiobject, instantiating one if it doesn't already exist
-function Interface.uipadding(guiobject: GuiObject, value: UDim?)
-	--- type solver umad?
-	local uipadding = guiobject:FindFirstChildOfClass("UIPadding")
-	if not uipadding then
-		uipadding = Instance.new("UIPadding")
-		;(uipadding::any).Parent = guiobject
-	end
-
-	if value then
-		(uipadding::any).PaddingTop = value
-		;(uipadding::any).PaddingLeft = value
-		;(uipadding::any).PaddingRight = value
-		;(uipadding::any).PaddingBottom = value
-	end
-
-	return uipadding::UIPadding
-end
-
---- applies `UIAspectRatioConstraint` to guiobject, instantiating one if it doesn't already exist
-function Interface.aspectratio(guiobject: GuiObject, value: number?)
-	--- type solver umad?
-	local aspectratio = guiobject:FindFirstChildOfClass("UIAspectRatioConstraint")
-	if not aspectratio then
-		aspectratio = Instance.new("UIAspectRatioConstraint")
-		;(aspectratio::any).Parent = guiobject
-	end
-
-	if value then
-		(aspectratio::any).AspectRatio = value
-	end
-
-	return aspectratio::UIAspectRatioConstraint
-end
-
---- pcall-wrapped `StarterGui:SetCoreGuiEnabled(...)`
-function Interface.setcoreguienabled(coreguis: {[Enum.CoreGuiType]: boolean})
-	return pcall(function()
-		for coregui, enabled in coreguis do
-			StarterGui:SetCoreGuiEnabled(coregui, enabled)
-		end
-		return true
-	end)
-end
-
---- creates a textqueuecontroller
-function Interface.createtextqueuecontroller(textobject: TextLabel, separator: string, alloc: number?)
+--- creates a textqueue, used for displaying text messages
+function Interface.createtextqueue(textobject: TextLabel, separator: string, alloc: number?)
 	return {
 		Queue = table.create(alloc or 16) :: { {string|number} };
 		Separator = separator;
@@ -401,8 +312,8 @@ function Interface.createtextqueuecontroller(textobject: TextLabel, separator: s
 	}
 end
 
---- inserts text into textqueuecontroller
-function Interface.textqueuecontrollerinsert(tq: typeof(Interface.createtextqueuecontroller(...)), text: string, expiry: number, front: boolean)
+--- inserts text into textqueue
+function Interface.textqueueinsert(tq: typeof(Interface.createtextqueue(...)), text: string, expiry: number, front: boolean)
 	if front then
 		table.insert(tq.Queue, 1, {text, expiry::any})
 	else
@@ -410,8 +321,8 @@ function Interface.textqueuecontrollerinsert(tq: typeof(Interface.createtextqueu
 	end
 end
 
---- advances textqueuecontroller, removing any expired text
-function Interface.textqueuecontrollerstep(tq: typeof(Interface.createtextqueuecontroller(...)), now: number)
+--- advances textqueue, removing any expired text
+function Interface.textqueuestep(tq: typeof(Interface.createtextqueue(...)), now: number)
 	local queue = tq.Queue
 	for i = #queue, 1, -1 do
 		local expiry = queue[i][2]::number
@@ -442,13 +353,14 @@ function Interface.textqueuecontrollerstep(tq: typeof(Interface.createtextqueuec
 	end
 end
 
-function Interface.nextguiobject(guiobjects: {GuiObject}, direction: Vector3, current: GuiObject?): GuiObject?
+--- returns best-fit-for-selection guiobject wrt `thumbstickvector` and currently-selected guiobject
+function Interface.nextguiobject(guiobjects: {GuiObject}, thumbstickvector: Vector3, current: GuiObject?): GuiObject?
 	current = current or guiobjects[1]
 	if not current then
 		return nil
 	end
 
-	if not (direction.Magnitude > 0) then
+	if not (vector.magnitude(thumbstickvector::any) > 0) then
 		return current
 	end
 
@@ -462,15 +374,15 @@ function Interface.nextguiobject(guiobjects: {GuiObject}, direction: Vector3, cu
 		local thispoint = guiobject.AbsolutePosition + (guiobject.AbsoluteSize * 0.5)
 		thispoint -= point
 
-		local dot = vector.dot(direction::any, vector.normalize(-Vector3.new(thispoint.X, thispoint.Y, 0)::any))
+		local dot = vector.dot(thumbstickvector::any, vector.normalize(-Vector3.new(thispoint.X, thispoint.Y, 0)::any))
 		if dot <= 0 then continue end
 
 		table.insert(guiobjectswithinangle, guiobject)
 	end
 
 	table.sort(guiobjectswithinangle, function(a, b)
-		local dista = (a.AbsolutePosition + (a.AbsoluteSize*0.5) - point).Magnitude
-		local distb = (b.AbsolutePosition + (b.AbsoluteSize*0.5) - point).Magnitude
+		local dista = vector.magnitude(a.AbsolutePosition::any + (a.AbsoluteSize*0.5) - point)
+		local distb = vector.magnitude(b.AbsolutePosition::any + (b.AbsoluteSize*0.5) - point)
 
 		return dista < distb
 	end)
@@ -522,10 +434,8 @@ function Interface.findhovertarget(list: {GuiObject}, insetmouselocation: Vector
 	if #inbounds > 1 then
 		--- sort by distance from center of guiobject
 		table.sort(inbounds, function(a, b)
-			--- local dista = vector.magnitude(a.AbsolutePosition::any + (a.AbsoluteSize*0.5) - insetmouselocation)
-			--- local distb = vector.magnitude(b.AbsolutePosition::any + (b.AbsoluteSize*0.5) - insetmouselocation)
-			local dista = (a.AbsolutePosition + (a.AbsoluteSize*0.5) - insetmouselocation).Magnitude
-			local distb = (b.AbsolutePosition + (b.AbsoluteSize*0.5) - insetmouselocation).Magnitude
+			local dista = vector.magnitude(a.AbsolutePosition::any + (a.AbsoluteSize*0.5) - insetmouselocation)
+			local distb = vector.magnitude(b.AbsolutePosition::any + (b.AbsoluteSize*0.5) - insetmouselocation)
 
 			return dista < distb
 		end)

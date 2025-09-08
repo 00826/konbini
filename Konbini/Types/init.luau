@@ -924,7 +924,7 @@ function Types.page<T>(t: {T}, size: number, offset: number)
 	)
 end
 
---- returns a book-type, used for neatly getting chunks (pages) of an array \
+--- creates a book, used for neatly getting chunks (pages) of an array \
 --- `size`: book page size \
 --- `alloc (?=size)`: `b.Items = table.create(alloc)`
 function Types.createbook(size: number, alloc: number?)
@@ -1044,41 +1044,6 @@ function Types.createstring(len: number)
 	end
 
 	return buffer.tostring(b)
-end
-
---- trims trailing whitespaces from string read from buffer
-function Types.trimstring(str: string)
-	return string.gsub(string.gsub(str, "%s+", " "), "\u{0000}", "")
-end
-
---- replaces substrings in text matching capture `pattern (?="[%w+_]+")` with respect to replacement table
-function Types.alias(text: string, replace: {[string]: string}, pattern: string?)
-	return string.gsub(text, pattern or "[%w+_]+", function(s: string)
-		return replace[s] or s
-	end)
-end
-
---- applies richtext formatting tags to text \
---- *assumes that richtext closure suffix follows pattern `string.match(prefix, "%a+")`*
---- ```
---- Types.richtext("color me surprised", "i", "font color='#ff00ff'") --> <font color="#ff00ff"><i>color me surprised</i></font>
---- Types.richtext("color me surprised", "i", Color3.fromRGB(255, 0, 255)) --> <font color="#ff00ff"><i>color me surprised</i></font>
---- ```
-function Types.richformat(text: string, ...: string|Color3)
-	for i, prefix in ipairs({...}::any) do
-		if typeof(prefix) == "Color3" then
-			prefix = "font color='#" .. prefix:ToHex() .. "'"
-		end
-
-		local closure = string.match(prefix, "%a+")
-		if closure then
-			text = "<" .. prefix .. ">" .. text .. "</" .. closure .. ">"
-		else
-			warn(string.format("skipped bad format tag #%d '%s'", i, prefix))
-		end
-	end
-
-	return text
 end
 
 --- formats time into a hour-minute-second-esque notation
@@ -1268,30 +1233,13 @@ function Types.timestamp(format: "Hour" | "Biphase" | "Day" | "Week" | "Season" 
 	return timestamp
 end
 
---- formats number: \
---- thousands separated by `tsep (?=".")` \
---- decimals separated by `dsep (?=".")`, truncated by `places (?=1)`
-function Types.formatnumber(x: number, tsep: string?, dsep: string?, places: number?)
-	if places == 0 then
-		return Types.commanumber(x, tsep)
-	else
-		local num = tostring(x)
-		local i = string.find(num, "%.")
-		
-		if i then
-			return Types.commanumber(x, tsep) .. (dsep or ".") .. string.sub(num, 1 + i, i + (places or 1))
-		else
-			return Types.commanumber(x, tsep)
-		end
-	end
-end
-
 --- formats number, thousands separated by `tsep (?=",")`
 function Types.commanumber(x: number, tsep: string?)
 	if math.abs(x) < 1000 then
 		return tostring(math.floor(x))
 	else
 		local str = string.reverse(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)", "%1" .. (tsep or ","))::any)
+		
 		return string.sub(str, string.find(str, "%d")::any, -1)
 	end
 end
