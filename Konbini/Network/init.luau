@@ -21,8 +21,8 @@ export type ClientArg =
 local Network = {}
 
 --- sends packet related to this scope
-function Network.send(scope: string, packet: { }, unreliable: boolean?, client: ClientArg?)
-	local remote = unreliable and UnreliableRemoteEvent or RemoteEvent
+function Network.send(scope: string, packet: { }, client: ClientArg?, reliable: boolean?)
+	local remote = reliable and RemoteEvent or UnreliableRemoteEvent
 
 	if IsServer then
 		if type(client) == "nil" then --- fire all
@@ -69,10 +69,10 @@ function Network.recv(scope: string, recv: ((packet: { }) -> ()) & (player: Play
 
 			if recvscope == scope then recv(player, packet) end
 		end
-		local a = RemoteEvent.OnServerEvent:Connect(serverrecv)
-		local b = UnreliableRemoteEvent.OnServerEvent:Connect(serverrecv)
 
-		return a, b
+		return 
+			RemoteEvent.OnServerEvent:Connect(serverrecv),
+			UnreliableRemoteEvent.OnServerEvent:Connect(serverrecv)
 	else
 		local function clientrecv(recvscope: string, packet: { })
 			assert(type(recvscope) == "string", debug.traceback(string.format("expected string scope, got %s", type(recvscope)), 2))
@@ -80,10 +80,10 @@ function Network.recv(scope: string, recv: ((packet: { }) -> ()) & (player: Play
 
 			if recvscope == scope then recv(packet) end
 		end
-		local a = RemoteEvent.OnClientEvent:Connect(clientrecv)
-		local b = UnreliableRemoteEvent.OnClientEvent:Connect(clientrecv)
 
-		return a, b
+		return 
+			RemoteEvent.OnClientEvent:Connect(clientrecv),
+			UnreliableRemoteEvent.OnClientEvent:Connect(clientrecv)
 	end
 end
 

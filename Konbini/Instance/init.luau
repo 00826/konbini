@@ -722,6 +722,73 @@ function InstanceK.emptydescription()
 	};
 end
 
+--- creates a zone
+function InstanceK.createzone(root: Instance)
+	local z = {
+		Model = root;
+
+		LoadContainer = workspace;
+		OffloadContainer = script;
+
+		Queue = table.create(#root:GetChildren());
+
+		Instances = root:GetChildren();
+		InstanceAddedConnection = nil :: RBXScriptConnection?;
+
+		ReparentConnection = nil :: RBXScriptConnection?;
+		ReparentRate = 2;
+	}
+
+	z.InstanceAddedConnection = root.ChildAdded:Connect(function(thing: Instance)
+		if not table.find(z.Instances, thing) then
+			table.insert(z.Instances, thing)
+			table.insert(z.Queue, thing)
+		end
+	end)
+
+	return z
+end
+
+--- loads zone instances into loadcontainer
+function InstanceK.zoneload(z: typeof(InstanceK.createzone(...)), callback: (Instance, number, number) -> ()?)
+	InstanceK.zonereparent(z, z.LoadContainer, callback)
+end
+
+--- offloads zone instances into offloadcontainer
+function InstanceK.zoneoffload(z: typeof(InstanceK.createzone(...)), callback: (Instance, number, number) -> ()?)
+	InstanceK.zonereparent(z, z.OffloadContainer, callback)
+end
+
+--- reparents zone instances into container
+function InstanceK.zonereparent(z: typeof(InstanceK.createzone(...)), container: Instance, callback: (Instance, number, number) -> ()?)
+	if z.ReparentConnection then z.ReparentConnection:Disconnect() end
+	z.ReparentConnection = nil
+
+	table.clear(z.Queue)
+	table.move(z.Instances, 1, #z.Instances, 1, z.Queue)
+	local x, y = 0, #z.Queue
+
+	z.ReparentConnection = RunService.Heartbeat:Connect(function(dt)
+		for i = 1, z.ReparentRate do
+			local thing = table.remove(z.Queue)
+
+			if thing then
+				if not thing:IsDescendantOf(container) then
+					thing.Parent = container
+				end
+
+				x += 1
+				if callback then
+					task.defer(callback, thing, x, y)
+				end
+			else
+				if z.ReparentConnection then z.ReparentConnection:Disconnect() end
+				z.ReparentConnection = nil
+			end
+		end
+	end)
+end
+
 --- `return pcall(contentprovider.PreloadAsync, contentprovider, assets, f)`
 function InstanceK.preloadasync(assets: {any}, f: ((contentstring: string, assetfetchstatus: Enum.AssetFetchStatus) -> ())?)
 	local contentprovider = game:GetService("ContentProvider")

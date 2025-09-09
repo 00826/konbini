@@ -381,8 +381,11 @@ function Interface.nextguiobject(guiobjects: {GuiObject}, thumbstickvector: Vect
 	end
 
 	table.sort(guiobjectswithinangle, function(a, b)
-		local dista = vector.magnitude(a.AbsolutePosition::any + (a.AbsoluteSize*0.5) - point)
-		local distb = vector.magnitude(b.AbsolutePosition::any + (b.AbsoluteSize*0.5) - point)
+		--- vector lib incompatible w vector2
+		--- local dista = vector.magnitude(a.AbsolutePosition::any + (a.AbsoluteSize*0.5) - point)
+		--- local distb = vector.magnitude(b.AbsolutePosition::any + (b.AbsoluteSize*0.5) - point)
+		local dista = (a.AbsolutePosition + (a.AbsoluteSize*0.5) - point).Magnitude
+		local distb = (b.AbsolutePosition + (b.AbsoluteSize*0.5) - point).Magnitude
 
 		return dista < distb
 	end)
@@ -434,8 +437,11 @@ function Interface.findhovertarget(list: {GuiObject}, insetmouselocation: Vector
 	if #inbounds > 1 then
 		--- sort by distance from center of guiobject
 		table.sort(inbounds, function(a, b)
-			local dista = vector.magnitude(a.AbsolutePosition::any + (a.AbsoluteSize*0.5) - insetmouselocation)
-			local distb = vector.magnitude(b.AbsolutePosition::any + (b.AbsoluteSize*0.5) - insetmouselocation)
+			--- vector lib incompatible w vector2
+			--- local dista = vector.magnitude(a.AbsolutePosition::any + (a.AbsoluteSize*0.5) - insetmouselocation)
+			--- local distb = vector.magnitude(b.AbsolutePosition::any + (b.AbsoluteSize*0.5) - insetmouselocation)
+			local dista = (a.AbsolutePosition + (a.AbsoluteSize*0.5) - insetmouselocation).Magnitude
+			local distb = (b.AbsolutePosition + (b.AbsoluteSize*0.5) - insetmouselocation).Magnitude
 
 			return dista < distb
 		end)
