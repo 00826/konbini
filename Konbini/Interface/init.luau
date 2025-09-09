@@ -313,8 +313,8 @@ function Interface.createtextqueue(textobject: TextLabel, separator: string, all
 end
 
 --- inserts text into textqueue
-function Interface.textqueueinsert(tq: typeof(Interface.createtextqueue(...)), text: string, expiry: number, front: boolean)
-	if front then
+function Interface.textqueueinsert(tq: typeof(Interface.createtextqueue(...)), text: string, expiry: number, front: boolean?)
+	if front == true then
 		table.insert(tq.Queue, 1, {text, expiry::any})
 	else
 		table.insert(tq.Queue, {text, expiry::any})

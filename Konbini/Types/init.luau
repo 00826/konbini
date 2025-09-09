@@ -1314,13 +1314,18 @@ function Types.createtypedbuffer(i: number, size: number)
 	return b
 end
 
---- returns `value` encoded as a buffer \
+--- returns: \
+--- `value` packed into a buffer \
+--- `instances` supplementary instance table \
 --- \
---- instances are returned as a supplementary table to pass into `Types.decode()` when decoding \
---- as there is no way to encode an instance into buffer-only terms
-function Types.encode(value: any, instancecursor: number?)
+--- instances are returned as a supplementary table to pass into `Types.unwrap()` when decoding \
+--- as there is no way to represent an instance into buffer-only terms \
+--- \
+--- `strings` must be no longer than 255 characters, as their length is encoded as an unsigned 8-bit integer \
+--- `tables & arrays` must contain no more than 65535 key-value/index-value pairs, as their length is encoded as an unsigned 16-bit integer \
+function Types.pack(value: any, instancecursor: number?)
 	local i = table.find(Types.typelookup, typeof(value))
-	assert(i, string.format("unknown type %s", typeof(value)))
+	assert(i, string.format("unsupported type %s", typeof(value)))
 
 	local b, instances = buffer.create(0), {}
 	instancecursor = instancecursor or 0
@@ -1340,9 +1345,9 @@ function Types.encode(value: any, instancecursor: number?)
 		local result = {}
 		if #value > 0 then
 			for idx, val in ipairs(value) do
-				local idxb, idxinstances = Types.encode(idx, instancecursor)
+				local idxb, idxinstances = Types.pack(idx, instancecursor)
 				table.move(idxinstances, 1, #idxinstances, #instances + 1, instances)
-				local valb, valinstances = Types.encode(val, instancecursor)
+				local valb, valinstances = Types.pack(val, instancecursor)
 				table.move(valinstances, 1, #valinstances, #instances + 1, instances)
 
 				local idxlen, vallen = buffer.len(idxb), buffer.len(valb)
@@ -1354,9 +1359,9 @@ function Types.encode(value: any, instancecursor: number?)
 			end
 		else
 			for key, val in value do
-				local keyb, keyinstances = Types.encode(key, instancecursor)
+				local keyb, keyinstances = Types.pack(key, instancecursor)
 				table.move(keyinstances, 1, #keyinstances, #instances + 1, instances)
-				local valb, valinstances = Types.encode(val, instancecursor)
+				local valb, valinstances = Types.pack(val, instancecursor)
 				table.move(valinstances, 1, #valinstances, #instances + 1, instances)
 
 				local idxlen, vallen = buffer.len(keyb), buffer.len(valb)
@@ -1440,7 +1445,7 @@ function Types.encode(value: any, instancecursor: number?)
 	elseif typeof(value) == "Vector2" then
 		local vec = {}
 		for _, value in ipairs{value.X, value.Y} do
-			local thisb = Types.encode(value)
+			local thisb = Types.pack(value)
 			table.insert(vec, thisb)
 		end
 
@@ -1462,7 +1467,7 @@ function Types.encode(value: any, instancecursor: number?)
 	elseif typeof(value) == "Vector3" then
 		local vec = {}
 		for _, value in ipairs{value.X, value.Y, value.Z} do
-			local thisb = Types.encode(value)
+			local thisb = Types.pack(value)
 			table.insert(vec, thisb)
 		end
 
@@ -1484,7 +1489,7 @@ function Types.encode(value: any, instancecursor: number?)
 	elseif typeof(value) == "CFrame" then
 		local vec = {}
 		for _, value in ipairs{value.X, value.Y, value.Z} do
-			local thisb = Types.encode(value)
+			local thisb = Types.pack(value)
 			table.insert(vec, thisb)
 		end
 
@@ -1515,11 +1520,11 @@ function Types.encode(value: any, instancecursor: number?)
 		buffer.copy(b, 1, prebuffer)
 
 	elseif typeof(value) == "Color3" then
-		local red = Types.encode(value.R * 255)
+		local red = Types.pack(value.R * 255)
 		local rlen = buffer.len(red)
-		local green = Types.encode(value.G * 255)
+		local green = Types.pack(value.G * 255)
 		local glen = buffer.len(green)
-		local blue = Types.encode(value.B * 255)
+		local blue = Types.pack(value.B * 255)
 		local blen = buffer.len(blue)
 
 		local prebuffer = buffer.create(rlen + glen + blen)
@@ -1535,27 +1540,29 @@ function Types.encode(value: any, instancecursor: number?)
 	return b, instances
 end
 
---- returns decoded value, encoded by `Types.decode`, beginning at `offset`
-function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, number)
-	local type = Types.typelookup[buffer.readu8(b, offset)]
+--- returns:
+--- `value`: unpacked value, packed by `Types.decode`, beginning at `offset`, using supplementary instance table `instances`
+--- `offset`: final offset after unpacking the buffer, should equate to `buffer.len(b)`
+function Types.unpack(pack: buffer, offset: number, instances: {Instance}): (any, number)
+	local type = Types.typelookup[buffer.readu8(pack, offset)]
 
 	if type == "nil" then
 		return nil, offset
 
 	elseif type == "Instance" then
 		offset += 1
-		return instances[buffer.readu8(b, offset)], offset + 1
+		return instances[buffer.readu8(pack, offset)], offset + 1
 
 	elseif type == "table" then
 		offset += 1
-		local len = buffer.readu16(b, offset)
+		local len = buffer.readu16(pack, offset)
 
 		offset += 2
 		local result = {}
 		for i = 1, len do
-			local key, aoffset = Types.decode(b, offset, instances)
+			local key, aoffset = Types.unpack(pack, offset, instances)
 			offset = aoffset
-			local value, boffset = Types.decode(b, offset, instances)
+			local value, boffset = Types.unpack(pack, offset, instances)
 			offset = boffset 
 
 			result[key] = value
@@ -1565,24 +1572,24 @@ function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, n
 
 	elseif type == "buffer" then
 		offset += 1
-		local len = buffer.readu16(b, offset)
+		local len = buffer.readu16(pack, offset)
 		local thisbuffer = buffer.create(len)
 
 		offset += 2
-		buffer.copy(thisbuffer, 0, b, offset, len)
+		buffer.copy(thisbuffer, 0, pack, offset, len)
 
 		return thisbuffer, offset + len
 
 	elseif type == "string" then
 		offset += 1
-		local len = buffer.readu8(b, offset)
+		local len = buffer.readu8(pack, offset)
 
 		offset += 1
-		return buffer.readstring(b, offset, len), offset + len
+		return buffer.readstring(pack, offset, len), offset + len
 
 	elseif type == "boolean" then
 		offset += 1
-		return buffer.readu8(b, offset) == 1, offset + 1
+		return buffer.readu8(pack, offset) == 1, offset + 1
 
 	elseif type == "number" then
 		--- last case
@@ -1591,7 +1598,7 @@ function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, n
 		local position = table.create(2)
 		for i = 1, 2 do
 			offset += 1
-			local value, nextoffset = Types.decode(b, offset, instances)
+			local value, nextoffset = Types.unpack(pack, offset, instances)
 			offset = nextoffset - 1
 			table.insert(position, value)
 		end
@@ -1602,7 +1609,7 @@ function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, n
 		local position = table.create(3)
 		for i = 1, 3 do
 			offset += 1
-			local value, nextoffset = Types.decode(b, offset, instances)
+			local value, nextoffset = Types.unpack(pack, offset, instances)
 			offset = nextoffset - 1
 			table.insert(position, value)
 		end
@@ -1613,7 +1620,7 @@ function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, n
 		local position = table.create(3)
 		for i = 1, 3 do
 			offset += 1
-			local value, nextoffset = Types.decode(b, offset, instances)
+			local value, nextoffset = Types.unpack(pack, offset, instances)
 			offset = nextoffset - 1
 			table.insert(position, value)
 		end
@@ -1621,7 +1628,7 @@ function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, n
 		local rotation = table.create(3)
 		for i = 1, 3 do
 			offset += 1
-			table.insert(rotation, math.map(buffer.readu8(b, offset), 0, 255, -math.pi, math.pi))
+			table.insert(rotation, math.map(buffer.readu8(pack, offset), 0, 255, -math.pi, math.pi))
 		end
 
 		return CFrame.new(position[1], position[2], position[3]) * CFrame.fromOrientation(rotation[1], rotation[2], rotation[3]), offset + 1
@@ -1630,7 +1637,7 @@ function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, n
 		local color = table.create(3)
 		for i = 1, 3 do
 			offset += 1
-			local value, nextoffset = Types.decode(b, offset, instances)
+			local value, nextoffset = Types.unpack(pack, offset, instances)
 			offset = nextoffset - 1
 			table.insert(color, value)
 		end
@@ -1639,11 +1646,11 @@ function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, n
 
 	elseif type == "f32" then
 		offset += 1
-		return buffer.readf32(b, offset), offset + 4
+		return buffer.readf32(pack, offset), offset + 4
 
 	elseif type == "f64" then
 		offset += 1
-		return buffer.readf64(b, offset), offset + 8
+		return buffer.readf64(pack, offset), offset + 8
 
 	else
 		--- true number case
@@ -1651,14 +1658,14 @@ function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, n
 			if uintentry.key == type then
 
 				offset += 1
-				return uintentry.read(b, offset), offset + uintentry.size
+				return uintentry.read(pack, offset), offset + uintentry.size
 			end
 		end
 		for _, intentry in Types.intlookup do
 			if intentry.key == type then
 
 				offset += 1
-				return intentry.read(b, offset), offset + intentry.size
+				return intentry.read(pack, offset), offset + intentry.size
 			end
 		end
 	end
