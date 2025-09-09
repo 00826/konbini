@@ -16,6 +16,410 @@ local Types = {
 	Abbreviations = {"", "K", "M", "B", "T", "Qd", "Qt", "Sx", "Sp", "Oc", "No", "De"};
 }
 
+Types.uintlookup = {
+	{ key = "u8", value = {0, 255}; size = 1; write = buffer.writeu8; read = buffer.readu8; };
+	{ key = "u16", value = {0, 65535}; size = 2; write = buffer.writeu16; read = buffer.readu16; };
+	{ key = "u24", value = {0, 16777215}; size = 3; write = Types.writeu24; read = Types.readu24; };
+	{ key = "u32", value = {0, 4294967295}; size = 4; write = buffer.writeu32; read = buffer.readu32; };
+}
+
+Types.intlookup = {
+	{ key = "i8", value = {-128, 127}; size = 1; write = buffer.writei8; read = buffer.readi8; };
+	{ key = "i16", value = {-32768, 32767}; size = 2; write = buffer.writei16; read = buffer.readi16; };
+	{ key = "i24", value = {-8388608, 8388607}; size = 3; write = Types.writei24; read = Types.readi24; };
+	{ key = "i32", value = {-2147483648, 2147483647}; size = 4; write = buffer.writei32; read = buffer.readi32; };
+}
+
+Types.typelookup = {
+	"nil";
+	"Instance";
+
+	"table";
+	"buffer";
+	"string";
+
+	"boolean";
+	"number";
+
+	"u8";
+	"u16";
+	"u24";
+	"u32";
+
+	"i8";
+	"i16";
+	"i24";
+	"i32";
+
+	"f32";
+	"f64";
+
+	"Vector2";
+	"Vector3";
+	"CFrame";
+	"Color3";
+}
+
+--- returns a data-typed buffer of variable width
+function Types.createtypedbuffer(i: number, size: number)
+	local b = buffer.create(1 + size)
+	buffer.writeu8(b, 0, i)
+
+	return b
+end
+
+--- returns `value` encoded as a buffer \
+--- \
+--- instances are returned as a supplementary table to pass into `Types.decode()` when decoding \
+--- as there is no way to encode an instance into buffer-only terms
+function Types.encode(value: any, instancecursor: number?)
+	local i = table.find(Types.typelookup, typeof(value))
+	assert(i, string.format("unknown type %s", typeof(value)))
+
+	local b, instances = buffer.create(0), {}
+	instancecursor = instancecursor or 0
+	assert(instancecursor)
+
+	if typeof(value) == "nil" then
+		b = Types.createtypedbuffer(i, 0)
+
+	elseif typeof(value) == "Instance" then
+		table.insert(instances, value)
+		instancecursor += 1
+
+		b = Types.createtypedbuffer(i, 1)
+		buffer.writeu8(b, 1, instancecursor)
+
+	elseif typeof(value) == "table" then
+		local result = {}
+		if #value > 0 then
+			for idx, val in ipairs(value) do
+				local idxb, idxinstances = Types.encode(idx, instancecursor)
+				table.move(idxinstances, 1, #idxinstances, #instances + 1, instances)
+				local valb, valinstances = Types.encode(val, instancecursor)
+				table.move(valinstances, 1, #valinstances, #instances + 1, instances)
+
+				local idxlen, vallen = buffer.len(idxb), buffer.len(valb)
+				local pair = buffer.create(idxlen + vallen)
+				buffer.copy(pair, 0, idxb)
+				buffer.copy(pair, idxlen, valb)
+
+				table.insert(result, pair)
+			end
+		else
+			for key, val in value do
+				local keyb, keyinstances = Types.encode(key, instancecursor)
+				table.move(keyinstances, 1, #keyinstances, #instances + 1, instances)
+				local valb, valinstances = Types.encode(val, instancecursor)
+				table.move(valinstances, 1, #valinstances, #instances + 1, instances)
+
+				local idxlen, vallen = buffer.len(keyb), buffer.len(valb)
+				local pair = buffer.create(idxlen + vallen)
+				buffer.copy(pair, 0, keyb)
+				buffer.copy(pair, idxlen, valb)
+
+				table.insert(result, pair)
+			end
+		end
+
+		local size = 0
+		local len = 0
+		for _, thisb in result do
+			size += buffer.len(thisb)
+			len += 1
+		end
+
+		local prebuffer = buffer.create(size)
+		local offset = 0
+		for _, thisb in ipairs(result) do
+			local thislen = buffer.len(thisb)
+			buffer.copy(prebuffer, offset, thisb, 0, thislen)
+			offset += thislen
+		end
+
+		b = Types.createtypedbuffer(i, buffer.len(prebuffer) + 2)
+		buffer.writeu16(b, 1, len)
+		buffer.copy(b, 3, prebuffer)
+
+	elseif typeof(value) == "buffer" then
+		local len = buffer.len(value)
+
+		b = Types.createtypedbuffer(i, len + 2)
+		buffer.writeu16(b, 1, len)
+		buffer.copy(b, 3, value)
+
+	elseif typeof(value) == "string" then
+		local len = string.len(value)
+
+		b = Types.createtypedbuffer(i, len + 1)
+		buffer.writeu8(b, 1, len)
+		buffer.writestring(b, 2, value, len)
+
+	elseif typeof(value) == "boolean" then
+		b = Types.createtypedbuffer(i, 1)
+		buffer.writeu8(b, 1, value and 1 or 0)
+
+	elseif typeof(value) == "number" then
+		if value == value and value ~= 1/0 and value ~= -1/0 then
+			local integer, fraction = math.modf(value)
+			if fraction == 0 then
+				--- integer
+				for _, a in ipairs(integer < 0 and Types.intlookup or Types.uintlookup) do
+					if integer >= a.value[1] and integer <= a.value[2] then
+						local itype = a.key
+						b = Types.createtypedbuffer(table.find(Types.typelookup, itype)::number, a.size)
+						a.write(b, 1, integer)
+
+						break
+					end
+				end
+			else
+				--- float
+				if integer < 2^24-1 then --- f32 integer limit
+					b = Types.createtypedbuffer(table.find(Types.typelookup, "f32")::number, 4)
+					buffer.writef32(b, 1, value)
+
+				else
+					b = Types.createtypedbuffer(table.find(Types.typelookup, "f64")::number, 8)
+					buffer.writef64(b, 1, value)
+
+				end
+			end
+		else
+			b = Types.createtypedbuffer(table.find(Types.typelookup, "f64")::number, 8)
+			buffer.writef64(b, 1, value)
+
+		end
+
+	elseif typeof(value) == "Vector2" then
+		local vec = {}
+		for _, value in ipairs{value.X, value.Y} do
+			local thisb = Types.encode(value)
+			table.insert(vec, thisb)
+		end
+
+		local size = 0
+		for _, thisb in vec do
+			size += buffer.len(thisb)
+		end
+
+		local vecbuffer = buffer.create(size)
+		local offset = 0
+		for _, thisb in ipairs(vec) do
+			buffer.copy(vecbuffer, offset, thisb, 0, buffer.len(thisb))
+			offset += buffer.len(thisb)
+		end
+
+		b = Types.createtypedbuffer(i, buffer.len(vecbuffer))
+		buffer.copy(b, 1, vecbuffer)
+
+	elseif typeof(value) == "Vector3" then
+		local vec = {}
+		for _, value in ipairs{value.X, value.Y, value.Z} do
+			local thisb = Types.encode(value)
+			table.insert(vec, thisb)
+		end
+
+		local size = 0
+		for _, thisb in vec do
+			size += buffer.len(thisb)
+		end
+
+		local vecbuffer = buffer.create(size)
+		local offset = 0
+		for _, thisb in ipairs(vec) do
+			buffer.copy(vecbuffer, offset, thisb, 0)
+			offset += buffer.len(thisb)
+		end
+
+		b = Types.createtypedbuffer(i, buffer.len(vecbuffer))
+		buffer.copy(b, 1, vecbuffer)
+
+	elseif typeof(value) == "CFrame" then
+		local vec = {}
+		for _, value in ipairs{value.X, value.Y, value.Z} do
+			local thisb = Types.encode(value)
+			table.insert(vec, thisb)
+		end
+
+		local size = 0
+		for _, thisb in vec do
+			size += buffer.len(thisb)
+		end
+
+		local vecbuffer = buffer.create(size)
+		local offset = 0
+		for _, thisb in ipairs(vec) do
+			buffer.copy(vecbuffer, offset, thisb)
+			offset += buffer.len(thisb)
+		end
+
+		local rx, ry, rz = value:ToOrientation()
+		local r = buffer.create(3)
+		local rlen = buffer.len(r)
+		buffer.writeu8(r, 0, math.map(rx, -math.pi, math.pi, 0, 255))
+		buffer.writeu8(r, 1, math.map(ry, -math.pi, math.pi, 0, 255))
+		buffer.writeu8(r, 2, math.map(rz, -math.pi, math.pi, 0, 255))
+
+		local prebuffer = buffer.create(size + rlen)
+		buffer.copy(prebuffer, 0, vecbuffer)
+		buffer.copy(prebuffer, size, r)
+
+		b = Types.createtypedbuffer(i, buffer.len(prebuffer))
+		buffer.copy(b, 1, prebuffer)
+
+	elseif typeof(value) == "Color3" then
+		local red = Types.encode(value.R * 255)
+		local rlen = buffer.len(red)
+		local green = Types.encode(value.G * 255)
+		local glen = buffer.len(green)
+		local blue = Types.encode(value.B * 255)
+		local blen = buffer.len(blue)
+
+		local prebuffer = buffer.create(rlen + glen + blen)
+		buffer.copy(prebuffer, 0, red)
+		buffer.copy(prebuffer, rlen, green)
+		buffer.copy(prebuffer, rlen + glen, blue)
+
+		b = Types.createtypedbuffer(i, buffer.len(prebuffer))
+		buffer.copy(b, 1, prebuffer)
+
+	end
+
+	return b, instances
+end
+
+--- returns decoded value, encoded by `Types.decode`, beginning at `offset`
+function Types.decode(b: buffer, offset: number, instances: {Instance}): (any, number)
+	local type = Types.typelookup[buffer.readu8(b, offset)]
+
+	if type == "nil" then
+		return nil, offset
+
+	elseif type == "Instance" then
+		offset += 1
+		return instances[buffer.readu8(b, offset)], offset + 1
+
+	elseif type == "table" then
+		offset += 1
+		local len = buffer.readu16(b, offset)
+
+		offset += 2
+		local result = {}
+		for i = 1, len do
+			local key, aoffset = Types.decode(b, offset, instances)
+			offset = aoffset
+			local value, boffset = Types.decode(b, offset, instances)
+			offset = boffset 
+
+			result[key] = value
+		end
+
+		return result, offset
+
+	elseif type == "buffer" then
+		offset += 1
+		local len = buffer.readu16(b, offset)
+		local thisbuffer = buffer.create(len)
+
+		offset += 2
+		buffer.copy(thisbuffer, 0, b, 3, len)
+
+		return thisbuffer, offset + len
+
+	elseif type == "string" then
+		offset += 1
+		local len = buffer.readu8(b, offset)
+
+		offset += 1
+		return buffer.readstring(b, offset, len), offset + len
+
+	elseif type == "boolean" then
+		offset += 1
+		return buffer.readu8(b, offset) == 1, offset + 1
+
+	elseif type == "number" then
+		--- last case
+
+	elseif type == "Vector2" then
+		local position = table.create(2)
+		for i = 1, 2 do
+			offset += 1
+			local value, nextoffset = Types.decode(b, offset, instances)
+			offset = nextoffset - 1
+			table.insert(position, value)
+		end
+
+		return Vector2.new(position[1], position[2]), offset + 1
+
+	elseif type == "Vector3" then
+		local position = table.create(3)
+		for i = 1, 3 do
+			offset += 1
+			local value, nextoffset = Types.decode(b, offset, instances)
+			offset = nextoffset - 1
+			table.insert(position, value)
+		end
+
+		return Vector3.new(position[1], position[2], position[3]), offset + 1
+
+	elseif type == "CFrame" then
+		local position = table.create(3)
+		for i = 1, 3 do
+			offset += 1
+			local value, nextoffset = Types.decode(b, offset, instances)
+			offset = nextoffset - 1
+			table.insert(position, value)
+		end
+
+		local rotation = table.create(3)
+		for i = 1, 3 do
+			offset += 1
+			table.insert(rotation, math.map(buffer.readu8(b, offset), 0, 255, -math.pi, math.pi))
+		end
+
+		return CFrame.new(position[1], position[2], position[3]) * CFrame.fromOrientation(rotation[1], rotation[2], rotation[3]), offset + 1
+
+	elseif type == "Color3" then
+		local color = table.create(3)
+		for i = 1, 3 do
+			offset += 1
+			local value, nextoffset = Types.decode(b, offset, instances)
+			offset = nextoffset - 1
+			table.insert(color, value)
+		end
+
+		return Color3.fromRGB(unpack(color)), offset + 1
+
+	elseif type == "f32" then
+		offset += 1
+		return buffer.readf32(b, offset), offset + 4
+
+	elseif type == "f64" then
+		offset += 1
+		return buffer.readf64(b, offset), offset + 8
+
+	else
+		--- true number case
+		for _, uintentry in Types.uintlookup do
+			if uintentry.key == type then
+
+				offset += 1
+				return uintentry.read(b, offset), offset + uintentry.size
+			end
+		end
+		for _, intentry in Types.intlookup do
+			if intentry.key == type then
+
+				offset += 1
+				return intentry.read(b, offset), offset + intentry.size
+			end
+		end
+	end
+
+	return nil, offset
+end
+
 --- reads Vector3 from buffer
 function Types.readvector3(b: buffer, offset: number)
 	return Vector3.new(
@@ -155,7 +559,7 @@ function Types.writei24(b: buffer, offset: number, value: number)
 	if sign == 1 then
 		value += 1
 	end
-	
+
 	buffer.writebits(b, bitoffset, 23, math.abs(value))
 	buffer.writebits(b, bitoffset + 23, 1, sign)
 end
@@ -546,7 +950,7 @@ function Types.todo32add(t: number, signal: { key: string, value: number }, map:
 	assert(step, "todo32: cannot progress an empty map")
 
 	local maxstep = #map
-	
+
 	if todostep > maxstep then
 		t = bit32.replace(t, maxstep, 0, 6)
 		t = bit32.replace(t, 0, 6, 26)
@@ -602,7 +1006,7 @@ function Types.todo32receipt(t: number, map: { { { key: number, value: {string} 
 	if not step then
 		return #map + 1, table.create(0)
 	end
-	
+
 	local maxstep = #map
 
 	if todostep > maxstep then
@@ -784,7 +1188,7 @@ function Types.reconcile(t: {}, diff: typeof(Types.diff(...)))
 				if next(v) == nil then
 					table.clear(t[i])
 				end
-				
+
 				Types.reconcile(t[i], v)
 			elseif type(v) == "buffer" then
 				local preexisting = t[i]
@@ -816,7 +1220,7 @@ function Types.reconcile(t: {}, diff: typeof(Types.diff(...)))
 				if next(v) == nil then
 					table.clear(t[k])
 				end
-				
+
 				Types.reconcile(t[k], v)
 			elseif type(v) == "buffer" then
 				local preexisting = t[k]
@@ -1004,7 +1408,7 @@ function Types.nextvaluefromweightedtable<T>(t: { { key: string, weight: number 
 		for _, entry in t do
 			sum += entry.weight
 		end
-		
+
 		local roll, passed = (R or Rand):NextNumber(0, sum), 0
 		for _, entry in t do
 			passed += entry.weight
@@ -1102,7 +1506,7 @@ function Types.hourminutesecond(time: number, notation: "DD:HH:MM:SS" | "HH:MM:S
 		local init = string.find(stringtime, "%.")
 		if init then
 			local append = string.sub(stringtime, init, init + 3)
-			
+
 			for i = 2, 4, 1 do
 				local substring = string.sub(append, i, i)
 				if substring == "" then
@@ -1239,7 +1643,7 @@ function Types.commanumber(x: number, tsep: string?)
 		return tostring(math.floor(x))
 	else
 		local str = string.reverse(string.gsub(string.reverse(tostring(math.floor(x))), "(%d%d%d)", "%1" .. (tsep or ","))::any)
-		
+
 		return string.sub(str, string.find(str, "%d")::any, -1)
 	end
 end
@@ -1248,7 +1652,7 @@ end
 function Types.abbreviatenumber(x: number, places: number?, dsep: string?)
 	local exp = math.floor(math.log(math.max(1, math.abs(x)), 1000))
 	local suffix = Types.Abbreviations[1 + exp] or ("e+" .. exp)
-	
+
 	return string.gsub(tostring(math.floor(x * ((10 ^ (places or 1)) / (1000 ^ exp))) / (10 ^ (places or 1))), "[.]", dsep or ".") .. suffix
 end
 
