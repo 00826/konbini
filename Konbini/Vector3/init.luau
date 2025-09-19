@@ -12,6 +12,16 @@ local Vector3K = {
 	xyaxis = Vector3.one - Vector3.zAxis;
 }
 
+--- returns vector3-typecasted `vector.normalize(v)`
+function Vector3K.normalize(v: Vector3)
+	return (vector.normalize(v::any)::any)::Vector3
+end
+
+--- returns vector3-typecasted `vector.magnitude(v)`
+function Vector3K.magnitude(v: Vector3)
+	return (vector.magnitude(v::any)::any)::Vector3
+end
+
 --- returns whether or not `v` is finite
 function Vector3K.isfinite(v: Vector3)
 	local x, y, z = v.X, v.Y, v.Z
@@ -347,7 +357,7 @@ function Vector3K.distancefromsphere(point: Vector3, position: Vector3, radius: 
 end
 
 --- returns position of a projectile given its initial `velocity`, elapsed `time`, and gravity `?=196`
-function Vector3K.projectile(velocity: Vector3, time: number, gravity: number?)
+function Vector3K.projectile(velocity: Vector3, time: number, gravity: number?): Vector3
 	return (vector.normalize(velocity::any)::any * (vector.magnitude(velocity::any) * time)) - ((0.5 * Vector3.yAxis) * (gravity or 196) * (time * time))
 end
 

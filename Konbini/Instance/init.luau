@@ -203,7 +203,7 @@ end
 
 --- ragdolls motors contained in target \
 --- motors must be owned by the current calling environment
-function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?)
+function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?, collidelimbs: {string}?)
 	if state == true then
 		assert(motors, "expected motor target list")
 		for _, motor6d in target:GetDescendants() do
@@ -226,6 +226,8 @@ function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?)
 				socket.Parent = motor6d.Parent
 
 				motor6d:Destroy()
+			elseif motor6d:IsA("BasePart") and collidelimbs and table.find(collidelimbs, motor6d.Name) then
+				motor6d.CanCollide = true
 			end
 		end
 	elseif state == false then
@@ -250,6 +252,8 @@ function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?)
 				ballsocket.Attachment0:Destroy()
 				ballsocket.Attachment1:Destroy()
 				ballsocket:Destroy()
+			elseif ballsocket:IsA("BasePart") and collidelimbs and table.find(collidelimbs, ballsocket.Name) then
+				ballsocket.CanCollide = true
 			end
 		end
 	end
