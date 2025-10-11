@@ -64,15 +64,9 @@ function MathK.interpolant(x: number, dt: number)
 	return 1 - (x ^ dt)
 end
 
---- returns: \
---- where `x ∈ [a, b]`: `true` \
---- where `x ∉ [a, b]`: `false`
+--- returns `x >= a and x <= b and true or false`
 function MathK.inrange(x: number, a: number, b: number)
-	if x >= a and x <= b then
-		return true
-	end
-
-	return false
+	return x >= a and x <= b and true or false
 end
 
 --- shifts `x` `a` times around limit `b` \

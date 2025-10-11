@@ -634,6 +634,58 @@ function Types.todo32receipt(t: number, map: { { { key: number, value: {string} 
 	end
 end
 
+--- applies xp `value` to level-xp unsigned integer `p32`
+--- ```
+---         level                 xp
+--- bits  [0000 0000] [00000000 00000000 00000000]
+--- range [31 .. 24]           [23 .. 0]
+--- limit  [0, 255]          [0, 16777215]
+--- ```
+--- returns: \
+--- `unsigned long p32`: modified `p32` \
+--- `number ups`: integer describing # of level-ups
+function Types.prog32(p32: number, value: number, required: (number) -> number, max: number?)
+	assert(value > 2^24-1, "value exceeds 24-bit integer limit (16777215)")
+
+	local level = bit32.extract(p32, 24, 8)
+	local xp = bit32.extract(p32, 0, 24)
+	local ups = 0
+
+	if level >= (max or 2^8-1) then
+		p32 = bit32.replace(p32, 0, 0, 24)
+
+		return p32, ups
+	else
+		local reqxp = required(level)
+		local newxp = xp + value
+
+		if newxp >= reqxp then
+			p32 = bit32.replace(p32, level + 1, 24, 8)
+			p32 = bit32.replace(p32, newxp - reqxp, 0, 24)
+			ups += 1
+
+			return p32, ups + Types.prog32(p32, 0, required, max)
+		else
+			p32 = bit32.replace(p32, level, 24, 8)
+			p32 = bit32.replace(p32, newxp, 0, 24)
+
+			return p32, ups
+		end
+	end
+end
+
+--- returns `xp` (unsigned sword) stored in level-xp unsigned integer \
+--- equivalent to `bit32.extract(p32, 0, 24)`
+function Types.prog32xp(p32: number)
+	return bit32.extract(p32, 0, 24)
+end
+
+--- returns `level` (unsigned char) stored in level-xp unsigned integer \
+--- equivalent to `bit32.extract(p32, 24, 8)`
+function Types.prog32level(p32: number)
+	return bit32.extract(p32, 24, 8)
+end
+
 --- returns # of bytes required to store given value \
 --- equivalent to `1 + (math.log(value, 2) // 8)`
 function Types.numbytes(value: number)
@@ -659,49 +711,6 @@ function Types.stringbits(x: number, field: number, range: number)
 	end
 
 	return bitstring
-end
-
---- recursively progresses `{ number level, number xp }`-typed array \
---- `p`: progression array \
---- `xp`: xp to add \
---- `required`: returns, with respect to current level, the xp required to progress to the next level \
---- `max (?=nil)`: if `level > max`, preserves current level and sets xp to 0 \
---- `offset (?=1)`: offset where `level = p[offset]` and `xp = p[offset + 1]` \
---- returns # of progression steps made
-function Types.prog(p: {number?}, xp: number, required: (number) -> number, max: number?, offset: number?)
-	local i = offset or 1
-	local j = i + 1
-
-	local level = p[i] or 1
-	assert(type(level) == "number", "expected level of `p` to be type number")
-	local ups = 0
-
-	if max then
-		if level > max then
-			p[j] = 0
-
-			return ups
-		end
-	end
-
-	local reqxp = required(level)
-	local oldxp = p[j] or 0
-	assert(type(oldxp) == "number", "expected xp of `p` to be type number")
-
-	local newxp = oldxp + xp
-
-	if newxp >= reqxp then
-		p[i] = level + 1
-		p[j] = newxp - reqxp
-		ups += 1
-
-		return ups + Types.prog(p, 0, required, max, offset)
-	else
-		p[i] = level
-		p[j] = newxp
-
-		return ups
-	end
 end
 
 --- returns a deep copy of table
