@@ -307,106 +307,116 @@ function Types.matrixinterpretcolumn(m: buffer, column: number)
 	return str
 end
 
---- returns a width`(?=4(f32))`-wide bar buffer \
---- `width: 2 -> u16` `[u16 value (?=maxvalue), u16 maxvalue]` \
---- `width: 4 -> f32` `[f32 value (?=maxvalue), f32 maxvalue]`
+--- returns a width-wide bar \
+--- `width: 2 -> 2*u8` `[u8 value (?=maxvalue), u8 maxvalue]` \
+--- `width: 4 -> 2*u16` `[u16 value (?=maxvalue), u16 maxvalue]` \
+--- `width: 8 -> 2*f32` `[f32 value (?=maxvalue), f32 maxvalue]`
 function Types.createbar(width: number, maxvalue: number, value: number?)
-	local b = buffer.create(width + width)
+	local b = buffer.create(width)
 
 	if width == 2 then
+		buffer.writeu8(b, 0, value or maxvalue)
+		buffer.writeu8(b, 1, maxvalue)
+	elseif width == 4 then
 		buffer.writeu16(b, 0, value or maxvalue)
 		buffer.writeu16(b, 2, maxvalue)
-	elseif width == 4 then
+	elseif width == 8 then
 		buffer.writef32(b, 0, value or maxvalue)
 		buffer.writef32(b, 4, maxvalue)
 	else
-		error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+		error("bar has width of " .. tostring(width) .. ", expected 2(2*u8), 4(2*u16) or 8(2*f32)")
 	end
 
 	return b
 end
 
---- writes to bar buffer \
---- `maxvalue~=nil`: attempts to scale stored value to fit `maxvalue`
-function Types.barwrite(b: buffer, value: number?, maxvalue: number?)
+--- writes value to bar
+function Types.barwritevalue(b: buffer, value: number)
 	local width = buffer.len(b)
 
-	if maxvalue then
-		if width == 4 then
-			buffer.writeu16(b, 0, buffer.readu16(b, 2) * math.clamp(buffer.readu16(b, 0) / maxvalue, 0, 1))
-			buffer.writeu16(b, 2, maxvalue)
-		elseif width == 8 then
-			buffer.writef32(b, 0, buffer.readf32(b, 4) * math.clamp(buffer.readf32(b, 0) / maxvalue, 0, 1))
-			buffer.writef32(b, 4, maxvalue)
-		else
-			error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
-		end
-	end
-	if value then
-		if width == 4 then
-			buffer.writeu16(b, 0, math.clamp(value, 0, buffer.readu16(b, 2)))
-		elseif width == 8 then
-			buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
-		else
-			error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
-		end
-	end
-end
-
---- applies deltas to bar buffer \
---- `maxvalue~=nil`: attempts to scale stored value to fit `maxvalue`
-function Types.bardelta(b: buffer, value: number?, maxvalue: number?)
-	local width = buffer.len(b)
-
-	if maxvalue then
-		if width == 4 then
-			maxvalue += buffer.readu16(b, 2)
-			buffer.writeu16(b, 0, buffer.readu16(b, 2) * math.clamp(buffer.readu16(b, 0) / maxvalue, 0, 1))
-			buffer.writeu16(b, 2, maxvalue)
-		elseif width == 8 then
-			maxvalue += buffer.readf32(b, 4)
-			buffer.writef32(b, 0, buffer.readf32(b, 4) * math.clamp(buffer.readf32(b, 0) / maxvalue, 0, 1))
-			buffer.writef32(b, 4, maxvalue)
-		else
-			error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
-		end
-	end
-	if value then
-		if width == 4 then
-			value += buffer.readu16(b, 0)
-			buffer.writeu16(b, 0, math.clamp(value, 0, buffer.readu16(b, 2)))
-		elseif width == 8 then
-			value += buffer.readf32(b, 0)
-			buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
-		else
-			error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
-		end
-	end
-end
-
---- equivalent to `buffer.writef32(b, 0, buffer.readf32(b, 0) - x)`
-function Types.barexpend(b: buffer, x: number)
-	local width = buffer.len(b)
-
-	if width == 4 then
-		buffer.writeu16(b, 0, math.clamp(buffer.readu16(b, 0) - x, 0, 65535))
+	if width == 2 then
+		buffer.writeu8(b, 0, math.clamp(value, 0, buffer.readu8(b, 1)))
+	elseif width == 4 then
+		buffer.writeu16(b, 0, math.clamp(value, 0, buffer.readu16(b, 2)))
 	elseif width == 8 then
-		buffer.writef32(b, 0, buffer.readf32(b, 0) - x)
+		buffer.writef32(b, 0, math.clamp(value, 0, buffer.readf32(b, 4)))
 	else
-		error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+		error("bar has width of " .. tostring(width) .. ", expected 2(2*u8), 4(2*u16) or 8(2*f32)")
 	end
 end
 
---- returns bar buffer `value, maxvalue`
+--- writes maxvalue to bar
+function Types.barwritemaxvalue(b: buffer, maxvalue: number)
+	local width = buffer.len(b)
+
+	if width == 2 then
+		buffer.writeu8(b, 1, maxvalue)
+
+		local value = buffer.readu8(b, 0)
+		if value > maxvalue then
+			buffer.writeu8(b, 0, math.clamp(value, 0, maxvalue))
+		end
+	elseif width == 4 then
+		buffer.writeu16(b, 2, maxvalue)
+
+		local value = buffer.readu16(b, 0)
+		if value > maxvalue then
+			buffer.writeu16(b, 0, math.clamp(value, 0, maxvalue))
+		end
+	elseif width == 8 then
+		buffer.writef32(b, 4, maxvalue)
+
+		local value = buffer.readf32(b, 0)
+		if value > maxvalue then
+			buffer.writef32(b, 0, math.clamp(value, 0, maxvalue))
+		end
+	else
+		error("bar has width of " .. tostring(width) .. ", expected 2(2*u8), 4(2*u16) or 8(2*f32)")
+	end
+end
+
+--- returns stored value of bar
+function Types.barreadvalue(b: buffer)
+	local width = buffer.len(b)
+	
+	if width == 2 then
+		return buffer.readu8(b, 0)
+	elseif width == 4 then
+		return buffer.readu16(b, 0)
+	elseif width == 8 then
+		return buffer.readf32(b, 0)
+	else
+		error("bar has width of " .. tostring(width) .. ", 2(2*u8), expected 4(2*u16) or 8(2*f32)")
+	end
+end
+
+--- returns stored maxvalue of bar
+function Types.barreadmaxvalue(b: buffer)
+	local width = buffer.len(b)
+	
+	if width == 2 then
+		return buffer.readu8(b, 1)
+	elseif width == 4 then
+		return buffer.readu16(b, 2)
+	elseif width == 8 then
+		return buffer.readf32(b, 4)
+	else
+		error("bar has width of " .. tostring(width) .. ", 2(2*u8), expected 4(2*u16) or 8(2*f32)")
+	end
+end
+
+--- returns bar `value, maxvalue`
 function Types.barunpack(b: buffer)
 	local width = buffer.len(b)
-
-	if width == 4 then
+	
+	if width == 2 then
+		return buffer.readu8(b, 0), buffer.readu8(b, 1)
+	elseif width == 4 then
 		return buffer.readu16(b, 0), buffer.readu16(b, 2)
 	elseif width == 8 then
 		return buffer.readf32(b, 0), buffer.readf32(b, 4)
 	else
-		error("bar width error: bar has width of " .. tostring(width) .. ", expected 4(2*u16) or 8(2*f32)")
+		error("bar has width of " .. tostring(width) .. ", 2(2*u8), expected 4(2*u16) or 8(2*f32)")
 	end
 end
 

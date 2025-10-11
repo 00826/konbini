@@ -80,10 +80,13 @@ end
 --- `Shift(5, 2, 6) -> 1` \
 --- `Shift(1, -3, 6) -> 4`
 function MathK.shift(x: number, a: number, b: number)
-	x += a
-	local c = x % b
+	if b == 0 then
+		return x
+	else
+		x = (x + a) % b
 
-	return c == 0 and b or c
+		return x == 0 and b or x
+	end
 end
 
 --- returns `n`-th value of the fibonacci sequence
