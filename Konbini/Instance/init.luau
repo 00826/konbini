@@ -7,25 +7,10 @@ local InsertService = game:GetService("InsertService")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
-local AccessoryPart = script:WaitForChild("AccessoryPart")
-local Animation = script:WaitForChild("Animation")
-local BallSocketConstraint = script:WaitForChild("BallSocketConstraint")
-local Motor6D = script:WaitForChild("Motor6D")
-local RigidConstraint = script:WaitForChild("RigidConstraint")
-local SoundPart = script:WaitForChild("SoundPart")
-local Weld = script:WaitForChild("Weld")
-
-export type MoverClass =
-	| "BodyGyro"
-	| "BodyVelocity"
-	| "BodyPosition"
-
 --- ### Instance.luau
 ---
 --- Instance library extension
 local InstanceK = {
-	Movers = script:WaitForChild("Movers");
-
 	AccessoryFlag = "Accessory";
 	AppearanceFlag = "AppearanceDescription";
 	AppearanceMap = {
@@ -69,25 +54,11 @@ local InstanceK = {
 	DebouncePrefix = "__d_";
 }
 
-AccessoryPart:SetAttribute(InstanceK.AccessoryFlag, true)
-
 --- equivalent to `TweenService:Create(object, TweenInfo.new(time, style(?=Enum.EasingStyle.Linear) ...), properties):Play()` \
 --- `...[1]`: `Enum.EasingDirection` \
 --- `...[2...]`: (remainder of `TweenInfo.new()` args)
 function InstanceK.tween(object: Instance, properties: {[string]: any}, time: number, style: Enum.EasingStyle?, ...)
 	TweenService:Create(object, TweenInfo.new(time, style or Enum.EasingStyle.Linear, ...), properties):Play()
-end
-
---- `fov(?=70)` \
---- `name(?="Camera")`
-function InstanceK.camera(cframe: CFrame, fov: number?, name: string?)
-	local camera = Instance.new("Camera")
-	camera.CFrame = cframe
-	camera.FieldOfView = fov or 70
-	camera.Name = name or "Camera"
-	camera.Parent = workspace
-
-	return camera
 end
 
 --- applies attribute debounce to instance, returning true if debounce passes \
@@ -109,13 +80,25 @@ function InstanceK.debounce(thing: Instance, name: string, now: number?, time: n
 	end
 end
 
+--- `fov(?=70)` \
+--- `name(?="Camera")`
+function InstanceK.camera(cframe: CFrame, fov: number?, name: string?)
+	local camera = Instance.new("Camera")
+	camera.CFrame = cframe
+	camera.FieldOfView = fov or 70
+	camera.Name = name or "Camera"
+	camera.Parent = workspace
+
+	return camera
+end
+
 --- welds b to a at offset \
 --- `a`: "root" part \
 --- `b`: "loose" part \
 --- `offset: (?=CFrame.identity)`: `b.CFrame = a.CFrame * offset` \
 --- `force:` `b.CFrame = force`
 function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame?)
-	local newweld = Weld:Clone()
+	local newweld = Instance.new("WeldConstraint")
 	if force then
 		b.CFrame = force
 	else
@@ -129,7 +112,7 @@ function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame
 end
 
 --- emits sound at optional position or instance
-function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspeed: number?, timeposition: number?)
+function InstanceK.sound(sound: Sound, at: (Vector3|Instance)?, playbackspeed: number?, timeposition: number?)
 	if typeof(at) == "Instance" then
 		local real: BasePart? = nil
 		if at:IsA("BasePart") then
@@ -158,7 +141,15 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspee
 
 		return newsound
 	elseif typeof(at) == "Vector3" then
-		local newpart = SoundPart:Clone()
+		local newpart = Instance.new("Part")
+		newpart.CastShadow = false
+		newpart.Transparency = 1
+		newpart.Anchored = true
+		newpart.CanCollide = false
+		newpart.CanQuery = false
+		newpart.CanTouch = false
+		newpart.Massless = true
+		newpart.Size = Vector3.one
 		newpart.Position = at
 		newpart.Parent = workspace
 
@@ -184,21 +175,421 @@ function InstanceK.emitsound(sound: Sound, at: (Vector3|Instance)?, playbackspee
 	end
 end
 
---- memory-safe `Player:LoadCharacter()`
-function InstanceK.loadcharacter(player: Player, description: HumanoidDescription?)
-	if player.Character then
-		player.Character:Destroy()
-		player.Character = nil
+type baseadornment = {
+	adornee: PVInstance?,
+	adorncullingmode: Enum.AdornCullingMode?;
+	sizerelativeoffset: Vector3?;
+	alwaysontop: boolean?,
+	zindex: number?;
 
-		player.PlayerGui:ClearAllChildren()
+	color: Color3?,
+	transparency: number?,
+	visible: boolean?,
+}
+
+--- instantiates a `BoxHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.boxhandleadornment(
+	a: {
+		at: CFrame|Vector3,
+
+		size: Vector3,
+
+		parent: Instance?,
+	} & baseadornment,
+	b: ({
+		at: CFrame|Vector3?,
+
+		size: Vector3?,
+
+		parent: Instance?,
+
+		time: number,
+		destruct: boolean
+	} & baseadornment)?
+)
+	local adornment = Instance.new("BoxHandleAdornment")
+	adornment.Adornee = a.adornee or nil::any
+	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.AlwaysOnTop = a.alwaysontop or false
+	adornment.ZIndex = a.zindex or -1
+
+	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
+	adornment.Transparency = a.transparency or 0
+	adornment.Visible = a.visible or true
+
+	local at = a.at
+	if typeof(at) == "Vector3" then
+		adornment.CFrame = CFrame.new(at)
+	elseif typeof(at) == "CFrame" then
+		adornment.CFrame = at
+	else
+		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
+		adornment.CFrame = CFrame.identity
 	end
-	if IsServer then
-		if description then
-			player:LoadCharacterWithHumanoidDescription(description)
-		else
-			player:LoadCharacter()
+	
+	adornment.Size = a.size
+
+	adornment.Parent = a.parent or workspace
+
+	if b then
+		local to = b.at
+		local goal = {
+			Adornee = b.adornee;
+			AdornCullingMode = b.adorncullingmode;
+			SizeRelativeOffset = b.sizerelativeoffset;
+			AlwaysOnTop = b.alwaysontop;
+			ZIndex = b.zindex;
+
+			Color3 = b.color;
+			Transparency = b.transparency;
+			Visible = b.visible;
+
+			CFrame = typeof(to) == "Vector3" and CFrame.new(to) or typeof(to) == "CFrame" and to or nil;
+			
+			Size = b.size;
+
+			Parent = b.parent;
+		}
+
+		if next(goal) == nil then
+			InstanceK.tween(adornment, goal, b.time)
+		end
+
+		if b.destruct then
+			task.delay(b.time, adornment.Destroy, adornment)
 		end
 	end
+
+	return adornment
+end
+
+--- instantiates a `ConeHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.conehandleadornment(
+	a: {
+		at: CFrame|Vector3,
+
+		radius: number,
+		height: number,
+
+		parent: Instance?,
+	} & baseadornment,
+	b: ({
+		at: CFrame|Vector3?,
+
+		radius: number?,
+		height: number?,
+
+		parent: Instance?,
+
+		time: number,
+		destruct: boolean
+	} & baseadornment)?
+)
+	local adornment = Instance.new("ConeHandleAdornment")
+	adornment.Adornee = a.adornee or nil::any
+	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.AlwaysOnTop = a.alwaysontop or false
+	adornment.ZIndex = a.zindex or -1
+
+	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
+	adornment.Transparency = a.transparency or 0
+	adornment.Visible = a.visible or true
+
+	local at = a.at
+	if typeof(at) == "Vector3" then
+		adornment.CFrame = CFrame.new(at)
+	elseif typeof(at) == "CFrame" then
+		adornment.CFrame = at
+	else
+		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
+		adornment.CFrame = CFrame.identity
+	end
+	
+	adornment.Radius = a.radius
+	adornment.Height = a.height
+
+	adornment.Parent = a.parent or workspace
+
+	if b then
+		local to = b.at
+		local goal = {
+			Adornee = b.adornee;
+			AdornCullingMode = b.adorncullingmode;
+			SizeRelativeOffset = b.sizerelativeoffset;
+			AlwaysOnTop = b.alwaysontop;
+			ZIndex = b.zindex;
+
+			Color3 = b.color;
+			Transparency = b.transparency;
+			Visible = b.visible;
+
+			CFrame = typeof(to) == "Vector3" and CFrame.new(to) or typeof(to) == "CFrame" and to or nil;
+			
+			Radius = b.radius;
+			Height = b.height;
+
+			Parent = b.parent;
+		}
+
+		if next(goal) == nil then
+			InstanceK.tween(adornment, goal, b.time)
+		end
+
+		if b.destruct then
+			task.delay(b.time, adornment.Destroy, adornment)
+		end
+	end
+
+	return adornment
+end
+
+--- instantiates a `CylinderHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.cylinderhandleadornment(
+	a: {
+		at: CFrame|Vector3,
+
+		radius: number,
+		innerradius: number,
+		height: number,
+		angle: number,
+
+		parent: Instance?,
+	} & baseadornment,
+	b: ({
+		at: CFrame|Vector3?,
+
+		radius: number?,
+		innerradius: number?,
+		height: number?,
+		angle: number?,
+
+		parent: Instance?,
+
+		time: number,
+		destruct: boolean
+	} & baseadornment)?
+)
+	local adornment = Instance.new("CylinderHandleAdornment")
+	adornment.Adornee = a.adornee or nil::any
+	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.AlwaysOnTop = a.alwaysontop or false
+	adornment.ZIndex = a.zindex or -1
+
+	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
+	adornment.Transparency = a.transparency or 0
+	adornment.Visible = a.visible or true
+
+	local at = a.at
+	if typeof(at) == "Vector3" then
+		adornment.CFrame = CFrame.new(at)
+	elseif typeof(at) == "CFrame" then
+		adornment.CFrame = at
+	else
+		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
+		adornment.CFrame = CFrame.identity
+	end
+	
+	adornment.Radius = a.radius
+	adornment.InnerRadius = a.innerradius
+	adornment.Height = a.height
+	adornment.Angle = a.angle
+
+	adornment.Parent = a.parent or workspace
+
+	if b then
+		local to = b.at
+		local goal = {
+			Adornee = b.adornee;
+			AdornCullingMode = b.adorncullingmode;
+			SizeRelativeOffset = b.sizerelativeoffset;
+			AlwaysOnTop = b.alwaysontop;
+			ZIndex = b.zindex;
+
+			Color3 = b.color;
+			Transparency = b.transparency;
+			Visible = b.visible;
+
+			CFrame = typeof(to) == "Vector3" and CFrame.new(to) or typeof(to) == "CFrame" and to or nil;
+			
+			Radius = b.radius;
+			InnerRadius = b.innerradius;
+			Height = b.height;
+			Angle = b.angle;
+
+			Parent = b.parent;
+		}
+
+		if next(goal) == nil then
+			InstanceK.tween(adornment, goal, b.time)
+		end
+
+		if b.destruct then
+			task.delay(b.time, adornment.Destroy, adornment)
+		end
+	end
+
+	return adornment
+end
+
+--- instantiates a `ImageHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.imagehandleadornment(
+	a: {
+		at: CFrame|Vector3,
+
+		size: Vector2,
+		image: string,
+
+		parent: Instance?,
+	} & baseadornment,
+	b: ({
+		at: CFrame|Vector3?,
+
+		size: Vector2?,
+		image: string?,
+
+		parent: Instance?,
+
+		time: number,
+		destruct: boolean
+	} & baseadornment)?
+)
+	local adornment = Instance.new("ImageHandleAdornment")
+	adornment.Adornee = a.adornee or nil::any
+	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.AlwaysOnTop = a.alwaysontop or false
+	adornment.ZIndex = a.zindex or -1
+
+	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
+	adornment.Transparency = a.transparency or 0
+	adornment.Visible = a.visible or true
+
+	local at = a.at
+	if typeof(at) == "Vector3" then
+		adornment.CFrame = CFrame.new(at)
+	elseif typeof(at) == "CFrame" then
+		adornment.CFrame = at
+	else
+		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
+		adornment.CFrame = CFrame.identity
+	end
+	
+	adornment.Size = a.size
+	adornment.Image = a.image
+
+	adornment.Parent = a.parent or workspace
+
+	if b then
+		local to = b.at
+		local goal = {
+			Adornee = b.adornee;
+			AdornCullingMode = b.adorncullingmode;
+			SizeRelativeOffset = b.sizerelativeoffset;
+			AlwaysOnTop = b.alwaysontop;
+			ZIndex = b.zindex;
+
+			Color3 = b.color;
+			Transparency = b.transparency;
+			Visible = b.visible;
+
+			CFrame = typeof(to) == "Vector3" and CFrame.new(to) or typeof(to) == "CFrame" and to or nil;
+			
+			Size = b.size;
+			Image = b.image;
+
+			Parent = b.parent;
+		}
+
+		if next(goal) == nil then
+			InstanceK.tween(adornment, goal, b.time)
+		end
+
+		if b.destruct then
+			task.delay(b.time, adornment.Destroy, adornment)
+		end
+	end
+
+	return adornment
+end
+
+--- instantiates a `SphereHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.spherehandleadornment(
+	a: {
+		at: CFrame|Vector3,
+
+		radius: number,
+
+		parent: Instance?,
+	} & baseadornment,
+	b: ({
+		at: CFrame|Vector3?,
+
+		radius: number?,
+
+		parent: Instance?,
+
+		time: number,
+		destruct: boolean
+	} & baseadornment)?
+)
+	local adornment = Instance.new("SphereHandleAdornment")
+	adornment.Adornee = a.adornee or nil::any
+	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.AlwaysOnTop = a.alwaysontop or false
+	adornment.ZIndex = a.zindex or -1
+
+	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
+	adornment.Transparency = a.transparency or 0
+	adornment.Visible = a.visible or true
+
+	local at = a.at
+	if typeof(at) == "Vector3" then
+		adornment.CFrame = CFrame.new(at)
+	elseif typeof(at) == "CFrame" then
+		adornment.CFrame = at
+	else
+		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
+		adornment.CFrame = CFrame.identity
+	end
+	
+	adornment.Radius = a.radius
+
+	adornment.Parent = a.parent or workspace
+
+	if b then
+		local to = b.at
+		local goal = {
+			Adornee = b.adornee;
+			AdornCullingMode = b.adorncullingmode;
+			SizeRelativeOffset = b.sizerelativeoffset;
+			AlwaysOnTop = b.alwaysontop;
+			ZIndex = b.zindex;
+
+			Color3 = b.color;
+			Transparency = b.transparency;
+			Visible = b.visible;
+
+			CFrame = typeof(to) == "Vector3" and CFrame.new(to) or typeof(to) == "CFrame" and to or nil;
+			
+			Radius = b.radius;
+
+			Parent = b.parent;
+		}
+
+		if next(goal) == nil then
+			InstanceK.tween(adornment, goal, b.time)
+		end
+
+		if b.destruct then
+			task.delay(b.time, adornment.Destroy, adornment)
+		end
+	end
+
+	return adornment
 end
 
 --- ragdolls motors contained in target \
@@ -212,7 +603,16 @@ function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?, col
 
 				motor6d.Part1:SetAttribute("MotorName", motor6d.Name)
 				motor6d.Part1:SetAttribute("MotorVelocity", motor6d.MaxVelocity)
-				local socket = BallSocketConstraint:Clone()
+
+				local socket = Instance.new("BallSocketConstraint")
+				socket.LimitsEnabled = true
+				socket.TwistLimitsEnabled = true
+				socket.UpperAngle = 45
+				socket.Restitution = 0
+				socket.MaxFrictionTorque = 5
+				socket.TwistLowerAngle = -25
+				socket.TwistUpperAngle = 25
+
 				local A0, A1 = Instance.new("Attachment"), Instance.new("Attachment")
 				A0.Parent = motor6d.Part0
 				A1.Parent = motor6d.Part1
@@ -240,7 +640,7 @@ function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?, col
 				ballsocket.TwistUpperAngle = 0
 				ballsocket.TwistLowerAngle = 0
 
-				local motor6d = Motor6D:Clone()
+				local motor6d = Instance.new("Motor6D")::any
 				motor6d.Part0 = ballsocket.Attachment0.Parent
 				motor6d.Part1 = ballsocket.Attachment1.Parent
 				motor6d.C0 = ballsocket.Attachment0.CFrame
@@ -268,63 +668,20 @@ function InstanceK.setcollisiongroup(target: Instance, collisiongroup: string)
 	end
 end
 
---- applies bodymover to primarypart of target \
---- *in contexts where `time` is omitted, the bodymover will remain indefinitely*
-function InstanceK.bodymover(target: Model|BasePart, class: MoverClass, time: number?, properties: {[string]: any}?): BodyMover?
-	local rootpart
-	if target:IsA("Model") then
-		rootpart = target.PrimaryPart
-	else
-		rootpart = target
-	end
-	assert(rootpart, string.format("'%s' has no primarypart", target.Name))
-
-	local newmover = InstanceK.Movers:FindFirstChildOfClass(class):Clone()
-
-	if properties then
-		for k, v in properties do
-			newmover[k] = v
-		end
-	end
-
-	if time then
-		task.delay(time, newmover.Destroy, newmover)
-	end
-
-	newmover.Parent = rootpart
-	return newmover
-end
-
---- clears bodymovers from primarypart of target
-function InstanceK.bodymoverclear(target: Model|BasePart, class: MoverClass)
-	local rootpart
-	if target:IsA("Model") then
-		rootpart = target.PrimaryPart
-	else
-		rootpart = target
-	end
-	assert(rootpart, string.format("'%s' has no primarypart", target.Name))
-
-	for _, thing in rootpart:GetChildren() do
-		if thing.ClassName == class then
-			thing:Destroy()
-		end
-	end
-end
-
 --- creates an `Animation` instance with its `AnimationId` property set to `id`
 function InstanceK.createanimationfromid(id: string)
-	local a = Animation:Clone()
+	local a = Instance.new("Animation")
 	a.AnimationId = id
 	a.Parent = script
 
 	return a
 end
 
---- plays animation
+--- plays animation \
+--- `fadetime?=1/30`
 function InstanceK.playanimation(animator: Animator, animation: Animation, priority: Enum.AnimationPriority?, speed: number?, fadetime: number?, weight: number?)
 	local animtrack = animator:LoadAnimation(animation)
-	animtrack:Play(fadetime or Animation.FadeTime, weight, speed)
+	animtrack:Play(fadetime or 1/30, weight, speed)
 	animtrack.Priority = priority or Enum.AnimationPriority.Action
 
 	return animtrack
@@ -636,10 +993,10 @@ function InstanceK.attach(instance: Instance, basepart: BasePart, parent: Instan
 	basepart:SetAttribute(InstanceK.AccessoryFlag, true)
 	basepart.Parent = parent or instance
 
-	local constraint = RigidConstraint:Clone()
-	constraint.Parent = basepart
+	local constraint = Instance.new("RigidConstraint")
 	constraint.Attachment0 = rigattachment
 	constraint.Attachment1 = accessoryattachment
+	constraint.Parent = basepart
 
 	return true
 end
@@ -664,11 +1021,33 @@ end
 --- returns an `AccessoryPart` from assetid (server-only), or an empty AccessoryPart if no assetid is provided
 function InstanceK.createaccessory(assetid: number?)
 	if not assetid then
-		local clone = AccessoryPart:Clone()
-		clone.Name = "Accessory"
-		clone.Parent = script
+		local accessorypart = Instance.new("Part")
+		accessorypart.CastShadow = true
+		accessorypart.Material = Enum.Material.Plastic
+		accessorypart.Transparency = 0
+		accessorypart.Size = Vector3.one
+		accessorypart.CFrame = CFrame.identity
+		accessorypart.EnableFluidForces = false
+		accessorypart.Anchored = false
+		accessorypart.CanCollide = false
+		accessorypart.CanQuery = false
+		accessorypart.CanTouch = false
+		accessorypart.Massless = true
+		accessorypart.Name = "Accessory"
+		accessorypart:SetAttribute(InstanceK.AccessoryFlag, true)
+		accessorypart.Parent = script
 
-		return clone
+		local attachment = Instance.new("Attachment")
+		attachment.Name = "HatAttachment"
+		attachment.CFrame = CFrame.identity
+		attachment.Parent = accessorypart
+
+		local specialmesh = Instance.new("SpecialMesh")
+		specialmesh.MeshType = Enum.MeshType.FileMesh
+		specialmesh.Scale = Vector3.one
+		specialmesh.Parent = accessorypart
+
+		return accessorypart
 	end
 
 	assert(IsServer, "InstanceK.createaccessory() can only be called on server (InsertService limitation T__T)")
