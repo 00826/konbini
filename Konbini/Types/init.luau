@@ -140,6 +140,57 @@ function Types.compare(a: buffer, b: buffer, offset: number?)
 	end
 end
 
+--- returns byte-wide changes made from old buffer `a` and new buffer `b` \
+--- `number result[1]` delta offset \
+--- `buffer result[2]` delta byte value
+function Types.delta(a: buffer, b: buffer, offset: number?)
+	local lenA = buffer.len(a)
+	local lenB = buffer.len(b)
+
+	assert(lenA == lenB, "expected buffers to be of same-length when resolving delta")
+
+	offset = offset or 0
+	assert(offset) --- solver kick rocks
+
+	local result = {}
+
+	if offset >= lenA then
+		return result
+	else
+		local traverse = lenA - offset
+		if traverse >= 4 then
+			if buffer.readu32(a, offset) ~= buffer.readu32(b, offset) then
+				local value = buffer.create(4)
+				buffer.copy(value, 0, b, offset, 4)
+				table.insert(result, {offset, value::any})
+			end
+
+			local r = Types.delta(a, b, offset + 4)
+			table.move(r, 1, #r, #result + 1, result)
+		elseif traverse >= 2 then
+			if buffer.readu16(a, offset) ~= buffer.readu16(b, offset) then
+				local value = buffer.create(2)
+				buffer.copy(value, 0, b, offset, 2)
+				table.insert(result, {offset, value::any})
+			end
+
+			local r = Types.delta(a, b, offset + 2)
+			table.move(r, 1, #r, #result + 1, result)
+		else
+			if buffer.readu8(a, offset) ~= buffer.readu8(b, offset) then
+				local value = buffer.create(1)
+				buffer.copy(value, 0, b, offset, 1)
+				table.insert(result, {offset, value::any})
+			end
+
+			local r = Types.delta(a, b, offset + 1)
+			table.move(r, 1, #r, #result + 1, result)
+		end
+	end
+
+	return result
+end
+
 --- returns a duplicate of buffer
 function Types.duplicate(b: buffer)
 	local dupe = buffer.create(buffer.len(b))

@@ -210,7 +210,7 @@ function InstanceK.boxhandleadornment(
 	local adornment = Instance.new("BoxHandleAdornment")
 	adornment.Adornee = a.adornee or nil::any
 	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
 	adornment.AlwaysOnTop = a.alwaysontop or false
 	adornment.ZIndex = a.zindex or -1
 
@@ -289,7 +289,7 @@ function InstanceK.conehandleadornment(
 	local adornment = Instance.new("ConeHandleAdornment")
 	adornment.Adornee = a.adornee or nil::any
 	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
 	adornment.AlwaysOnTop = a.alwaysontop or false
 	adornment.ZIndex = a.zindex or -1
 
@@ -374,7 +374,7 @@ function InstanceK.cylinderhandleadornment(
 	local adornment = Instance.new("CylinderHandleAdornment")
 	adornment.Adornee = a.adornee or nil::any
 	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
 	adornment.AlwaysOnTop = a.alwaysontop or false
 	adornment.ZIndex = a.zindex or -1
 
@@ -459,7 +459,7 @@ function InstanceK.imagehandleadornment(
 	local adornment = Instance.new("ImageHandleAdornment")
 	adornment.Adornee = a.adornee or nil::any
 	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
 	adornment.AlwaysOnTop = a.alwaysontop or false
 	adornment.ZIndex = a.zindex or -1
 
@@ -538,7 +538,7 @@ function InstanceK.spherehandleadornment(
 	local adornment = Instance.new("SphereHandleAdornment")
 	adornment.Adornee = a.adornee or nil::any
 	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.one
+	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
 	adornment.AlwaysOnTop = a.alwaysontop or false
 	adornment.ZIndex = a.zindex or -1
 
