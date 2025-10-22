@@ -175,49 +175,55 @@ function InstanceK.sound(sound: Sound, at: (Vector3|Instance)?, playbackspeed: n
 	end
 end
 
-type baseadornment = {
-	adornee: PVInstance?,
+--- type describing handleadornment class
+type adornmentbase = {
+	adornee: PVInstance?;
 	adorncullingmode: Enum.AdornCullingMode?;
 	sizerelativeoffset: Vector3?;
-	alwaysontop: boolean?,
+	alwaysontop: boolean?;
 	zindex: number?;
 
-	color: Color3?,
-	transparency: number?,
-	visible: boolean?,
+	color: Color3?;
+	transparency: number?;
+	visible: boolean?;
+
+	parent: Instance?;
 }
 
---- instantiates a `BoxHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
-function InstanceK.boxhandleadornment(
-	a: {
-		at: CFrame|Vector3,
+--- type describing handleadornment transform (tween) args
+type adornmenttransform = {
+	time: number;
+	destroy: boolean;
+}
 
-		size: Vector3,
+--- sets adornment base properties
+local function setadornmentbaseproperties(adornment: HandleAdornment, a: adornmentbase & {at: CFrame|Vector3?})
+	if a.adornee ~= nil then
+		adornment.Adornee = a.adornee
+	end
+	if a.adorncullingmode then
+		adornment.AdornCullingMode = a.adorncullingmode
+	end
+	if a.sizerelativeoffset then
+		adornment.SizeRelativeOffset = a.sizerelativeoffset
+	end
+	if a.alwaysontop ~= nil then
+		adornment.AlwaysOnTop = a.alwaysontop
+	end
+	if a.zindex then
+		adornment.ZIndex = a.zindex
+	end
 
-		parent: Instance?,
-	} & baseadornment,
-	b: ({
-		at: CFrame|Vector3?,
-
-		size: Vector3?,
-
-		parent: Instance?,
-
-		time: number,
-		destruct: boolean
-	} & baseadornment)?
-)
-	local adornment = Instance.new("BoxHandleAdornment")
-	adornment.Adornee = a.adornee or nil::any
-	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
-	adornment.AlwaysOnTop = a.alwaysontop or false
-	adornment.ZIndex = a.zindex or -1
-
-	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
-	adornment.Transparency = a.transparency or 0
-	adornment.Visible = a.visible or true
-
+	if a.color then
+		adornment.Color3 = a.color
+	end
+	if a.transparency then
+		adornment.Transparency = a.transparency
+	end
+	if a.visible ~= nil then
+		adornment.Visible = a.visible
+	end
+	
 	local at = a.at
 	if typeof(at) == "Vector3" then
 		adornment.CFrame = CFrame.new(at)
@@ -227,10 +233,27 @@ function InstanceK.boxhandleadornment(
 		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
 		adornment.CFrame = CFrame.identity
 	end
-	
-	adornment.Size = a.size
 
 	adornment.Parent = a.parent or workspace
+end
+
+--- instantiates a `BoxHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.boxhandleadornment(
+	a: {
+		at: CFrame|Vector3;
+
+		size: Vector3;
+	} & adornmentbase,
+	b: ({
+		at: CFrame|Vector3?;
+
+		size: Vector3?;
+	} & adornmentbase & adornmenttransform)?
+)
+	local adornment = Instance.new("BoxHandleAdornment")
+	setadornmentbaseproperties(adornment, a)
+	
+	adornment.Size = a.size
 
 	if b then
 		local to = b.at
@@ -256,7 +279,7 @@ function InstanceK.boxhandleadornment(
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
-		if b.destruct then
+		if b.destroy then
 			task.delay(b.time, adornment.Destroy, adornment)
 		end
 	end
@@ -267,50 +290,23 @@ end
 --- instantiates a `ConeHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
 function InstanceK.conehandleadornment(
 	a: {
-		at: CFrame|Vector3,
+		at: CFrame|Vector3;
 
-		radius: number,
-		height: number,
-
-		parent: Instance?,
-	} & baseadornment,
+		radius: number;
+		height: number;
+	} & adornmentbase,
 	b: ({
-		at: CFrame|Vector3?,
+		at: CFrame|Vector3?;
 
-		radius: number?,
-		height: number?,
-
-		parent: Instance?,
-
-		time: number,
-		destruct: boolean
-	} & baseadornment)?
+		radius: number?;
+		height: number?;
+	} & adornmentbase & adornmenttransform)?
 )
 	local adornment = Instance.new("ConeHandleAdornment")
-	adornment.Adornee = a.adornee or nil::any
-	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
-	adornment.AlwaysOnTop = a.alwaysontop or false
-	adornment.ZIndex = a.zindex or -1
-
-	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
-	adornment.Transparency = a.transparency or 0
-	adornment.Visible = a.visible or true
-
-	local at = a.at
-	if typeof(at) == "Vector3" then
-		adornment.CFrame = CFrame.new(at)
-	elseif typeof(at) == "CFrame" then
-		adornment.CFrame = at
-	else
-		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
-		adornment.CFrame = CFrame.identity
-	end
+	setadornmentbaseproperties(adornment, a)
 	
 	adornment.Radius = a.radius
 	adornment.Height = a.height
-
-	adornment.Parent = a.parent or workspace
 
 	if b then
 		local to = b.at
@@ -337,7 +333,7 @@ function InstanceK.conehandleadornment(
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
-		if b.destruct then
+		if b.destroy then
 			task.delay(b.time, adornment.Destroy, adornment)
 		end
 	end
@@ -348,56 +344,29 @@ end
 --- instantiates a `CylinderHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
 function InstanceK.cylinderhandleadornment(
 	a: {
-		at: CFrame|Vector3,
+		at: CFrame|Vector3;
 
-		radius: number,
-		innerradius: number,
-		height: number,
-		angle: number,
-
-		parent: Instance?,
-	} & baseadornment,
+		radius: number;
+		innerradius: number;
+		height: number;
+		angle: number;
+	} & adornmentbase,
 	b: ({
-		at: CFrame|Vector3?,
+		at: CFrame|Vector3?;
 
-		radius: number?,
-		innerradius: number?,
-		height: number?,
-		angle: number?,
-
-		parent: Instance?,
-
-		time: number,
-		destruct: boolean
-	} & baseadornment)?
+		radius: number?;
+		innerradius: number?;
+		height: number?;
+		angle: number?;
+	} & adornmentbase & adornmenttransform)?
 )
 	local adornment = Instance.new("CylinderHandleAdornment")
-	adornment.Adornee = a.adornee or nil::any
-	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
-	adornment.AlwaysOnTop = a.alwaysontop or false
-	adornment.ZIndex = a.zindex or -1
-
-	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
-	adornment.Transparency = a.transparency or 0
-	adornment.Visible = a.visible or true
-
-	local at = a.at
-	if typeof(at) == "Vector3" then
-		adornment.CFrame = CFrame.new(at)
-	elseif typeof(at) == "CFrame" then
-		adornment.CFrame = at
-	else
-		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
-		adornment.CFrame = CFrame.identity
-	end
+	setadornmentbaseproperties(adornment, a)
 	
 	adornment.Radius = a.radius
 	adornment.InnerRadius = a.innerradius
 	adornment.Height = a.height
 	adornment.Angle = a.angle
-
-	adornment.Parent = a.parent or workspace
 
 	if b then
 		local to = b.at
@@ -426,7 +395,7 @@ function InstanceK.cylinderhandleadornment(
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
-		if b.destruct then
+		if b.destroy then
 			task.delay(b.time, adornment.Destroy, adornment)
 		end
 	end
@@ -437,50 +406,23 @@ end
 --- instantiates a `ImageHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
 function InstanceK.imagehandleadornment(
 	a: {
-		at: CFrame|Vector3,
+		at: CFrame|Vector3;
 
-		size: Vector2,
-		image: string,
-
-		parent: Instance?,
-	} & baseadornment,
+		size: Vector2;
+		image: string;
+	} & adornmentbase,
 	b: ({
-		at: CFrame|Vector3?,
+		at: CFrame|Vector3?;
 
-		size: Vector2?,
-		image: string?,
-
-		parent: Instance?,
-
-		time: number,
-		destruct: boolean
-	} & baseadornment)?
+		size: Vector2?;
+		image: string?;
+	} & adornmentbase & adornmenttransform)?
 )
 	local adornment = Instance.new("ImageHandleAdornment")
-	adornment.Adornee = a.adornee or nil::any
-	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
-	adornment.AlwaysOnTop = a.alwaysontop or false
-	adornment.ZIndex = a.zindex or -1
-
-	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
-	adornment.Transparency = a.transparency or 0
-	adornment.Visible = a.visible or true
-
-	local at = a.at
-	if typeof(at) == "Vector3" then
-		adornment.CFrame = CFrame.new(at)
-	elseif typeof(at) == "CFrame" then
-		adornment.CFrame = at
-	else
-		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
-		adornment.CFrame = CFrame.identity
-	end
+	setadornmentbaseproperties(adornment, a)
 	
 	adornment.Size = a.size
 	adornment.Image = a.image
-
-	adornment.Parent = a.parent or workspace
 
 	if b then
 		local to = b.at
@@ -507,7 +449,7 @@ function InstanceK.imagehandleadornment(
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
-		if b.destruct then
+		if b.destroy then
 			task.delay(b.time, adornment.Destroy, adornment)
 		end
 	end
@@ -518,47 +460,20 @@ end
 --- instantiates a `SphereHandleAdornment` with initial properties `a` and optionally-transforms it toward goal `b`
 function InstanceK.spherehandleadornment(
 	a: {
-		at: CFrame|Vector3,
+		at: CFrame|Vector3;
 
-		radius: number,
-
-		parent: Instance?,
-	} & baseadornment,
+		radius: number;
+	} & adornmentbase,
 	b: ({
-		at: CFrame|Vector3?,
+		at: CFrame|Vector3?;
 
-		radius: number?,
-
-		parent: Instance?,
-
-		time: number,
-		destruct: boolean
-	} & baseadornment)?
+		radius: number?;
+	} & adornmentbase & adornmenttransform)?
 )
 	local adornment = Instance.new("SphereHandleAdornment")
-	adornment.Adornee = a.adornee or nil::any
-	adornment.AdornCullingMode = a.adorncullingmode or Enum.AdornCullingMode.Automatic
-	adornment.SizeRelativeOffset = a.sizerelativeoffset or Vector3.zero
-	adornment.AlwaysOnTop = a.alwaysontop or false
-	adornment.ZIndex = a.zindex or -1
-
-	adornment.Color3 = a.color or Color3.fromRGB(163, 162, 165)
-	adornment.Transparency = a.transparency or 0
-	adornment.Visible = a.visible or true
-
-	local at = a.at
-	if typeof(at) == "Vector3" then
-		adornment.CFrame = CFrame.new(at)
-	elseif typeof(at) == "CFrame" then
-		adornment.CFrame = at
-	else
-		warn(string.format("could not place adornment; expected vector3 or cframe, got %s", typeof(at)))
-		adornment.CFrame = CFrame.identity
-	end
+	setadornmentbaseproperties(adornment, a)
 	
 	adornment.Radius = a.radius
-
-	adornment.Parent = a.parent or workspace
 
 	if b then
 		local to = b.at
@@ -584,7 +499,7 @@ function InstanceK.spherehandleadornment(
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
-		if b.destruct then
+		if b.destroy then
 			task.delay(b.time, adornment.Destroy, adornment)
 		end
 	end
