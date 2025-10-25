@@ -97,18 +97,18 @@ end
 --- `b`: "loose" part \
 --- `offset: (?=CFrame.identity)`: `b.CFrame = a.CFrame * offset` \
 --- `force:` `b.CFrame = force`
-function InstanceK.weld(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame?)
-	local newweld = Instance.new("WeldConstraint")
+function InstanceK.weldconstraint(a: BasePart, b: BasePart, offset: CFrame?, force: CFrame?)
+	local weld = Instance.new("WeldConstraint")
 	if force then
 		b.CFrame = force
 	else
 		b.CFrame = a.CFrame * (offset or CFrame.identity)
 	end
-	newweld.Part0 = b
-	newweld.Part1 = a
-	newweld.Parent = b
+	weld.Part0 = b
+	weld.Part1 = a
+	weld.Parent = b
 
-	return newweld
+	return weld
 end
 
 --- emits sound at optional position or instance
@@ -505,6 +505,195 @@ function InstanceK.spherehandleadornment(
 	end
 
 	return adornment
+end
+
+--- type describing light class
+type lightbase = {
+	brightness: number?;
+	color: Color3?;
+	enabled: boolean?;
+	shadows: boolean?;
+	
+	parent: PVInstance?;
+}
+
+--- type describing light transform (tween) args
+type lighttransform = {
+	time: number;
+	destroy: boolean;
+}
+
+--- sets light base properties
+local function setlightbaseproperties(light: Light, a: lightbase)
+	if a.brightness then
+		light.Brightness = a.brightness
+	end
+	if a.color then
+		light.Color = a.color
+	end
+	if a.enabled ~= nil then
+		light.Enabled = a.enabled
+	end
+	if a.shadows ~= nil then
+		light.Shadows = a.shadows
+	end
+
+	if a.parent then
+		light.Parent = a.parent
+	end
+end
+
+--- instantiates a `PointLight` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.pointlight(
+	a: {
+		range: number;
+	} & lightbase,
+	b: ({
+		range: number?;
+	} & lightbase & lighttransform)?
+)
+	local light = Instance.new("PointLight")
+	setlightbaseproperties(light, a)
+
+	light.Range = a.range
+
+	if b then
+		local goal = {
+			Brightness = b.brightness;
+			Color3 = b.color;
+			Enabled = b.enabled;
+			Shadows = b.shadows;
+
+			Range = b.range;
+
+			Parent = b.parent;
+		}
+
+		if next(goal) == nil then
+			InstanceK.tween(light, goal, b.time)
+		end
+
+		if b.destroy then
+			task.delay(b.time, light.Destroy, light)
+		end
+	end
+
+	return light
+end
+
+--- instantiates a `SpotLight` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.spotlight(
+	a: {
+		range: number;
+		face: Enum.NormalId;
+		angle: number;
+	} & lightbase,
+	b: ({
+		range: number?;
+		face: Enum.NormalId?;
+		angle: number?;
+	} & lightbase & lighttransform)?
+)
+	local light = Instance.new("SpotLight")
+	setlightbaseproperties(light, a)
+
+	light.Range = a.range
+	light.Face = a.face
+	light.Angle = a.angle
+
+	if b then
+		local goal = {
+			Brightness = b.brightness;
+			Color3 = b.color;
+			Enabled = b.enabled;
+			Shadows = b.shadows;
+
+			Range = b.range;
+			Face = b.face;
+			Angle = b.angle;
+
+			Parent = b.parent;
+		}
+
+		if next(goal) == nil then
+			InstanceK.tween(light, goal, b.time)
+		end
+
+		if b.destroy then
+			task.delay(b.time, light.Destroy, light)
+		end
+	end
+
+	return light
+end
+
+--- instantiates a `SurfaceLight` with initial properties `a` and optionally-transforms it toward goal `b`
+function InstanceK.surfacelight(
+	a: {
+		range: number;
+		face: Enum.NormalId;
+		angle: number;
+	} & lightbase,
+	b: ({
+		range: number?;
+		face: Enum.NormalId?;
+		angle: number?;
+	} & lightbase & lighttransform)?
+)
+	local light = Instance.new("SurfaceLight")
+	setlightbaseproperties(light, a)
+
+	light.Range = a.range
+	light.Face = a.face
+	light.Angle = a.angle
+
+	if b then
+		local goal = {
+			Brightness = b.brightness;
+			Color3 = b.color;
+			Enabled = b.enabled;
+			Shadows = b.shadows;
+
+			Range = b.range;
+			Face = b.face;
+			Angle = b.angle;
+
+			Parent = b.parent;
+		}
+
+		if next(goal) == nil then
+			InstanceK.tween(light, goal, b.time)
+		end
+
+		if b.destroy then
+			task.delay(b.time, light.Destroy, light)
+		end
+	end
+
+	return light
+end
+
+--- instantiates a minimal static `Part`
+function InstanceK.basepart(at: Vector3|CFrame, parent: Instance?)
+	local basepart = Instance.new("Part")
+	basepart.CastShadow = false
+	basepart.Transparency = 1
+	basepart.Anchored = true
+	basepart.CanCollide = false
+	basepart.CanQuery = false
+	basepart.CanTouch = false
+	basepart.Massless = true
+	basepart.Size = Vector3.one
+
+	if typeof(at) == "Vector3" then
+		basepart.Position = at
+	elseif typeof(at) == "CFrame" then
+		basepart.CFrame = at
+	end
+	
+	basepart.Parent = parent or workspace
+
+	return basepart
 end
 
 --- ragdolls motors contained in target \
