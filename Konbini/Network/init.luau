@@ -360,6 +360,11 @@ function Network.pack(value: any, instancecursor: number?)
 						break
 					end
 				end
+				
+				--- fallback to f64 if integer exceeds i/u32 limit
+				b = createtypedbuffer(table.find(typelookup, "f64")::number, 8)
+				buffer.writef64(b, 1, value)
+
 			else
 				--- float
 				if integer < 2^24-1 then --- f32 integer limit
