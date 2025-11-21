@@ -696,7 +696,7 @@ end
 --- `unsigned long p32`: modified `p32` \
 --- `number ups`: integer describing # of level-ups
 function Types.prog32(p32: number, value: number, required: (number) -> number, max: number?)
-	assert(value > 2^24-1, "value exceeds 24-bit integer limit (16777215)")
+	assert(value <= 2^24-1, "value exceeds 24-bit integer limit (16777215)")
 
 	local level = bit32.extract(p32, 24, 8)
 	local xp = bit32.extract(p32, 0, 24)
@@ -1071,12 +1071,12 @@ function Types.nextvaluefromweightedtable<T>(t: { { key: string, weight: number 
 		return nil
 	else
 		local sum = 0
-		for _, entry in t do
+		for _, entry in ipairs(t) do
 			sum += entry.weight
 		end
 
 		local roll, passed = (R or Rand):NextNumber(0, sum), 0
-		for _, entry in t do
+		for _, entry in ipairs(t) do
 			passed += entry.weight
 
 			if roll <= passed then

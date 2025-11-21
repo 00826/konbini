@@ -55,14 +55,14 @@ local Inputs = {
 
 --- returns index-value pair of key bound to `Inputs.InputTypesToKeyCodes[inputobject.UserInputType]` or `inputObject.KeyCode` \
 --- `Enum.KeyCode.Unknown` returns `nil, nil`
-function Inputs.keybindof(inputobject: InputObject, keybinds: {{value: Enum.KeyCode} & {[string]: any}}): (number?, ({value: Enum.KeyCode} & {[string]: any})?)
+function Inputs.keybindof<T>(inputobject: InputObject, keybinds: {{key: Enum.KeyCode}} & T): (number?, any?)
 	local keycode = Inputs.InputTypesToKeyCodes[inputobject.UserInputType] or inputobject.KeyCode
 
 	if keycode == Enum.KeyCode.Unknown then
 		return nil, nil
 	else
 		for i, bind in ipairs(keybinds) do
-			if bind.value == keycode then
+			if bind.key == keycode then
 				return i, bind
 			end
 		end

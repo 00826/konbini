@@ -1058,18 +1058,13 @@ function InstanceK.createappearancedescription(t: {[string]: any} | HumanoidDesc
 	return result
 end
 
---- decodes appearance description table 
+--- decodes appearance description table
 function InstanceK.decodeappearancedescription(a: typeof(InstanceK.createappearancedescription(...)))
 	local appearancemap = InstanceK.AppearanceMap
 
 	local result = {}::{[string]: any}
 
 	for k, v in a::{[string]: any} do
-		if k == "Accessories" then
-			result[k] = table.concat(v, ",")
-
-			continue
-		end
 		if table.find(appearancemap.BodyColorProperties, k) or table.find(appearancemap.ClothingColorProperties, k) then
 			local num = tonumber(v, 16)
 			if num and num <= 16777215 then
@@ -1094,7 +1089,6 @@ function InstanceK.attach(instance: Instance, basepart: BasePart, parent: Instan
 	local rigattachment = InstanceK.findattachment(instance, accessoryattachment.Name)
 	if not rigattachment then return false end
 
-	basepart:SetAttribute(InstanceK.AccessoryFlag, true)
 	basepart.Parent = parent or instance
 
 	local constraint = Instance.new("RigidConstraint")
