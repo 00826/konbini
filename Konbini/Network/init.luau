@@ -259,32 +259,35 @@ local typelookup = {
 --- \
 --- `strings` must be no longer than 255 characters, as their length is encoded as an unsigned 8-bit integer \
 --- `tables & arrays` must contain no more than 65535 key-value/index-value pairs, as their length is encoded as an unsigned 16-bit integer \
-function Network.pack(value: any, instancecursor: number?)
+function Network.pack(value: any, instances: {Instance}?)
 	local i = table.find(typelookup, typeof(value))
 	assert(i, string.format("unsupported type %s", typeof(value)))
 
-	local b, instances = buffer.create(0), {}
-	instancecursor = instancecursor or 0
-	assert(instancecursor)
+	instances = instances or {}
+	assert(instances)
+
+	local b = buffer.create(0)
 
 	if typeof(value) == "nil" then
 		b = createtypedbuffer(i, 0)
 
 	elseif typeof(value) == "Instance" then
-		table.insert(instances, value)
-		instancecursor += 1
+		local offset = table.find(instances, value)
+		if not offset then
+			table.insert(instances, value)
+			offset = #instances
+		end
+		assert(offset)
 
 		b = createtypedbuffer(i, 1)
-		buffer.writeu8(b, 1, instancecursor)
+		buffer.writeu8(b, 1, offset)
 
 	elseif typeof(value) == "table" then
 		local result = {}
 		if #value > 0 then
 			for idx, val in ipairs(value) do
-				local idxb, idxinstances = Network.pack(idx, instancecursor)
-				table.move(idxinstances, 1, #idxinstances, #instances + 1, instances)
-				local valb, valinstances = Network.pack(val, instancecursor)
-				table.move(valinstances, 1, #valinstances, #instances + 1, instances)
+				local idxb = Network.pack(idx, instances)
+				local valb = Network.pack(val, instances)
 
 				local idxlen, vallen = buffer.len(idxb), buffer.len(valb)
 				local pair = buffer.create(idxlen + vallen)
@@ -295,10 +298,8 @@ function Network.pack(value: any, instancecursor: number?)
 			end
 		else
 			for key, val in value do
-				local keyb, keyinstances = Network.pack(key, instancecursor)
-				table.move(keyinstances, 1, #keyinstances, #instances + 1, instances)
-				local valb, valinstances = Network.pack(val, instancecursor)
-				table.move(valinstances, 1, #valinstances, #instances + 1, instances)
+				local keyb = Network.pack(key, instances)
+				local valb = Network.pack(val, instances)
 
 				local idxlen, vallen = buffer.len(keyb), buffer.len(valb)
 				local pair = buffer.create(idxlen + vallen)
@@ -386,7 +387,7 @@ function Network.pack(value: any, instancecursor: number?)
 	elseif typeof(value) == "Vector2" then
 		local vec = {}
 		for _, value in ipairs{value.X, value.Y} do
-			local thisb = Network.pack(value)
+			local thisb = Network.pack(value, instances)
 			table.insert(vec, thisb)
 		end
 
@@ -408,7 +409,7 @@ function Network.pack(value: any, instancecursor: number?)
 	elseif typeof(value) == "Vector3" then
 		local vec = {}
 		for _, value in ipairs{value.X, value.Y, value.Z} do
-			local thisb = Network.pack(value)
+			local thisb = Network.pack(value, instances)
 			table.insert(vec, thisb)
 		end
 
@@ -430,7 +431,7 @@ function Network.pack(value: any, instancecursor: number?)
 	elseif typeof(value) == "CFrame" then
 		local vec = {}
 		for _, value in ipairs{value.X, value.Y, value.Z} do
-			local thisb = Network.pack(value)
+			local thisb = Network.pack(value, instances)
 			table.insert(vec, thisb)
 		end
 
@@ -461,11 +462,11 @@ function Network.pack(value: any, instancecursor: number?)
 		buffer.copy(b, 1, prebuffer)
 
 	elseif typeof(value) == "Color3" then
-		local red = Network.pack(value.R * 255)
+		local red = Network.pack(value.R * 255, instances)
 		local rlen = buffer.len(red)
-		local green = Network.pack(value.G * 255)
+		local green = Network.pack(value.G * 255, instances)
 		local glen = buffer.len(green)
-		local blue = Network.pack(value.B * 255)
+		local blue = Network.pack(value.B * 255, instances)
 		local blen = buffer.len(blue)
 
 		local prebuffer = buffer.create(rlen + glen + blen)
