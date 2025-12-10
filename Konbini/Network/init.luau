@@ -9,6 +9,8 @@ local Players = game:GetService("Players")
 local RemoteEvent = script:WaitForChild("RemoteEvent")
 local UnreliableRemoteEvent = script:WaitForChild("UnreliableRemoteEvent")
 
+local Hooks = {}
+
 --- writes signed 24-bit integer to buffer
 local function writei24(b: buffer, offset: number, value: number)
 	local bitoffset = offset * 8
@@ -613,6 +615,90 @@ function Network.unpack(pack: buffer, offset: number, instances: {Instance}): (a
 	end
 
 	return nil, offset
+end
+
+--- returns hooked-function table `<H>` \
+--- functions are deferred
+function Network.hook(name: string)
+	if not Hooks[name] then
+		Hooks[name] = {
+			functions = {};
+			onces = {};
+			yields = {};
+		}
+		local hook = Hooks[name]
+
+		--- recursively resumes yielded threads
+		local function resume(...: any)
+			local co = table.remove(hook.yields)
+			if co then
+				task.defer(co, ...)
+				resume(...)
+			else
+				return
+			end
+		end
+
+		--- recursively removes-then-defers functions bound by signal.once()
+		local function onces(...: any)
+			local f = table.remove(hook.onces)
+			if f then
+				task.defer(f, ...)
+				onces(...)
+			else
+				return
+			end
+		end
+
+		--- connects function to this signal
+		hook.connect = function(f: (...any) -> ())
+			table.insert(hook.functions, f)
+
+			return function()
+				table.remove(hook.functions, table.find(hook.functions, f) or 0)
+			end
+		end
+		--- connects function to this signal to be fired once
+		hook.once = function(f: (...any) -> ())
+			table.insert(hook.onces, f)
+
+			return function()
+				table.remove(hook.onces, table.find(hook.onces, f) or 0)
+			end
+		end
+		--- yields thread until this signal is fired
+		hook.wait = function()
+			table.insert(hook.yields, coroutine.running())
+
+			return coroutine.yield()
+		end
+		--- calls functions bound to this signal along with any arguments passed
+		hook.fire = function(...: any)
+			for _, f in hook.functions do
+				task.defer(f, ...)
+			end
+			
+			onces(...)
+			resume(...)
+		end
+		--- disconnects all functions bound to this signal
+		hook.disconnectall = function()
+			table.clear(hook.functions)
+			table.clear(hook.onces)
+		end
+		--- destroys this signal, resuming any yielded threads prior to destruction
+		hook.destroy = function(...: any)
+			resume(...)
+
+			table.clear(hook.functions)
+			table.clear(hook.onces)
+			
+			table.clear(hook)
+			Hooks[name] = nil
+		end
+	end
+
+	return Hooks[name]
 end
 
 if IsServer then
