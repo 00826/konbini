@@ -966,7 +966,7 @@ function InstanceK.createappearancedescription(t: {[string]: any} | HumanoidDesc
 	elseif type(t) == "number" then
 		if t < 1 then return InstanceK.emptydescription() end
 
-		return InstanceK.createappearancedescription(Players:GetHumanoidDescriptionFromUserId(t))
+		return InstanceK.createappearancedescription(Players:GetHumanoidDescriptionFromUserIdAsync(t))
 	elseif typeof(t) == "Instance" then
 		if t:IsA("HumanoidDescription") then
 			do --- accessories

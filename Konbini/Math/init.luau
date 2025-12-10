@@ -64,6 +64,11 @@ function MathK.interpolant(x: number, dt: number)
 	return 1 - (x ^ dt)
 end
 
+--- returns `-(a // -b)`
+function MathK.cdiv(a: number, b: number)
+	return -(a // -b)
+end
+
 --- returns `x >= a and x <= b and true or false`
 function MathK.inrange(x: number, a: number, b: number)
 	return x >= a and x <= b and true or false

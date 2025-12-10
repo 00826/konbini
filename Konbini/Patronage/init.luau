@@ -21,12 +21,12 @@ local Patronage = {
 
 --- returns `pcall(a.IsInGroup, a, groupid)`
 function Patronage.isingroup(a: Player, groupid: number)
-	return pcall(a.IsInGroup, a, groupid)
+	return pcall(a.IsInGroupAsync, a, groupid)
 end
 
 --- returns `pcall(a.IsFriendsWith, a, b.UserId)`
 function Patronage.isfriendswith(a: Player, b: Player)
-	return pcall(a.IsFriendsWith, a, b.UserId)
+	return pcall(a.IsFriendsWithAsync, a, b.UserId)
 end
 
 --- returns `pcall(LocalizationService.GetCountryRegionForPlayerAsync, LocalizationService, player)`
@@ -64,9 +64,9 @@ function Patronage.policyfromjson(json: string,
 	return nil
 end
 
---- returns `pcall(MarketplaceService.GetProductInfo, MarketplaceService, id, itemtype)`
+--- returns `pcall(MarketplaceService.GetProductInfoAsync, MarketplaceService, id, itemtype)`
 function Patronage.getproductinfo(id: number, itemtype: Enum.InfoType)
-	return pcall(MarketplaceService.GetProductInfo, MarketplaceService, id, itemtype)
+	return pcall(MarketplaceService.GetProductInfoAsync, MarketplaceService, id, itemtype)
 end
 
 --- returns an empty minimum marketplace product

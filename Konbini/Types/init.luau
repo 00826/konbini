@@ -1098,6 +1098,28 @@ function Types.union<T>(t: { {T} })
 	return result
 end
 
+--- returns `b ¬ a` such that
+--- ```lua
+--- c{(a, 1), (b, 1)} = b{(a, 2), (b, 1), (c, 1)} ¬ a{(a, 1), (c, 1)}
+--- --- or
+--- c{a, b} = b{a, a, b, c} ¬ a{a, c}
+--- ``` 
+function Types.negate<T>(a: {T}, b: {T})
+	local block = table.clone(b)
+ 
+	for _, value in ipairs(a) do
+		table.remove(block, table.find(block, value) or 0)
+	end
+
+	return block
+end
+
+--- shorthand for `t[a] = (t[a] or 0) + b`
+function Types.incr<T>(t: {[T]: number}, a: T, b: number)
+	--- ta
+	t[a] = (t[a] or 0) + b
+end
+
 --- returns a randomized alphanumeric string \
 --- all characters elements of set `[A-Za-z0-9]`
 function Types.createstring(len: number)

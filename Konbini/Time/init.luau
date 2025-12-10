@@ -15,6 +15,11 @@ local Time = {
 
 --- returns server-authoritative unix time in seconds
 function Time.now()
+	return buffer.readf64(Time.UnixBuffer, 0) / 1000
+end
+
+--- returns server-authoritative unix time in milliseconds
+function Time.nowms()
 	return buffer.readf64(Time.UnixBuffer, 0)
 end
 
@@ -39,7 +44,7 @@ end
 
 if IsServer then
 	local recent = os.clock() - Time.Framerate
-	buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis/1000)
+	buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis)
 
 	RunService.Heartbeat:Connect(function()
 		local now = os.clock()
@@ -47,13 +52,13 @@ if IsServer then
 		if dt > Time.Framerate then
 			recent = now - (dt - Time.Framerate)
 
-			buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis/1000)
+			buffer.writef64(Time.UnixBuffer, 0, DateTime.now().UnixTimestampMillis)
 			Remote:FireAllClients(Time.UnixBuffer)
 		end
 	end)
 else
 	Remote.OnClientEvent:Connect(function(b: buffer)
-		buffer.writef64(Time.UnixBuffer, 0, buffer.readf64(b, 0))
+		buffer.copy(Time.UnixBuffer, 0, b)
 	end)
 end
 
