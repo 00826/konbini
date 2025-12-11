@@ -4,7 +4,17 @@
 
 |ico.svg|lore|
 |-|-|
-|<img src="./konbini-ico.svg" width="96"/>|a shelf of roblox-luau convenience modules<br><br>started as a util module, ended as a library<br>*"the best thing since catalog price floors"*<br><br>while "stocking the shelves" i wanted to keep everything:<br>- simple & straightforward<br>- concise & to-the-point<br>- portable & copy-pastable|
+|<img src="./konbini-ico.svg" width="96"/>|a shelf of roblox-luau convenience modules with no external or cross-dependencies<br><br>started as a util module, ended as a library|
+
+## gotchas
+
+1. konbini is not backward-compatible
+
+code is constantly being cycled in and out on a per-need basis
+
+2. konbini must be required on the server and client
+
+this is so the `Time` library (`Time.now()`, `Time.nowms()`) can work
 
 ## aisles
 
