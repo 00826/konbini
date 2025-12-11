@@ -340,7 +340,7 @@ function Color3K.fromvertexcolor(v: Vector3)
 end
 
 --- returns `color3 * x`
-function Color3K.scale(c: Color3, x: number)
+function Color3K.mul(c: Color3, x: number)
 	return Color3.new(c.R * x, c.G * x, c.B * x)
 end
 

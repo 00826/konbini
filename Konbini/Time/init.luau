@@ -25,7 +25,8 @@ end
 
 --- runs function at second interval `x` \
 --- `immediate(?=true)`: function is called on the next frame
-function Time.framerule(x: number, f: (dt: number) -> (), immediate: boolean?)
+function Time.framerule(x: number, f: (dt: number, elapsed: number) -> (), immediate: boolean?)
+	local start = os.clock()
 	local recent = os.clock()
 	if immediate ~= false then
 		recent -= x
@@ -37,9 +38,26 @@ function Time.framerule(x: number, f: (dt: number) -> (), immediate: boolean?)
 		if dt > x then
 			recent = now - (dt - x)
 
-			f(dt)
+			f(dt, now - start)
 		end
 	end)
+end
+
+--- runs function every frame for `x` seconds
+function Time.run(x: number, f: (dt: number, elapsed: number) -> ())
+	local start = os.clock()
+	local c; c = RunService.Heartbeat:Connect(function(dt: number)
+		local elapsed = os.clock() - start
+		elapsed += dt
+
+		f(dt, elapsed)
+
+		if elapsed > x then
+			if c then c:Disconnect() end
+		end
+	end)
+
+	return c
 end
 
 if IsServer then

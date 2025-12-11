@@ -12,6 +12,11 @@ local Vector3K = {
 	xyaxis = Vector3.one - Vector3.zAxis;
 }
 
+--- returns vector3-typecasted `vector.lerp(v, w a)`
+function Vector3K.lerp(v: Vector3, w: Vector3, a: number)
+	return (vector.lerp(v::any, w::any, a)::any)::Vector3
+end
+
 --- returns vector3-typecasted `vector.normalize(v)`
 function Vector3K.normalize(v: Vector3)
 	return (vector.normalize(v::any)::any)::Vector3
@@ -19,7 +24,7 @@ end
 
 --- returns vector3-typecasted `vector.magnitude(v)`
 function Vector3K.magnitude(v: Vector3)
-	return (vector.magnitude(v::any)::any)::Vector3
+	return vector.magnitude(v::any)
 end
 
 --- returns whether or not `v` is finite
@@ -74,8 +79,7 @@ function Vector3K.bezier(vectors: {Vector3}, a: number)
 			local w = vectors[i + 1]
 			if not w then break end
 
-			--- table.insert(result, (vector.lerp(v::any, w::any, a)::any)::Vector3)
-			table.insert(result, v:Lerp(w, a))
+			table.insert(result, (vector.lerp(v::any, w::any, a)::any)::Vector3)
 		end
 
 		return Vector3K.bezier(result, a)
@@ -95,8 +99,7 @@ function Vector3K.split(v: Vector3, w: Vector3, u: number)
 		table.insert(result, v)
 		
 		for i = 1, u - 1 do
-			--- table.insert(result, (vector.lerp(v::any, w::any, i / u)::any)::Vector3)
-			table.insert(result, v:Lerp(w, i / u))
+			table.insert(result, (vector.lerp(v::any, w::any, i / u)::any)::Vector3)
 		end
 
 		table.insert(result, w)

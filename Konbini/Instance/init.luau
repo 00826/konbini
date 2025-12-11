@@ -275,7 +275,7 @@ function InstanceK.boxhandleadornment(
 			Parent = b.parent;
 		}
 
-		if next(goal) == nil then
+		if next(goal) ~= nil then
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
@@ -329,7 +329,7 @@ function InstanceK.conehandleadornment(
 			Parent = b.parent;
 		}
 
-		if next(goal) == nil then
+		if next(goal) ~= nil then
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
@@ -391,7 +391,7 @@ function InstanceK.cylinderhandleadornment(
 			Parent = b.parent;
 		}
 
-		if next(goal) == nil then
+		if next(goal) ~= nil then
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
@@ -445,7 +445,7 @@ function InstanceK.imagehandleadornment(
 			Parent = b.parent;
 		}
 
-		if next(goal) == nil then
+		if next(goal) ~= nil then
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
@@ -495,7 +495,7 @@ function InstanceK.spherehandleadornment(
 			Parent = b.parent;
 		}
 
-		if next(goal) == nil then
+		if next(goal) ~= nil then
 			InstanceK.tween(adornment, goal, b.time)
 		end
 
@@ -569,7 +569,7 @@ function InstanceK.pointlight(
 			Parent = b.parent;
 		}
 
-		if next(goal) == nil then
+		if next(goal) ~= nil then
 			InstanceK.tween(light, goal, b.time)
 		end
 
@@ -615,7 +615,7 @@ function InstanceK.spotlight(
 			Parent = b.parent;
 		}
 
-		if next(goal) == nil then
+		if next(goal) ~= nil then
 			InstanceK.tween(light, goal, b.time)
 		end
 
@@ -661,7 +661,7 @@ function InstanceK.surfacelight(
 			Parent = b.parent;
 		}
 
-		if next(goal) == nil then
+		if next(goal) ~= nil then
 			InstanceK.tween(light, goal, b.time)
 		end
 
