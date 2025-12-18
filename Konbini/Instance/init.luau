@@ -818,7 +818,7 @@ end
 function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?, collidelimbs: {string}?)
 	if state == true then
 		assert(motors, "expected motor target list")
-		for _, motor6d in target:GetDescendants() do
+		for _, motor6d in target:QueryDescendants("Motor6D, BasePart") do
 			if motor6d:IsA("Motor6D") and table.find(motors, motor6d.Name) then
 				if not motor6d.Part1 then warn(`motor6d {motor6d} no part0`); continue end
 
@@ -852,7 +852,7 @@ function InstanceK.ragdoll(target: Model, state: boolean, motors: {string}?, col
 			end
 		end
 	elseif state == false then
-		for _, ballsocket in target:GetDescendants() do
+		for _, ballsocket in target:QueryDescendants("BallSocketConstraint, BasePart") do
 			if ballsocket:IsA("BallSocketConstraint") then
 				if not ballsocket.Attachment0 then warn(`ballsocket {ballsocket} no attachment0`); continue end
 				if not ballsocket.Attachment1 then warn(`ballsocket {ballsocket} no attachment1`); continue end
@@ -882,7 +882,7 @@ end
 
 --- sets collision group of baseparts under target
 function InstanceK.setcollisiongroup(target: Instance, collisiongroup: string)
-	for _, thing in target:GetDescendants() do
+	for _, thing in target:QueryDescendants("BasePart") do
 		if thing:IsA("BasePart") then
 			thing.CollisionGroup = collisiongroup
 		end
@@ -987,7 +987,7 @@ end
 
 --- creates a transparency controller using localtransparencymodifier
 function InstanceK.createtransparencycontroller(thing: Instance)
-	local things = thing:GetDescendants()
+	local things = thing:QueryDescendants("Instance")
 	local controller = {
 		Rig = thing;
 
@@ -1203,7 +1203,7 @@ function InstanceK.attach(instance: Instance, basepart: BasePart, parent: Instan
 	local accessoryattachment = basepart:FindFirstChildOfClass("Attachment")
 	if not accessoryattachment then return false end
 
-	local rigattachment = InstanceK.findattachment(instance, accessoryattachment.Name)
+	local rigattachment = InstanceK.findfirstattachment(instance, accessoryattachment.Name)
 	if not rigattachment then return false end
 
 	basepart.Parent = parent or instance
@@ -1217,20 +1217,8 @@ function InstanceK.attach(instance: Instance, basepart: BasePart, parent: Instan
 end
 
 --- returns attachment in instance
-function InstanceK.findattachment(instance: Instance, name: string): Attachment?
-	for _, thing in instance:GetChildren() do
-		if thing:GetAttribute(InstanceK.AccessoryFlag) then continue end
-
-		if thing:IsA("BasePart") or thing:IsA("MeshPart") then
-			for _, maybeattachment in thing:GetChildren() do
-				if maybeattachment:IsA("Attachment") and maybeattachment.Name == name then
-					return maybeattachment
-				end
-			end
-		end
-	end
-
-	return
+function InstanceK.findfirstattachment(instance: Instance, name: string)
+	return (instance:QueryDescendants(string.format("Attachment #%s", name))[1]::any)::Attachment?
 end
 
 --- returns an `AccessoryPart` from assetid (server-only), or an empty AccessoryPart if no assetid is provided
@@ -1328,9 +1316,9 @@ function InstanceK.createzone(root: Instance)
 		LoadContainer = workspace;
 		OffloadContainer = script;
 
-		Queue = table.create(#root:GetChildren());
+		Queue = table.create(#root:QueryDescendants(">Instance"));
 
-		Instances = root:GetChildren();
+		Instances = root:QueryDescendants(">Instance");
 		InstanceAddedConnection = nil :: RBXScriptConnection?;
 
 		ReparentConnection = nil :: RBXScriptConnection?;
