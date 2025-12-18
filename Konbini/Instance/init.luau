@@ -51,6 +51,8 @@ local InstanceK = {
 		DefaultFace = "rbxasset://textures/face.png";
 	};
 
+	ContentCache = {};
+
 	DebouncePrefix = "__d_";
 }
 
@@ -59,6 +61,121 @@ local InstanceK = {
 --- `...[2...]`: (remainder of `TweenInfo.new()` args)
 function InstanceK.tween(object: Instance, properties: {[string]: any}, time: number, style: Enum.EasingStyle?, ...)
 	TweenService:Create(object, TweenInfo.new(time, style or Enum.EasingStyle.Linear, ...), properties):Play()
+end
+
+--- sets `i[primary content-related property] = content` \
+--- `propertyscope` overrides `[primary content-related property]` \
+--- returns `scope` and `value` in key-value pair form
+function InstanceK.setassetid(
+	i: 
+		| Animation
+		| Decal
+		| ImageButton
+		| ImageHandleAdornment
+		| ImageLabel
+		| MeshPart
+		| ParticleEmitter
+		| Sound
+		| SpecialMesh
+		| Texture,
+	content: string|number|Content?,
+	propertyscope: string?
+)
+	if type(content) == "number" or type(content) == "string" then
+		content = InstanceK.content(content)
+	else
+		content = content or Content.none
+	end
+	assert(content)
+	assert(typeof(content) == "Content")
+
+	local scope, value = nil, nil::any
+	
+	if i:IsA("Animation") then
+		scope = propertyscope or "AnimationId"
+		value = content.Uri or ""
+	elseif i:IsA("Decal") then
+		scope = propertyscope or "TextureContent"
+		value = content
+	elseif i:IsA("ImageButton") then
+		scope = propertyscope or "ImageContent"
+		value = content
+	elseif i:IsA("ImageHandleAdornment") then
+		scope = propertyscope or "Image"
+		value = content.Uri or ""
+	elseif i:IsA("ImageLabel") then
+		scope = propertyscope or "ImageContent"
+		value = content
+	elseif i:IsA("MeshPart") then
+		scope = propertyscope or "MeshContent"
+		value = content
+	elseif i:IsA("ParticleEmitter") then
+		scope = propertyscope or "Texture"
+		value = content.Uri or ""
+	elseif i:IsA("Sound") then
+		scope = propertyscope or "AudioContent"
+		value = content
+	elseif i:IsA("SpecialMesh") then
+		scope = propertyscope or "MeshId"
+		value = content.Uri or ""
+	elseif i:IsA("Texture") then
+		scope = propertyscope or "TextureContent"
+		value = content
+	else
+		error(string.format("no case for instance %s", i.ClassName))
+	end
+
+	assert(type(scope) == "string")
+	assert(value ~= nil)
+
+	--- today we're counting down our top 10 semicolons
+	;(i::any)[scope] = value
+
+	return scope, value
+end
+
+--- converts uri or assetid into `Content` form \
+--- numeric `uriorassetid` is prefixed with `"rbxassetid://"` \
+--- `Content` with `uriorassetid` is cached for faster re-access \
+--- \
+--- `uriorassetid == "" -> Content.none` \
+--- `uriorassetid == nil -> nil`
+function InstanceK.content(uriorassetid: string|number?): Content?
+	if type(uriorassetid) == "string" then
+		if uriorassetid == "" then
+			return Content.none
+		else
+			local content = InstanceK.ContentCache[uriorassetid]
+			if not content then
+				InstanceK.ContentCache[uriorassetid] = Content.fromUri(uriorassetid)
+				content = InstanceK.ContentCache[uriorassetid]
+			end
+
+			return content::Content
+		end
+	elseif type(uriorassetid) == "number" then
+		return InstanceK.content("rbxassetid://" .. tostring(uriorassetid))
+	elseif type(uriorassetid) == "nil" then
+		return nil
+	else
+		error(string.format("expected uriorassetid to be string or number, got %s", type(uriorassetid)))
+	end
+end
+
+--- takes variants and caches their `Content` equivalent for faster re-access by `InstanceK.content(...)`
+function InstanceK.contentcache(list: {number|string|Content})
+	for _, c in list do
+		if typeof(c) ~= "Content" then
+			InstanceK.content(c)
+		else
+			local uri = c.Uri
+			if uri then
+				if not InstanceK.ContentCache[uri] then
+					InstanceK.ContentCache[uri] = c
+				end
+			end
+		end
+	end
 end
 
 --- applies attribute debounce to instance, returning true if debounce passes \
@@ -422,7 +539,7 @@ function InstanceK.imagehandleadornment(
 	setadornmentbaseproperties(adornment, a)
 	
 	adornment.Size = a.size
-	adornment.Image = a.image
+	local contentscope = InstanceK.setassetid(adornment, a.image)
 
 	if b then
 		local to = b.at
@@ -440,7 +557,7 @@ function InstanceK.imagehandleadornment(
 			CFrame = typeof(to) == "Vector3" and CFrame.new(to) or typeof(to) == "CFrame" and to or nil;
 			
 			Size = b.size;
-			Image = b.image;
+			[contentscope] = InstanceK.content(b.image);
 
 			Parent = b.parent;
 		}
@@ -773,9 +890,9 @@ function InstanceK.setcollisiongroup(target: Instance, collisiongroup: string)
 end
 
 --- creates an `Animation` instance with its `AnimationId` property set to `id`
-function InstanceK.createanimationfromid(id: string)
+function InstanceK.createanimation(id: number|string|Content?)
 	local a = Instance.new("Animation")
-	a.AnimationId = id
+	InstanceK.setassetid(a, id)
 	a.Parent = script
 
 	return a

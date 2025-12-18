@@ -215,13 +215,14 @@ function Interface.sprite(imagelabel: ImageLabel, sprite: typeof(
 	{
 		Position = 0;
 		Layout = {
-			Id = "";
+			ContentId = (nil::any)::(typeof(Content.none) | string);
 			Size = Vector2.zero;
 			Width = 0;
 		};
-	})?)
+	})?
+)
 	if not sprite then
-		imagelabel.Image = ""
+		imagelabel.ImageContent = Content.none
 		imagelabel.ImageRectSize = Vector2.zero
 		imagelabel.ImageRectOffset = Vector2.zero
 
@@ -231,13 +232,21 @@ function Interface.sprite(imagelabel: ImageLabel, sprite: typeof(
 	local layout = sprite.Layout
 
 	if layout then
-		imagelabel.Image = layout.Id
+		local content = layout.ContentId
+		if type(content) == "number" then
+			imagelabel.ImageContent = Content.fromAssetId(content)
+		elseif type(content) == "string" then
+			imagelabel.ImageContent = Content.fromUri(content)
+		elseif typeof(content) == "Content" then
+			imagelabel.ImageContent = content
+		end
+
 		local x, y = cartesian(sprite.Position, layout.Width)
 		local size = layout.Size
 		imagelabel.ImageRectSize = size
 		imagelabel.ImageRectOffset = Vector2.new(y * size.X, x * size.Y)
 	else
-		imagelabel.Image = ""
+		imagelabel.ImageContent = Content.none
 		imagelabel.ImageRectSize = Vector2.zero
 		imagelabel.ImageRectOffset = Vector2.zero
 	end

@@ -471,71 +471,36 @@ function Types.barunpack(b: buffer)
 	end
 end
 
---- returns a `[f64 expiry, u8 stacks (?=1)]` state buffer \
---- a state is considered "expired" if `stacks == 0` or `expiry < time` \
---- a state is considrered "indefinite" if `expiry == -1`
-function Types.createstate(expiry: number, stacks: number?)
-	local s = buffer.create(4 + 1)
+--- returns 9-wide state `[f64 expiry, u8 value]`
+function Types.createstate()
+	return buffer.create(9)
+end
 
+--- returns `f64` state expiry
+function Types.statereadexpiry(s: buffer)
+	return buffer.readf64(s, 0)
+end
+
+--- writes to expiry portion of state
+function Types.statewriteexpiry(s: buffer, expiry: number)
 	buffer.writef64(s, 0, expiry)
-	buffer.writeu8(s, 4, stacks or 1)
-
-	return s
 end
 
---- writes value to state buffer expiry portion
-function Types.stateexpiry(s: buffer, value: number)
-	buffer.writef64(s, 0, value)
+--- returns `u8` state value
+function Types.statereadvalue(s: buffer)
+	return buffer.readu8(s, 8)
 end
 
---- writes value to state buffer stacks portion
-function Types.statestacks(s: buffer, value: number)
-	buffer.writeu8(s, 4, value)
+--- writes to value portion of state
+function Types.statewritevalue(s: buffer, value: number)
+	buffer.writeu8(s, 8, value)
 end
 
---- adds value to state buffer stacks portion
-function Types.statestacksdelta(s: buffer, value: number)
-	buffer.writeu8(s, 4, buffer.readu8(s, 4) + value)
-end
-
---- sets or creates (if it doesn't exist already) a state at `st[key]`
-function Types.stateset(st: {[string]: buffer}, key: string, expiry: number, stacks: number?)
-	local state = st[key]
-	if not state then
-		st[key] = Types.createstate(expiry, stacks)
-	else
-		buffer.writef64(state, 0, expiry)
-		if stacks then
-			buffer.writeu8(state, 4, stacks)
-		end
-	end
-end
-
---- returns list of active states contained in state table `st`
-function Types.statefind(st: {[string]: buffer}, keys: {string}, now: number)
-	local result = table.create(#keys)
-
-	for _, key in keys do
-		local s = st[key]
-		if not s then continue end
-
-		local expiry = buffer.readf64(s, 0)
-		if expiry == -1 then
-			table.insert(result, key)
-			continue
-		end
-		local active = expiry > now
-		if not active then continue end
-
-		table.insert(result, key)
-	end
-
-	return result
-end
-
---- returns state buffer `expiry, stacks`
+--- returns \
+--- `f64` state expiry \
+--- `u8` state value
 function Types.stateunpack(s: buffer)
-	return buffer.readf64(s, 0), buffer.readu8(s, 4)
+	return buffer.readf64(s, 0), buffer.readu8(s, 8)
 end
 
 --- returns numeric stage `base / base` \
