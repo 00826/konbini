@@ -1218,7 +1218,7 @@ end
 
 --- returns attachment in instance
 function InstanceK.findfirstattachment(instance: Instance, name: string)
-	return (instance:QueryDescendants(string.format("Attachment #%s", name))[1]::any)::Attachment?
+	return (instance:QueryDescendants(string.format("[ClassName = Attachment][Name = %s]", name))[1]::any)::Attachment?
 end
 
 --- returns an `AccessoryPart` from assetid (server-only), or an empty AccessoryPart if no assetid is provided

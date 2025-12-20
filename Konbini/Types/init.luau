@@ -839,10 +839,10 @@ function Types.reconcile(t: {}, diff: typeof(Types.diff(...)))
 		end
 	else
 		for k, v in diff do
-			local i = tonumber(k)
+			--[[local i = tonumber(k)
 			if i ~= nil then
 				k = i
-			end
+			end]]
 
 			if type(v) == "table" then
 				if not t[k] then
